@@ -26,8 +26,6 @@ button:disabled{background:#333;color:#666;cursor:default;transform:none}
 .ready-btn{background:#fff!important;color:#000!important}
 .ready-btn:hover{background:#ddd!important}
 .ready-btn.is-ready{background:#666!important;color:#ccc!important}
-#btnUndo{background:#444;color:#ccc}
-#btnUndo:hover{background:#555}
 #btnInstructions{background:transparent;color:#999;border:1px solid #444;padding:8px 20px;font-weight:400;font-size:.9em}
 #btnInstructions:hover{color:#fff;border-color:#888;background:transparent}
 #btnBackToMenu{background:transparent;color:#999;border:1px solid #444;padding:6px 16px;font-weight:400;font-size:.8em;position:absolute;top:12px;left:12px}
@@ -151,7 +149,6 @@ canvas{flex:1;width:100%;min-height:0;display:block;touch-action:none}
   <div class="action-panel">
     <div class="action-queue" id="actionQueue"></div>
     <div class="action-btns">
-      <button id="btnUndo">Undo</button>
       <button id="btnGameReady" class="ready-btn">Ready</button>
     </div>
   </div>
@@ -540,24 +537,31 @@ function resizeCanvas(){
 }
 
 // ──────────────────────────────────────────────
-// INPUT — pointer events: drag to move, hold for skill, tap for targeting
+// INPUT — tap to select+move, drag to move, hold for skill
+// Priority order: most recently assigned/reassigned = 1st
 // ──────────────────────────────────────────────
 function onPointerDown(e){
   if(G.phase!=='planning' || G.myReady) return;
   e.preventDefault();
-  canvas.setPointerCapture(e.pointerId);
   const rect=canvas.getBoundingClientRect();
   const sx=e.clientX-rect.left, sy=e.clientY-rect.top;
   const hex=screenToHex(sx,sy);
-  if(!onBoard(hex.q,hex.r)) return;
 
-  // If in skill targeting mode, handle target selection
-  if(G.actionMode && G.selectedUnit){
+  // Store tap info for pointerup
+  drag.tapHex = onBoard(hex.q,hex.r) ? hex : null;
+
+  if(!onBoard(hex.q,hex.r)){
+    G.selectedUnit=null; G.actionMode=null; hideHint();
+    return;
+  }
+
+  // Skill targeting mode — handle tap on target
+  if(G.actionMode && G.actionMode.startsWith('skill-') && G.selectedUnit){
     handleTargetTap(hex);
     return;
   }
 
-  // If tapping on a dead unit's spawn hex for respawn
+  // Respawn mode — tap spawn hex
   if(G.actionMode==='respawn'){
     const deadUnit = myUnits().find(u=>u.dead && !G.myActions.find(a=>a.unitId===u.id));
     if(deadUnit && hex.r===spawnRow(G.myPlayer) && !unitAt(hex.q,hex.r)){
@@ -568,24 +572,25 @@ function onPointerDown(e){
     return;
   }
 
+  // If tapping own unit → start drag/hold tracking
   const unit = unitAt(hex.q,hex.r);
-  if(!unit || unit.player!==G.myPlayer || unit.dead) return;
+  if(unit && unit.player===G.myPlayer && !unit.dead){
+    canvas.setPointerCapture(e.pointerId);
+    drag.unit = unit;
+    drag.startHex = {q:hex.q, r:hex.r};
+    drag.startPos = {x:sx, y:sy};
+    drag.currentPos = {x:sx, y:sy};
+    drag.targetHex = null;
+    drag.moved = false;
+    drag.isHold = false;
+    drag.holdTimer = setTimeout(()=>{
+      if(!drag.moved){ drag.isHold=true; if(navigator.vibrate) navigator.vibrate(30); }
+    }, LONG_PRESS_MS);
+    return;
+  }
 
-  drag.unit = unit;
-  drag.startHex = {q:hex.q, r:hex.r};
-  drag.startPos = {x:sx, y:sy};
-  drag.currentPos = {x:sx, y:sy};
-  drag.targetHex = null;
-  drag.moved = false;
-  drag.isHold = false;
-
-  // Start hold timer
-  drag.holdTimer = setTimeout(()=>{
-    if(!drag.moved){
-      drag.isHold = true;
-      if(navigator.vibrate) navigator.vibrate(30);
-    }
-  }, LONG_PRESS_MS);
+  // If in move mode and tapping a valid adjacent hex → assign move
+  // (handled in pointerup to distinguish from drags)
 }
 
 function onPointerMove(e){
@@ -595,78 +600,87 @@ function onPointerMove(e){
   const sx=e.clientX-rect.left, sy=e.clientY-rect.top;
   drag.currentPos = {x:sx, y:sy};
 
-  // Check if moved past threshold (drag, not hold)
   const dx=sx-drag.startPos.x, dy=sy-drag.startPos.y;
-  if(Math.sqrt(dx*dx+dy*dy) > 12 && !drag.moved){
-    drag.moved = true;
-    clearTimeout(drag.holdTimer);
-    drag.isHold = false;
+  if(Math.sqrt(dx*dx+dy*dy)>12 && !drag.moved){
+    drag.moved=true; clearTimeout(drag.holdTimer); drag.isHold=false;
   }
 
-  // Find nearest valid target hex while dragging
   if(drag.moved){
-    const hex = screenToHex(sx,sy);
-    const nb = neighbors(drag.unit.q, drag.unit.r);
-    const valid = nb.find(n=>n.q===hex.q && n.r===hex.r);
+    const hex=screenToHex(sx,sy);
+    const nb=neighbors(drag.unit.q, drag.unit.r);
+    const valid=nb.find(n=>n.q===hex.q && n.r===hex.r);
     if(valid){
-      const occ = unitAt(hex.q,hex.r);
+      const occ=unitAt(hex.q,hex.r);
       drag.targetHex = (!occ || occ.player!==G.myPlayer) ? hex : null;
-    } else {
-      drag.targetHex = null;
-    }
+    } else { drag.targetHex=null; }
   }
 }
 
 function onPointerUp(e){
-  if(!drag.unit){ return; }
   e.preventDefault();
   clearTimeout(drag.holdTimer);
 
-  if(drag.isHold && !drag.moved){
-    // ── Long press: toggle skill ──
-    toggleSkill(drag.unit);
-  } else if(drag.moved && drag.targetHex){
-    // ── Drag release on valid hex: assign move ──
-    assignAction({unitId:drag.unit.id, type:'move', target:{q:drag.targetHex.q, r:drag.targetHex.r}});
+  if(drag.unit){
+    if(drag.isHold && !drag.moved){
+      // Long press → toggle skill
+      toggleSkill(drag.unit);
+    } else if(drag.moved && drag.targetHex){
+      // Drag → assign move
+      assignAction({unitId:drag.unit.id, type:'move', target:{q:drag.targetHex.q, r:drag.targetHex.r}});
+      G.selectedUnit=null; G.actionMode=null;
+    } else if(!drag.moved && !drag.isHold){
+      // Short tap on own unit → select it for move mode
+      G.selectedUnit = drag.unit.id;
+      G.actionMode = 'move';
+    }
+  } else if(drag.tapHex && G.actionMode==='move' && G.selectedUnit){
+    // In move mode, tapped a hex → try to assign move
+    const u = unitById(G.selectedUnit);
+    const hex = drag.tapHex;
+    if(u && neighbors(u.q,u.r).some(n=>n.q===hex.q && n.r===hex.r)){
+      const occ = unitAt(hex.q,hex.r);
+      if(!occ || occ.player!==G.myPlayer){
+        assignAction({unitId:u.id, type:'move', target:{q:hex.q, r:hex.r}});
+      }
+      G.selectedUnit=null; G.actionMode=null;
+    } else {
+      // Invalid tap → deselect
+      G.selectedUnit=null; G.actionMode=null;
+    }
+  } else {
+    G.selectedUnit=null; G.actionMode=null; hideHint();
   }
 
-  drag.unit=null; drag.targetHex=null; drag.currentPos=null; drag.moved=false; drag.isHold=false;
+  drag.unit=null; drag.targetHex=null; drag.currentPos=null;
+  drag.moved=false; drag.isHold=false; drag.tapHex=null;
 }
 
-// Toggle skill activation via long press
+// Toggle skill on/off via long press
 function toggleSkill(unit){
   const existing = G.myActions.find(a=>a.unitId===unit.id);
 
-  // If unit already has a skill action, deactivate it
   if(existing && existing.type==='skill'){
     G.myActions = G.myActions.filter(a=>a.unitId!==unit.id);
     updateActionQueue();
     G.selectedUnit=null; G.actionMode=null; hideHint();
     return;
   }
-
-  // If unit already has a move, remove it to replace with skill
   if(existing) G.myActions = G.myActions.filter(a=>a.unitId!==unit.id);
 
   if(!unit.skill) return;
   const sd = SKILL_DEF[unit.skill];
-
-  // Check once-per-game limits
   if(sd.once && ((unit.skill==='trap' && unit.trapUsed) || (unit.skill==='decoy' && unit.decoyUsed))) return;
 
   if(sd.targeted){
-    // Enter targeting mode — wait for next tap
     G.selectedUnit = unit.id;
     G.actionMode = sd.targeted==='direction' ? 'skill-direction' :
                    sd.targeted==='adjacent' ? 'skill-adjacent' : 'skill-ally';
-    const hints = {
-      'skill-direction': 'Tap a hex in the arrow direction',
-      'skill-adjacent': 'Tap an adjacent hex for trap',
-      'skill-ally': 'Tap an ally to swap with'
-    };
-    showHint(hints[G.actionMode]);
+    showHint({
+      'skill-direction':'Tap a hex in the arrow direction',
+      'skill-adjacent':'Tap an adjacent hex for trap',
+      'skill-ally':'Tap an ally to swap with'
+    }[G.actionMode]);
   } else {
-    // Non-targeted: activate immediately
     assignAction({unitId:unit.id, type:'skill', skill:unit.skill});
   }
   updateActionQueue();
@@ -678,21 +692,18 @@ function handleTargetTap(hex){
   if(!u) return;
 
   if(G.actionMode==='skill-direction'){
-    const dir = DIRS.find(d=>{
+    const dir=DIRS.find(d=>{
       for(let s=1;s<=2;s++) if(u.q+d.q*s===hex.q && u.r+d.r*s===hex.r) return true;
       return false;
     });
-    if(dir){
-      assignAction({unitId:u.id, type:'skill', skill:'bow', direction:dir});
-      G.actionMode=null; G.selectedUnit=null; hideHint();
-    }
+    if(dir){ assignAction({unitId:u.id, type:'skill', skill:'bow', direction:dir}); G.actionMode=null; G.selectedUnit=null; hideHint(); }
   } else if(G.actionMode==='skill-adjacent'){
     if(neighbors(u.q,u.r).some(n=>n.q===hex.q&&n.r===hex.r) && !unitAt(hex.q,hex.r)){
       assignAction({unitId:u.id, type:'skill', skill:'trap', target:{q:hex.q,r:hex.r}});
       G.actionMode=null; G.selectedUnit=null; hideHint();
     }
   } else if(G.actionMode==='skill-ally'){
-    const clicked = unitAt(hex.q,hex.r);
+    const clicked=unitAt(hex.q,hex.r);
     if(clicked && clicked.player===G.myPlayer && !clicked.dead && clicked.id!==G.selectedUnit){
       assignAction({unitId:G.selectedUnit, type:'skill', skill:'decoy', targetId:clicked.id});
       G.actionMode=null; G.selectedUnit=null; hideHint();
@@ -701,23 +712,24 @@ function handleTargetTap(hex){
 }
 
 // ──────────────────────────────────────────────
-// ACTION QUEUE — assign, reassign, undo
+// ACTION QUEUE — most recently assigned = priority 1
+// Reassigning a unit moves it to the front
 // ──────────────────────────────────────────────
-
-// Assign or update an action for a unit (keeps priority if updating)
 function assignAction(action){
-  const idx = G.myActions.findIndex(a=>a.unitId===action.unitId);
-  if(idx>=0) G.myActions[idx] = action;
-  else G.myActions.push(action);
+  // Remove existing action for this unit
+  G.myActions = G.myActions.filter(a=>a.unitId!==action.unitId);
+  // Prepend — most recent = highest priority
+  G.myActions.unshift(action);
+  // Cap at 3
+  if(G.myActions.length>3) G.myActions.pop();
   updateActionQueue();
   checkAutoSelectDead();
 }
 
-// Check if there are dead units needing respawn assignment
 function checkAutoSelectDead(){
   const assigned = new Set(G.myActions.map(a=>a.unitId));
   const deadUnassigned = myUnits().find(u=>u.dead && !assigned.has(u.id));
-  if(deadUnassigned && G.myActions.length < 3){
+  if(deadUnassigned && G.myActions.length<3){
     G.selectedUnit = deadUnassigned.id;
     G.actionMode = 'respawn';
     showHint('Tap a spawn tile to respawn');
@@ -732,7 +744,6 @@ function updateActionQueue(){
     const u = unitById(a.unitId);
     let desc = a.type==='move' ? 'Move' : a.type==='respawn' ? 'Respawn' : SKILL_DEF[a.skill].name;
     tag.innerHTML = `<span class="num">${i+1}</span> ${u&&u.skill?SKILL_DEF[u.skill].icon:'U'}: ${desc}`;
-    tag.onclick = ()=>{ G.myActions.splice(i,1); updateActionQueue(); };
     aq.appendChild(tag);
   });
 }
@@ -810,9 +821,6 @@ function startPlanning(){
     ()=>submitPlan()
   );
   rb.onclick=()=>submitPlan();
-  document.getElementById('btnUndo').onclick=()=>{
-    if(G.myActions.length>0){ G.myActions.pop(); updateActionQueue(); }
-  };
 }
 function submitPlan(){
   if(G.myReady) return;
@@ -973,7 +981,11 @@ function joinGame(roomId){
 
 function wireConn(){
   conn.on('data',onMessage);
-  conn.on('close',()=>showOverlay('Opponent disconnected', true));
+  conn.on('close',()=>{
+    showOverlay('Opponent disconnected', true);
+    // Auto-return to menu after 5 seconds
+    setTimeout(()=>{ backToMenu(); }, 5000);
+  });
 }
 function send(data){ if(conn&&conn.open) conn.send(data); }
 
