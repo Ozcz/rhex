@@ -7,57 +7,57 @@
 <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-body{background:#0a0a1a;color:#e0e0e0;font-family:'Segoe UI',system-ui,sans-serif;height:100vh;overflow:hidden;display:flex;flex-direction:column}
+body{background:#000;color:#e8e8e8;font-family:'Segoe UI',system-ui,sans-serif;height:100vh;overflow:hidden;display:flex;flex-direction:column}
 .screen{display:none;flex:1;flex-direction:column;align-items:center;justify-content:center;padding:20px;gap:16px}
 .screen.active{display:flex}
-h1{font-size:3em;color:#4ecdc4;letter-spacing:.15em;text-shadow:0 0 30px #4ecdc455}
-.subtitle{color:#888;font-size:1.1em}
-button{background:#4ecdc4;color:#0a0a1a;border:none;padding:12px 28px;border-radius:8px;font-size:1em;font-weight:700;cursor:pointer;transition:all .2s}
-button:hover{background:#45b7b0;transform:scale(1.03)}
+h1{font-size:3em;color:#fff;letter-spacing:.15em}
+.subtitle{color:#999;font-size:1.1em}
+button{background:#fff;color:#000;border:none;padding:12px 28px;border-radius:8px;font-size:1em;font-weight:700;cursor:pointer;transition:all .2s}
+button:hover{background:#ddd;transform:scale(1.03)}
 button:disabled{background:#333;color:#666;cursor:default;transform:none}
 .link-box{display:flex;gap:8px;width:100%;max-width:400px}
-.link-box input{flex:1;background:#1a1a2e;border:1px solid #333;color:#e0e0e0;padding:10px;border-radius:6px;font-size:.9em}
-.waiting{color:#888;margin-top:8px;animation:pulse 1.5s infinite}
+.link-box input{flex:1;background:#111;border:1px solid #444;color:#fff;padding:10px;border-radius:6px;font-size:.9em}
+.waiting{color:#999;margin-top:8px;animation:pulse 1.5s infinite}
 @keyframes pulse{0%,100%{opacity:.5}50%{opacity:1}}
 .setup-header{text-align:center;margin-bottom:12px}
-.timer{font-size:2em;color:#ff6;font-weight:700;font-variant-numeric:tabular-nums}
+.timer{font-size:2em;color:#fff;font-weight:700;font-variant-numeric:tabular-nums}
 .unit-cards{display:flex;gap:12px;flex-wrap:wrap;justify-content:center;margin:12px 0}
-.unit-card{background:#1a1a2e;border:2px solid #333;border-radius:12px;padding:16px;width:160px;text-align:center}
-.unit-card .unit-label{font-weight:700;margin-bottom:10px;font-size:1.1em}
-.unit-card.p1 .unit-label{color:#4ecdc4}
-.unit-card.p2 .unit-label{color:#e85d75}
+.unit-card{background:#111;border:2px solid #333;border-radius:12px;padding:16px;width:160px;text-align:center}
+.unit-card .unit-label{font-weight:700;margin-bottom:10px;font-size:1.1em;color:#fff}
 .skill-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px}
-.skill-btn{padding:8px 4px;font-size:.75em;border-radius:6px;background:#252540;color:#ccc;border:2px solid transparent}
-.skill-btn:hover{background:#353560;transform:none}
-.skill-btn.selected{border-color:#4ecdc4;background:#1a3a3a;color:#4ecdc4}
-.game-hud{display:flex;align-items:center;justify-content:space-between;padding:8px 16px;background:#111;border-bottom:1px solid #222;width:100%;flex-shrink:0}
+.skill-btn{padding:8px 4px;font-size:.75em;border-radius:6px;background:#222;color:#bbb;border:2px solid transparent}
+.skill-btn:hover{background:#333;transform:none}
+.skill-btn.selected{border-color:#fff;background:#333;color:#fff}
+.game-hud{display:flex;align-items:center;justify-content:space-between;padding:8px 16px;background:#0a0a0a;border-bottom:1px solid #222;width:100%;flex-shrink:0}
 .score{font-size:1.4em;font-weight:700;min-width:60px}
 .score.p1{color:#4ecdc4;text-align:left}
 .score.p2{color:#e85d75;text-align:right}
 .phase-info{text-align:center}
-.phase-label{font-size:.85em;color:#888;text-transform:uppercase;letter-spacing:.1em}
+.phase-label{font-size:.85em;color:#999;text-transform:uppercase;letter-spacing:.1em}
 canvas{flex:1;width:100%;display:block;touch-action:none}
-.action-panel{background:#111;border-top:1px solid #222;padding:8px 16px;width:100%;flex-shrink:0}
+.action-panel{background:#0a0a0a;border-top:1px solid #222;padding:8px 16px;width:100%;flex-shrink:0}
 .action-queue{display:flex;gap:6px;margin-bottom:8px;min-height:36px;flex-wrap:wrap}
-.action-tag{background:#252540;padding:6px 12px;border-radius:6px;font-size:.8em;display:flex;align-items:center;gap:6px;cursor:pointer}
-.action-tag:hover{background:#353560}
-.action-tag .num{color:#4ecdc4;font-weight:700}
+.action-tag{background:#222;padding:6px 12px;border-radius:6px;font-size:.8em;display:flex;align-items:center;gap:6px;cursor:pointer;color:#ccc}
+.action-tag:hover{background:#333}
+.action-tag .num{color:#fff;font-weight:700}
 .action-btns{display:flex;gap:8px;justify-content:center}
 .action-btns button{padding:8px 16px;font-size:.85em}
-#btnSkill{background:#8b6914}
-#btnSkill:hover{background:#a07a1a}
-#btnUndo{background:#555}
-#btnUndo:hover{background:#666}
-.ready-btn{background:#2ecc71!important}
-.ready-btn:hover{background:#27ae60!important}
-.ready-btn.is-ready{background:#e74c3c!important}
-.overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.7);display:flex;align-items:center;justify-content:center;z-index:10}
-.overlay-text{font-size:2em;font-weight:700;color:#ff6;text-align:center;animation:pulse 1s infinite}
-.skill-target-hint{position:fixed;bottom:100px;left:50%;transform:translateX(-50%);background:#333;padding:10px 20px;border-radius:8px;color:#ff6;font-size:.9em;z-index:5}
-.status-msg{color:#888;font-size:.9em;text-align:center}
+#btnSkill{background:#888;color:#000}
+#btnSkill:hover{background:#aaa}
+#btnUndo{background:#444;color:#ccc}
+#btnUndo:hover{background:#555}
+.ready-btn{background:#fff!important;color:#000!important}
+.ready-btn:hover{background:#ddd!important}
+.ready-btn.is-ready{background:#666!important;color:#ccc!important}
+.overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.8);align-items:center;justify-content:center;z-index:10;display:none}
+.overlay.visible{display:flex}
+.overlay-text{font-size:2em;font-weight:700;color:#fff;text-align:center;animation:pulse 1s infinite}
+.skill-target-hint{position:fixed;bottom:100px;left:50%;transform:translateX(-50%);background:#222;padding:10px 20px;border-radius:8px;color:#fff;font-size:.9em;z-index:5;display:none}
+.skill-target-hint.visible{display:block}
+.status-msg{color:#999;font-size:.9em;text-align:center}
 #screenGameover{gap:20px}
-#screenGameover h2{font-size:2.5em;color:#ff6}
-#finalScore{font-size:1.2em;color:#aaa}
+#screenGameover h2{font-size:2.5em;color:#fff}
+#finalScore{font-size:1.2em;color:#999}
 </style>
 </head>
 <body>
@@ -66,8 +66,7 @@ canvas{flex:1;width:100%;display:block;touch-action:none}
   <h1>RHEX</h1>
   <p class="subtitle">Hex Strategy</p>
   <button id="btnCreate">Create Game</button>
-  <button id="btnSolo" style="background:#8b6914">Test Solo</button>
-  <div id="shareArea" hidden>
+  <div id="shareArea" style="display:none">
     <p>Share this link with a friend:</p>
     <div class="link-box">
       <input id="shareLink" readonly>
@@ -75,7 +74,7 @@ canvas{flex:1;width:100%;display:block;touch-action:none}
     </div>
     <p class="waiting">Waiting for opponent...</p>
   </div>
-  <div id="joinArea" hidden>
+  <div id="joinArea" style="display:none">
     <p class="waiting">Connecting to game...</p>
   </div>
 </div>
@@ -103,7 +102,7 @@ canvas{flex:1;width:100%;display:block;touch-action:none}
   <div class="action-panel">
     <div class="action-queue" id="actionQueue"></div>
     <div class="action-btns">
-      <button id="btnSkill" hidden>Use Skill</button>
+      <button id="btnSkill" style="display:none">Use Skill</button>
       <button id="btnUndo">Undo</button>
       <button id="btnGameReady" class="ready-btn">Ready</button>
     </div>
@@ -116,16 +115,15 @@ canvas{flex:1;width:100%;display:block;touch-action:none}
   <button id="btnRematch">Play Again</button>
 </div>
 
-<div id="overlay" class="overlay" hidden>
+<div id="overlay" class="overlay">
   <div class="overlay-text" id="overlayText"></div>
 </div>
-<div id="skillHint" class="skill-target-hint" hidden></div>
+<div id="skillHint" class="skill-target-hint"></div>
 
 <script>
 (function(){
 'use strict';
 
-// ===== CONFIG =====
 const HEX = 40;
 const RAD = 2;
 const TIMER_S = 60;
@@ -143,7 +141,6 @@ const SKILL_DEF = {
 };
 const DIRS = [{q:1,r:0},{q:-1,r:0},{q:0,r:1},{q:0,r:-1},{q:1,r:-1},{q:-1,r:1}];
 
-// ===== HEX MATH =====
 const S3 = Math.sqrt(3);
 function hexToPixelRaw(q,r){return{x:HEX*(S3*q+S3/2*r),y:HEX*(1.5*r)}}
 function pixelToHexRaw(x,y){
@@ -157,26 +154,22 @@ function hexRound(q,r){
   return{q:rq,r:rr};
 }
 function onBoard(q,r){return Math.abs(q)<=RAD&&Math.abs(r)<=RAD&&Math.abs(q+r)<=RAD}
-function hKey(q,r){return q+','+r}
 function neighbors(q,r){return DIRS.map(d=>({q:q+d.q,r:r+d.r})).filter(h=>onBoard(h.q,h.r))}
-function hexDist(a,b){return Math.max(Math.abs(a.q-b.q),Math.abs(a.r-b.r),Math.abs((a.q+a.r)-(b.q+b.r)))}
 function rowDist(r,player){return player===1?r+2:2-r}
 function pointVal(r,player){return ROW_VALS[rowDist(r,player)]}
 
-// ===== BOARD =====
 const boardHexes = [];
 for(let r=-RAD;r<=RAD;r++)for(let q=-RAD;q<=RAD;q++)if(onBoard(q,r))boardHexes.push({q,r});
 function spawnRow(p){return p===1?-2:2}
 function spawnHexes(p){return boardHexes.filter(h=>h.r===spawnRow(p))}
 
-// ===== GAME STATE =====
 let G = {
   phase:'lobby',myPlayer:0,
   units:[],traps:[],
   scores:[0,0,0],
   myActions:[],opActions:null,
   myReady:false,opReady:false,
-  selectedUnit:null,actionMode:null,skillDir:null,
+  selectedUnit:null,actionMode:null,
   timerVal:0,timerH:null,
   winner:0,turnNum:0
 };
@@ -195,7 +188,6 @@ function opUnits(){return G.units.filter(u=>u.player!==G.myPlayer)}
 function unitAt(q,r){return G.units.find(u=>!u.dead&&u.q===q&&u.r===r)}
 function unitById(id){return G.units.find(u=>u.id===id)}
 
-// ===== SCREEN MANAGEMENT =====
 function showScreen(id){
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   document.getElementById(id).classList.add('active');
@@ -212,7 +204,7 @@ function screenToHex(sx,sy){
   return pixelToHexRaw((sx-centerX)*flip,(sy-centerY)*flip);
 }
 
-const HEX_COLORS=['#2d4a3e','#3d6b5e','#5a7d4a','#8b7d3c','#b85c2e'];
+const HEX_COLORS=['#1a2a22','#2a4a35','#3a5a3a','#5a5a2a','#6a3a1a'];
 function hexColor(val){return HEX_COLORS[Math.min(val,4)]}
 
 function drawHexShape(cx,cy,size){
@@ -228,19 +220,17 @@ function drawHexShape(cx,cy,size){
 function render(){
   ctx.clearRect(0,0,cw,ch);
 
-  // board hexes
   for(const h of boardHexes){
     const s=hexToScreen(h.q,h.r);
     const v=pointVal(h.r,G.myPlayer);
     drawHexShape(s.x,s.y,HEX-2);
     ctx.fillStyle=hexColor(v);ctx.fill();
-    ctx.strokeStyle='#1a1a2e';ctx.lineWidth=2;ctx.stroke();
-    ctx.fillStyle='rgba(255,255,255,0.4)';
+    ctx.strokeStyle='#000';ctx.lineWidth=2;ctx.stroke();
+    ctx.fillStyle='rgba(255,255,255,0.5)';
     ctx.font=`${HEX*0.3}px sans-serif`;ctx.textAlign='center';ctx.textBaseline='middle';
     ctx.fillText(v,s.x,s.y+HEX*0.28);
   }
 
-  // highlights
   if(G.phase==='planning'&&G.selectedUnit!==null&&G.actionMode==='move'){
     const u=unitById(G.selectedUnit);
     if(u&&!u.dead){
@@ -257,12 +247,11 @@ function render(){
     const u=unitById(G.selectedUnit);
     if(u){
       for(const d of DIRS){
-        const tq=u.q+d.q*2,tr=u.r+d.r*2;
-        const mid={q:u.q+d.q,r:u.r+d.r};
-        for(const t of [mid,{q:tq,r:tr}]){
+        for(let s=1;s<=2;s++){
+          const t={q:u.q+d.q*s,r:u.r+d.r*s};
           if(onBoard(t.q,t.r)){
-            const s=hexToScreen(t.q,t.r);
-            drawHexShape(s.x,s.y,HEX-4);
+            const sc=hexToScreen(t.q,t.r);
+            drawHexShape(sc.x,sc.y,HEX-4);
             ctx.fillStyle='rgba(255,200,50,0.25)';ctx.fill();
           }
         }
@@ -291,7 +280,6 @@ function render(){
     }
   }
 
-  // traps (own only)
   for(const t of G.traps){
     if(t.player!==G.myPlayer)continue;
     const s=hexToScreen(t.q,t.r);
@@ -300,7 +288,6 @@ function render(){
     ctx.fillText('x',s.x,s.y-HEX*0.1);
   }
 
-  // units
   for(const u of G.units){
     if(u.dead)continue;
     if(u.cloaked&&u.player!==G.myPlayer)continue;
@@ -308,54 +295,44 @@ function render(){
     const col=u.player===1?P1_COLOR:P2_COLOR;
     const r=HEX*0.33;
 
-    // selection ring
     if(G.selectedUnit===u.id){
       ctx.beginPath();ctx.arc(s.x,s.y,r+5,0,Math.PI*2);
-      ctx.strokeStyle='#ff6';ctx.lineWidth=3;ctx.stroke();
+      ctx.strokeStyle='#fff';ctx.lineWidth=3;ctx.stroke();
     }
 
-    // body
     ctx.beginPath();ctx.arc(s.x,s.y,r,0,Math.PI*2);
     ctx.fillStyle=u.cloaked?col+'66':col;ctx.fill();
     ctx.strokeStyle='#fff';ctx.lineWidth=2;ctx.stroke();
 
-    // shield indicator
     if(u.shielded){
       ctx.beginPath();ctx.arc(s.x,s.y,r+3,0,Math.PI*2);
       ctx.strokeStyle='#ff6';ctx.lineWidth=2;ctx.setLineDash([4,3]);ctx.stroke();ctx.setLineDash([]);
     }
 
-    // skill icon
     if(u.skill){
-      ctx.fillStyle='#fff';ctx.font=`bold ${HEX*0.25}px sans-serif`;
+      ctx.fillStyle='#000';ctx.font=`bold ${HEX*0.25}px sans-serif`;
       ctx.textAlign='center';ctx.textBaseline='middle';
       ctx.fillText(SKILL_DEF[u.skill].icon,s.x,s.y);
     }
 
-    // hoe bonus
     if(u.hoeBonus>0){
       ctx.fillStyle='#ff6';ctx.font=`${HEX*0.22}px sans-serif`;
       ctx.fillText('+'+u.hoeBonus,s.x,s.y-r-6);
     }
 
-    // action assigned indicator
     const aIdx=G.myActions.findIndex(a=>a.unitId===u.id);
     if(aIdx>=0&&u.player===G.myPlayer){
-      ctx.fillStyle='#ff6';ctx.font=`bold ${HEX*0.22}px sans-serif`;
+      ctx.fillStyle='#fff';ctx.font=`bold ${HEX*0.22}px sans-serif`;
       ctx.fillText(aIdx+1,s.x+r+4,s.y-r);
     }
   }
 
-  // respawn indicators for dead own units
-  if(G.phase==='planning'){
-    const deadOwn=myUnits().filter(u=>u.dead);
-    if(deadOwn.length>0&&G.actionMode==='respawn'){
-      for(const h of spawnHexes(G.myPlayer)){
-        if(!unitAt(h.q,h.r)){
-          const s=hexToScreen(h.q,h.r);
-          drawHexShape(s.x,s.y,HEX-4);
-          ctx.fillStyle='rgba(100,255,200,0.3)';ctx.fill();
-        }
+  if(G.phase==='planning'&&G.actionMode==='respawn'){
+    for(const h of spawnHexes(G.myPlayer)){
+      if(!unitAt(h.q,h.r)){
+        const s=hexToScreen(h.q,h.r);
+        drawHexShape(s.x,s.y,HEX-4);
+        ctx.fillStyle='rgba(100,255,200,0.3)';ctx.fill();
       }
     }
   }
@@ -363,7 +340,7 @@ function render(){
   requestAnimationFrame(render);
 }
 
-// ===== CANVAS SETUP =====
+// ===== CANVAS =====
 function setupCanvas(){
   canvas=document.getElementById('board');
   ctx=canvas.getContext('2d');
@@ -387,7 +364,6 @@ function onCanvasClick(e){
   const sx=e.clientX-rect.left,sy=e.clientY-rect.top;
   const hex=screenToHex(sx,sy);
   if(!onBoard(hex.q,hex.r))return;
-
   if(G.phase==='planning')handlePlanClick(hex);
 }
 
@@ -395,22 +371,18 @@ function handlePlanClick(hex){
   if(G.myReady)return;
   const clicked=unitAt(hex.q,hex.r);
 
-  // respawn mode
   if(G.actionMode==='respawn'){
     const deadUnit=myUnits().find(u=>u.dead&&!G.myActions.find(a=>a.unitId===u.id));
     if(deadUnit&&hex.r===spawnRow(G.myPlayer)&&!unitAt(hex.q,hex.r)){
       addAction({unitId:deadUnit.id,type:'respawn',target:{q:hex.q,r:hex.r}});
-      G.actionMode=null;G.selectedUnit=null;
-      hideHint();
+      G.actionMode=null;G.selectedUnit=null;hideHint();
     }
     return;
   }
 
-  // skill target modes
   if(G.actionMode==='skill-direction'){
     const u=unitById(G.selectedUnit);
     if(!u)return;
-    const dq=hex.q-u.q,dr=hex.r-u.r;
     const dir=DIRS.find(d=>{
       for(let s=1;s<=2;s++)if(u.q+d.q*s===hex.q&&u.r+d.r*s===hex.r)return true;
       return false;
@@ -430,20 +402,17 @@ function handlePlanClick(hex){
     return;
   }
   if(G.actionMode==='skill-ally'){
-    const ally=clicked;
-    if(ally&&ally.player===G.myPlayer&&!ally.dead&&ally.id!==G.selectedUnit){
-      addAction({unitId:G.selectedUnit,type:'skill',skill:'decoy',targetId:ally.id});
+    if(clicked&&clicked.player===G.myPlayer&&!clicked.dead&&clicked.id!==G.selectedUnit){
+      addAction({unitId:G.selectedUnit,type:'skill',skill:'decoy',targetId:clicked.id});
       G.actionMode=null;G.selectedUnit=null;hideHint();
     }
     return;
   }
 
-  // move mode
   if(G.actionMode==='move'&&G.selectedUnit){
     const u=unitById(G.selectedUnit);
     if(!u)return;
-    const nb=neighbors(u.q,u.r);
-    if(nb.some(n=>n.q===hex.q&&n.r===hex.r)){
+    if(neighbors(u.q,u.r).some(n=>n.q===hex.q&&n.r===hex.r)){
       const occ=unitAt(hex.q,hex.r);
       if(occ&&occ.player===G.myPlayer)return;
       addAction({unitId:u.id,type:'move',target:{q:hex.q,r:hex.r}});
@@ -452,30 +421,27 @@ function handlePlanClick(hex){
     return;
   }
 
-  // select own unit
   if(clicked&&clicked.player===G.myPlayer&&!clicked.dead){
     if(G.myActions.find(a=>a.unitId===clicked.id))return;
     G.selectedUnit=clicked.id;
     G.actionMode='move';
-    document.getElementById('btnSkill').hidden=!clicked.skill;
     updateSkillBtn(clicked);
     return;
   }
 
-  // deselect
   G.selectedUnit=null;G.actionMode=null;
-  document.getElementById('btnSkill').hidden=true;
+  document.getElementById('btnSkill').style.display='none';
   hideHint();
 }
 
 function updateSkillBtn(u){
   const btn=document.getElementById('btnSkill');
-  if(!u||!u.skill){btn.hidden=true;return;}
+  if(!u||!u.skill){btn.style.display='none';return;}
   const sd=SKILL_DEF[u.skill];
   if(sd.once&&((u.skill==='trap'&&u.trapUsed)||(u.skill==='decoy'&&u.decoyUsed))){
-    btn.hidden=true;return;
+    btn.style.display='none';return;
   }
-  btn.hidden=false;
+  btn.style.display='';
   btn.textContent=sd.name;
 }
 
@@ -492,14 +458,13 @@ function autoSelectNext(){
   const deadUnassigned=myUnits().find(u=>u.dead&&!assigned.has(u.id));
   if(next){
     G.selectedUnit=next.id;G.actionMode='move';
-    document.getElementById('btnSkill').hidden=!next.skill;
     updateSkillBtn(next);
   }else if(deadUnassigned){
     G.selectedUnit=deadUnassigned.id;G.actionMode='respawn';
     showHint('Click a spawn tile to respawn');
   }else{
     G.selectedUnit=null;G.actionMode=null;
-    document.getElementById('btnSkill').hidden=true;
+    document.getElementById('btnSkill').style.display='none';
   }
 }
 
@@ -512,7 +477,7 @@ function updateActionQueue(){
     let desc=a.type==='move'?'Move':'';
     if(a.type==='skill')desc=SKILL_DEF[a.skill].name;
     if(a.type==='respawn')desc='Respawn';
-    tag.innerHTML=`<span class="num">${i+1}</span> ${u?u.skill?SKILL_DEF[u.skill].icon:'U':'?'}: ${desc}`;
+    tag.innerHTML=`<span class="num">${i+1}</span> ${u&&u.skill?SKILL_DEF[u.skill].icon:'U'}: ${desc}`;
     tag.onclick=()=>undoAction(i);
     aq.appendChild(tag);
   });
@@ -524,10 +489,9 @@ function undoAction(idx){
   autoSelectNext();
 }
 
-function showHint(msg){const el=document.getElementById('skillHint');el.textContent=msg;el.hidden=false;}
-function hideHint(){document.getElementById('skillHint').hidden=true;}
+function showHint(msg){const el=document.getElementById('skillHint');el.textContent=msg;el.classList.add('visible');}
+function hideHint(){document.getElementById('skillHint').classList.remove('visible');}
 
-// ===== SKILL BUTTON =====
 document.addEventListener('DOMContentLoaded',()=>{
   document.getElementById('btnSkill').addEventListener('click',()=>{
     const u=unitById(G.selectedUnit);
@@ -577,10 +541,9 @@ function startSetup(){
 function buildSetupUI(){
   const container=document.getElementById('unitCards');
   container.innerHTML='';
-  const mine=myUnits();
-  mine.forEach((u,i)=>{
+  myUnits().forEach((u,i)=>{
     const card=document.createElement('div');
-    card.className='unit-card '+(G.myPlayer===1?'p1':'p2');
+    card.className='unit-card';
     let html=`<div class="unit-label">Unit ${i+1}</div><div class="skill-grid">`;
     for(const[key,sd]of Object.entries(SKILL_DEF)){
       html+=`<button class="skill-btn" data-uid="${u.id}" data-skill="${key}">${sd.icon} ${sd.name}</button>`;
@@ -599,6 +562,7 @@ function buildSetupUI(){
     btn.classList.add('selected');
   });
   document.getElementById('btnSetupReady').onclick=()=>finishSetup();
+  document.getElementById('btnSetupReady').disabled=false;
   document.getElementById('setupStatus').textContent='';
 }
 
@@ -624,7 +588,7 @@ function startPlanning(){
   document.getElementById('btnGameReady').disabled=false;
   document.getElementById('btnGameReady').classList.remove('is-ready');
   document.getElementById('btnGameReady').textContent='Ready';
-  document.getElementById('btnSkill').hidden=true;
+  document.getElementById('btnSkill').style.display='none';
   updateActionQueue();
   updateScoreDisplay();
   autoSelectNext();
@@ -660,9 +624,7 @@ async function runResolution(){
   const p2Acts=G.myPlayer===2?G.myActions:G.opActions;
 
   for(let step=0;step<3;step++){
-    const a1=p1Acts[step]||null;
-    const a2=p2Acts[step]||null;
-    resolveStep(a1,a2);
+    resolveStep(p1Acts[step]||null,p2Acts[step]||null);
     await sleep(1200);
   }
 
@@ -674,12 +636,9 @@ async function runResolution(){
   if(checkWin()){
     G.phase='gameover';
     showScreen('screenGameover');
-    const w=G.winner;
-    document.getElementById('winText').textContent=w===G.myPlayer?'You Win!':'You Lose!';
+    document.getElementById('winText').textContent=G.winner===G.myPlayer?'You Win!':'You Lose!';
     document.getElementById('finalScore').textContent=`Score: P1 ${G.scores[1]} - P2 ${G.scores[2]}`;
-    document.getElementById('btnRematch').onclick=()=>{
-      send({type:'rematch'});startSetup();
-    };
+    document.getElementById('btnRematch').onclick=()=>{send({type:'rematch'});startSetup();};
   }else{
     startPlanning();
   }
@@ -690,7 +649,6 @@ function resolveStep(a1,a2){
   if(a1)actions.push({...a1,player:1});
   if(a2)actions.push({...a2,player:2});
 
-  // Respawns first
   for(const a of actions){
     if(a.type==='respawn'){
       const u=unitById(a.unitId);
@@ -704,7 +662,6 @@ function resolveStep(a1,a2){
   const movers=actions.filter(a=>a.type==='move');
   const skillers=actions.filter(a=>a.type==='skill');
 
-  // Activate shields first (they're defensive)
   for(const a of skillers){
     if(a.skill==='shield'){
       const u=unitById(a.unitId);
@@ -712,51 +669,38 @@ function resolveStep(a1,a2){
     }
   }
 
-  // Check move collisions
   if(movers.length===2&&movers[0].target.q===movers[1].target.q&&movers[0].target.r===movers[1].target.r){
-    // Both going to same hex - cancel both
+    // same target - cancel both
   }else if(movers.length===2){
     const u0=unitById(movers[0].unitId),u1=unitById(movers[1].unitId);
-    // Head-on check
     if(u0&&u1&&movers[0].target.q===u1.q&&movers[0].target.r===u1.r&&movers[1].target.q===u0.q&&movers[1].target.r===u0.r){
-      // Head-on swap collision - both cancel
+      // head-on - cancel both
     }else{
-      // Process each move
       for(const m of movers)processMove(m);
     }
   }else{
     for(const m of movers)processMove(m);
   }
 
-  // Process skills (non-shield)
   for(const a of skillers){
     const u=unitById(a.unitId);
     if(!u||u.dead)continue;
     switch(a.skill){
-      case 'bow': resolveBow(u,a.direction);break;
-      case 'hoe': u.hoeBonus++;break;
+      case 'bow':resolveBow(u,a.direction);break;
+      case 'hoe':u.hoeBonus++;break;
       case 'trap':
-        if(!u.trapUsed){
-          G.traps.push({q:a.target.q,r:a.target.r,player:u.player});
-          u.trapUsed=true;
-        }
+        if(!u.trapUsed){G.traps.push({q:a.target.q,r:a.target.r,player:u.player});u.trapUsed=true;}
         break;
-      case 'cloak': u.cloaked=!u.cloaked;if(u.cloaked)u.hoeBonus=0;break;
+      case 'cloak':u.cloaked=!u.cloaked;if(u.cloaked)u.hoeBonus=0;break;
       case 'decoy':
         if(!u.decoyUsed){
           const ally=unitById(a.targetId);
-          if(ally&&!ally.dead){
-            const tq=u.q,tr=u.r;
-            u.q=ally.q;u.r=ally.r;
-            ally.q=tq;ally.r=tr;
-            u.decoyUsed=true;
-          }
+          if(ally&&!ally.dead){const tq=u.q,tr=u.r;u.q=ally.q;u.r=ally.r;ally.q=tq;ally.r=tr;u.decoyUsed=true;}
         }
         break;
     }
   }
 
-  // Check traps after all movement
   for(const u of G.units){
     if(u.dead)continue;
     const trap=G.traps.find(t=>t.q===u.q&&t.r===u.r&&t.player!==u.player);
@@ -771,15 +715,12 @@ function resolveStep(a1,a2){
 function processMove(m){
   const u=unitById(m.unitId);
   if(!u||u.dead)return;
-  const target=m.target;
-  const enemy=unitAt(target.q,target.r);
+  const enemy=unitAt(m.target.q,m.target.r);
   if(enemy&&enemy.player!==u.player){
     if(enemy.shielded){enemy.shielded=false;return;}
     enemy.dead=true;enemy.hoeBonus=0;enemy.cloaked=false;
-  }else if(enemy&&enemy.player===u.player){
-    return;
-  }
-  u.q=target.q;u.r=target.r;
+  }else if(enemy&&enemy.player===u.player){return;}
+  u.q=m.target.q;u.r=m.target.r;
   u.cloaked=false;
   if(u.hoeBonus>0)u.hoeBonus=0;
 }
@@ -804,8 +745,7 @@ function calcScores(){
   G.scores[1]=0;G.scores[2]=0;
   for(const u of G.units){
     if(u.dead||u.cloaked)continue;
-    const v=pointVal(u.r,u.player)+u.hoeBonus;
-    G.scores[u.player]+=v;
+    G.scores[u.player]+=pointVal(u.r,u.player)+u.hoeBonus;
   }
 }
 function updateScoreDisplay(){
@@ -813,8 +753,7 @@ function updateScoreDisplay(){
   document.getElementById('scoreP2').textContent=G.scores[2];
 }
 function checkWin(){
-  const diff=Math.abs(G.scores[1]-G.scores[2]);
-  if(diff>=WIN_DIFF){
+  if(Math.abs(G.scores[1]-G.scores[2])>=WIN_DIFF){
     G.winner=G.scores[1]>G.scores[2]?1:2;
     return true;
   }
@@ -828,8 +767,8 @@ function createGame(){
   peer.on('open',()=>{
     const url=location.origin+location.pathname+'?room='+roomId;
     document.getElementById('shareLink').value=url;
-    document.getElementById('shareArea').hidden=false;
-    document.getElementById('btnCreate').hidden=true;
+    document.getElementById('shareArea').style.display='';
+    document.getElementById('btnCreate').style.display='none';
   });
   peer.on('connection',c=>{
     conn=c;G.myPlayer=1;
@@ -841,8 +780,8 @@ function createGame(){
 }
 
 function joinGame(roomId){
-  document.getElementById('btnCreate').hidden=true;
-  document.getElementById('joinArea').hidden=false;
+  document.getElementById('btnCreate').style.display='none';
+  document.getElementById('joinArea').style.display='';
   peer=new Peer(undefined,{debug:0});
   peer.on('open',()=>{
     conn=peer.connect('rhex-'+roomId,{reliable:true});
@@ -856,10 +795,9 @@ function wireConn(){
   conn.on('close',()=>showOverlay('Opponent disconnected'));
 }
 
-let sendFn=function(data){
+function send(data){
   if(conn&&conn.open)conn.send(data);
-};
-function send(data){sendFn(data);}
+}
 
 function onMessage(data){
   switch(data.type){
@@ -886,45 +824,13 @@ function onMessage(data){
   }
 }
 
-// ===== HELPERS =====
 function sleep(ms){return new Promise(r=>setTimeout(r,ms));}
 function showOverlay(msg){
   document.getElementById('overlayText').textContent=msg;
-  document.getElementById('overlay').hidden=false;
+  document.getElementById('overlay').classList.add('visible');
 }
-function hideOverlay(){document.getElementById('overlay').hidden=true;}
+function hideOverlay(){document.getElementById('overlay').classList.remove('visible');}
 
-// ===== SOLO TEST MODE =====
-let soloMode=false;
-function startSolo(){
-  soloMode=true;G.myPlayer=1;
-  sendFn=function(data){
-    if(data.type==='setup-done'){
-      // auto-assign skills to opponent
-      opUnits().forEach(u=>{u.skill=u.skill||'shield';});
-      G.opReady=true;
-      if(G.myReady)startPlanning();
-    }else if(data.type==='plan-done'){
-      // auto-generate opponent actions: each unit moves forward if possible
-      const opActs=[];
-      for(const u of opUnits()){
-        if(u.dead)continue;
-        const fwd=neighbors(u.q,u.r).filter(n=>{
-          const d=rowDist(n.r,2);
-          return d>rowDist(u.r,2)&&!unitAt(n.q,n.r);
-        });
-        if(fwd.length>0){
-          opActs.push({unitId:u.id,type:'move',target:fwd[0]});
-        }
-      }
-      G.opActions=opActs;G.opReady=true;
-      if(G.myReady)runResolution();
-    }
-  };
-  startSetup();
-}
-
-// ===== INIT =====
 function init(){
   const params=new URLSearchParams(location.search);
   const room=params.get('room');
@@ -932,11 +838,9 @@ function init(){
     joinGame(room);
   }else{
     document.getElementById('btnCreate').onclick=createGame;
-    document.getElementById('btnSolo').onclick=startSolo;
   }
   document.getElementById('btnCopy').onclick=()=>{
-    const inp=document.getElementById('shareLink');
-    inp.select();navigator.clipboard.writeText(inp.value).catch(()=>{});
+    navigator.clipboard.writeText(document.getElementById('shareLink').value).catch(()=>{});
   };
 }
 
