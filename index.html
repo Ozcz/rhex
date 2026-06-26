@@ -63,6 +63,9 @@ button:disabled{background:#333;color:#666;cursor:default;transform:none}
 .skill-btn.selected{border-color:#fff;background:#333;color:#fff}
 .status-msg{color:#999;font-size:.9em;text-align:center}
 
+/* ── Game screen: fixed layout with hud top, canvas middle, panel bottom ── */
+#screenGame{justify-content:stretch;padding:0;gap:0;height:100vh;max-height:100vh;overflow:hidden}
+
 /* ── Game HUD ── */
 .game-hud{display:flex;align-items:center;justify-content:space-between;padding:8px 16px;background:#0a0a0a;border-bottom:1px solid #222;width:100%;flex-shrink:0}
 .score{font-size:1.4em;font-weight:700;min-width:60px}
@@ -73,8 +76,8 @@ button:disabled{background:#333;color:#666;cursor:default;transform:none}
 .timer{font-size:2em;color:#fff;font-weight:700;font-variant-numeric:tabular-nums}
 
 /* ── Game canvas & action panel ── */
-canvas{flex:1;width:100%;display:block;touch-action:none}
-.action-panel{background:#0a0a0a;border-top:1px solid #222;padding:10px 16px;width:100%;flex-shrink:0;min-height:80px}
+canvas{flex:1;width:100%;min-height:0;display:block;touch-action:none}
+.action-panel{background:#0a0a0a;border-top:1px solid #222;padding:10px 16px;width:100%;flex-shrink:0}
 .action-queue{display:flex;gap:6px;margin-bottom:8px;min-height:36px;flex-wrap:wrap}
 .action-tag{background:#222;padding:6px 12px;border-radius:6px;font-size:.8em;display:flex;align-items:center;gap:6px;cursor:pointer;color:#ccc}
 .action-tag:hover{background:#333}
@@ -209,7 +212,7 @@ canvas{flex:1;width:100%;display:block;touch-action:none}
 // ──────────────────────────────────────────────
 // CONFIG
 // ──────────────────────────────────────────────
-const HEX   = 40;
+let HEX = 40; // recalculated on resize to fit the board
 const RAD   = 2;
 const WIN_DIFF = 6;
 const P1_COLOR = '#4ecdc4';
@@ -527,6 +530,13 @@ function resizeCanvas(){
   canvas.width=cw*dpr; canvas.height=ch*dpr;
   ctx.setTransform(dpr,0,0,dpr,0,0);
   centerX=cw/2; centerY=ch/2;
+  // Scale hex size to fit board in available space
+  // Board spans ~5 hex heights vertically and ~5 hex widths horizontally
+  const S3=Math.sqrt(3);
+  const maxByHeight = ch / (5 * 1.5 + 0.5) * 0.85;
+  const maxByWidth  = cw / (5 * S3) * 0.85;
+  HEX = Math.min(maxByHeight, maxByWidth, 50); // cap at 50
+  HEX = Math.max(HEX, 20); // floor at 20
 }
 
 // ──────────────────────────────────────────────
