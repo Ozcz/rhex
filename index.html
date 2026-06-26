@@ -773,8 +773,6 @@ function createGame(){
   peer.on('connection',c=>{
     conn=c;G.myPlayer=1;
     wireConn();
-    send({type:'welcome',player:2});
-    startSetup();
   });
   peer.on('error',e=>console.error('Peer error:',e));
 }
@@ -785,7 +783,10 @@ function joinGame(roomId){
   peer=new Peer(undefined,{debug:0});
   peer.on('open',()=>{
     conn=peer.connect('rhex-'+roomId,{reliable:true});
-    conn.on('open',()=>{wireConn();});
+    conn.on('open',()=>{
+      wireConn();
+      send({type:'join'});
+    });
   });
   peer.on('error',e=>console.error('Peer error:',e));
 }
@@ -801,8 +802,12 @@ function send(data){
 
 function onMessage(data){
   switch(data.type){
-    case 'welcome':
-      G.myPlayer=data.player;
+    case 'join':
+      send({type:'start'});
+      startSetup();
+      break;
+    case 'start':
+      G.myPlayer=2;
       startSetup();
       break;
     case 'setup-done':
