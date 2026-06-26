@@ -70,13 +70,12 @@ h2{color:#fff;font-weight:300;letter-spacing:.15em;font-size:1.4em}
 
 /* -- Game screen -- */
 /* Centered cluster: bounded board on top, HUD below (timer, badges, ready). */
-#screenGame{justify-content:center;align-items:center;gap:20px;padding:24px;height:100vh;background:#000;color:#e8e8e8;transition:background-color 1.8s ease,color 1.8s ease}
-#screenGame.light{background:#f0f0f0;color:#222}
+#screenGame{justify-content:center;align-items:center;gap:20px;padding:24px;height:100vh}
 #boardWrap{width:min(86vw,680px);aspect-ratio:1/1;flex:none}
 #board{width:100%;height:100%;display:block;touch-action:none}
 .game-hud{display:flex;flex-direction:column;align-items:center;gap:14px}
 .timer-big{font-size:4.5rem;font-weight:300;color:#333;font-variant-numeric:tabular-nums;line-height:1;letter-spacing:.06em}
-.timer-big.urgent{color:#000}
+.timer-big.urgent{color:#fff}
 .badges-row{display:flex;align-items:flex-end;justify-content:center;gap:24px}
 .badge{display:flex;flex-direction:column;align-items:center;gap:4px}
 .badge .pts{display:flex;flex-direction:column-reverse;gap:2px;justify-content:flex-end;min-height:0}
@@ -282,8 +281,6 @@ let G={phase:'lobby',myPlayer:0,units:[],scores:[0,0,0],myActions:{},unitOrder:[
 let peer=null,conn=null;
 let canvas,ctx,cw,ch,dpr,centerX,centerY;
 let drag={unit:null,startHex:null,startPos:null,currentPos:null,targetHex:null,moved:false,holdTimer:null,isHold:false,tapHex:null};
-let lightPhase=0; // 0=dark, 1=light — animated over time
-let lightStart=0;
 
 // Setup screen state
 let setupCanvas,setupCtx,setupCW,setupCH,setupDpr,setupCenterX,setupCenterY,setupHEX=40;
@@ -311,8 +308,6 @@ function backToMenu(){
   G.phase='lobby';G.myPlayer=0;G.myReady=false;G.opReady=false;
   hideOverlay();
   document.getElementById('settingsModal').classList.remove('visible');
-  document.getElementById('screenGame').classList.remove('light');
-  lightPhase=0;lightStart=0;
   document.getElementById('shareArea').style.display='none';
   document.getElementById('joinArea').style.display='none';
   document.getElementById('btnCreate').style.display='';
@@ -360,18 +355,9 @@ function drawSmallHex(c, cx, cy, size){
 function render(){
   ctx.clearRect(0,0,cw,ch);
 
-  // Animate dark→light transition
-  if(lightStart>0){lightPhase=Math.min(1,(performance.now()-lightStart)/1800);}
-  function lerpC(dark,light){return Math.round(dark+(light-dark)*lightPhase);}
-  const hexFill=`rgb(${lerpC(0,255)},${lerpC(0,255)},${lerpC(0,255)})`;
-  const hexStroke=`rgb(${lerpC(255,0)},${lerpC(255,0)},${lerpC(255,0)})`;
-  const hexThick=`rgb(${lerpC(255,34)},${lerpC(255,34)},${lerpC(255,34)})`;
-  const highlightCol=lightPhase>0.5?'rgba(0,0,0,':'rgba(255,255,255,';
-  const unitStroke=hexStroke;
-
   // -- Board --
-  for(const h of boardHexes){const s=hexToScreen(h.q,h.r);drawHexShape(ctx,s.x,s.y+HEX_THICK,HEX-2);ctx.fillStyle=hexThick;ctx.fill()}
-  for(const h of boardHexes){const s=hexToScreen(h.q,h.r);drawHexShape(ctx,s.x,s.y,HEX-2);ctx.fillStyle=hexFill;ctx.fill();ctx.strokeStyle=hexStroke;ctx.lineWidth=1;ctx.stroke()}
+  for(const h of boardHexes){const s=hexToScreen(h.q,h.r);drawHexShape(ctx,s.x,s.y+HEX_THICK,HEX-2);ctx.fillStyle='#fff';ctx.fill()}
+  for(const h of boardHexes){const s=hexToScreen(h.q,h.r);drawHexShape(ctx,s.x,s.y,HEX-2);ctx.fillStyle='#000';ctx.fill();ctx.strokeStyle='#fff';ctx.lineWidth=1;ctx.stroke()}
 
   // Highlights -- during active drag (include current hex as valid stay)
   if(drag.unit&&drag.moved&&G.phase==='planning'){
@@ -379,20 +365,20 @@ function render(){
     const stayS=hexToScreen(drag.unit.q,drag.unit.r);
     const isStayTarget=drag.targetHex&&drag.targetHex.q===drag.unit.q&&drag.targetHex.r===drag.unit.r;
     drawHexShape(ctx,stayS.x,stayS.y,HEX-4);
-    ctx.fillStyle=isStayTarget?highlightCol+'0.12)':highlightCol+'0.08)';
+    ctx.fillStyle=isStayTarget?'rgba(255,255,255,0.12)':'rgba(255,255,255,0.08)';
     ctx.fill();
     // Neighbor hexes
     for(const n of neighbors(drag.unit.q,drag.unit.r)){
       const s=hexToScreen(n.q,n.r);
       drawHexShape(ctx,s.x,s.y,HEX-4);
       const isT=drag.targetHex&&drag.targetHex.q===n.q&&drag.targetHex.r===n.r;
-      ctx.fillStyle=isT?highlightCol+'0.12)':highlightCol+'0.08)';
+      ctx.fillStyle=isT?'rgba(255,255,255,0.12)':'rgba(255,255,255,0.08)';
       ctx.fill();
     }
   }
   // Skill targeting highlights
-  if(G.actionMode==='skill-direction'){const u=unitById(G.selectedUnit);if(u)for(const d of DIRS)for(let s=1;s<=2;s++){const t={q:u.q+d.q*s,r:u.r+d.r*s};if(onBoard(t.q,t.r)){const sc=hexToScreen(t.q,t.r);drawHexShape(ctx,sc.x,sc.y,HEX-4);ctx.fillStyle=highlightCol+'0.08)';ctx.fill()}}}
-  if(G.phase==='planning'&&G.actionMode==='respawn'){for(const h of spawnHexes(G.myPlayer))if(!unitAt(h.q,h.r)){const s=hexToScreen(h.q,h.r);drawHexShape(ctx,s.x,s.y,HEX-4);ctx.fillStyle=highlightCol+'0.08)';ctx.fill()}}
+  if(G.actionMode==='skill-direction'){const u=unitById(G.selectedUnit);if(u)for(const d of DIRS)for(let s=1;s<=2;s++){const t={q:u.q+d.q*s,r:u.r+d.r*s};if(onBoard(t.q,t.r)){const sc=hexToScreen(t.q,t.r);drawHexShape(ctx,sc.x,sc.y,HEX-4);ctx.fillStyle='rgba(255,255,255,0.08)';ctx.fill()}}}
+  if(G.phase==='planning'&&G.actionMode==='respawn'){for(const h of spawnHexes(G.myPlayer))if(!unitAt(h.q,h.r)){const s=hexToScreen(h.q,h.r);drawHexShape(ctx,s.x,s.y,HEX-4);ctx.fillStyle='rgba(255,255,255,0.08)';ctx.fill()}}
 
   // Action lines
   if(G.phase==='planning'){
@@ -401,7 +387,7 @@ function render(){
     if(a.type==='move')to=hexToScreen(a.target.q,a.target.r);
     else if(a.type==='skill'&&a.direction){const end=onBoard(u.q+a.direction.q*2,u.r+a.direction.r*2)?2:1;to=hexToScreen(u.q+a.direction.q*end,u.r+a.direction.r*end)}
     else if(a.type==='respawn'&&a.target)to=hexToScreen(a.target.q,a.target.r);
-    if(to){ctx.beginPath();ctx.moveTo(from.x,from.y);ctx.lineTo(to.x,to.y);ctx.strokeStyle=highlightCol+'0.12)';ctx.lineWidth=1;ctx.setLineDash([4,4]);ctx.stroke();ctx.setLineDash([]);ctx.beginPath();ctx.arc(to.x,to.y,2,0,Math.PI*2);ctx.fillStyle=highlightCol+'0.25)';ctx.fill()}
+    if(to){ctx.beginPath();ctx.moveTo(from.x,from.y);ctx.lineTo(to.x,to.y);ctx.strokeStyle='rgba(255,255,255,0.12)';ctx.lineWidth=1;ctx.setLineDash([4,4]);ctx.stroke();ctx.setLineDash([]);ctx.beginPath();ctx.arc(to.x,to.y,2,0,Math.PI*2);ctx.fillStyle='rgba(255,255,255,0.25)';ctx.fill()}
     // Balloon on respawn target hex (unit not there yet)
     if(a.type==='respawn'&&a.target){
       const ts=hexToScreen(a.target.q,a.target.r);
@@ -409,8 +395,8 @@ function render(){
       if(orderIdx>=0){
         const br=HEX*0.2;
         ctx.beginPath();ctx.arc(ts.x,ts.y,br,0,Math.PI*2);
-        ctx.fillStyle=highlightCol+'0.5)';ctx.fill();
-        ctx.fillStyle='#fff';ctx.font=`600 ${br*1.3}px Inter,sans-serif`;
+        ctx.fillStyle='rgba(255,255,255,0.7)';ctx.fill();
+        ctx.fillStyle='#000';ctx.font=`600 ${br*1.3}px Inter,sans-serif`;
         ctx.textAlign='center';ctx.textBaseline='middle';
         ctx.fillText(String(orderIdx+1),ts.x,ts.y);
       }
@@ -418,7 +404,7 @@ function render(){
   }
 
   // Drag line
-  if(drag.unit&&drag.moved&&drag.currentPos&&G.phase==='planning'){const from=hexToScreen(drag.unit.q,drag.unit.r);ctx.beginPath();ctx.moveTo(from.x,from.y);ctx.lineTo(drag.currentPos.x,drag.currentPos.y);ctx.strokeStyle=highlightCol+'0.08)';ctx.lineWidth=1;ctx.stroke()}
+  if(drag.unit&&drag.moved&&drag.currentPos&&G.phase==='planning'){const from=hexToScreen(drag.unit.q,drag.unit.r);ctx.beginPath();ctx.moveTo(from.x,from.y);ctx.lineTo(drag.currentPos.x,drag.currentPos.y);ctx.strokeStyle='rgba(255,255,255,0.08)';ctx.lineWidth=1;ctx.stroke()}
 
   // Units
   for(const u of G.units){
@@ -428,8 +414,8 @@ function render(){
     const col=u.player===1?P1_COLOR:P2_COLOR;const r=HEX*0.28;
     ctx.beginPath();ctx.arc(s.x,s.y,r,0,Math.PI*2);
     ctx.fillStyle=u.cloaked?col+'44':(isDragging?col+'aa':col);ctx.fill();
-    ctx.strokeStyle=unitStroke;ctx.lineWidth=1;ctx.stroke();
-    if(u.shielded){ctx.beginPath();ctx.arc(s.x,s.y,r+3,0,Math.PI*2);ctx.strokeStyle=unitStroke;ctx.lineWidth=1;ctx.setLineDash([3,3]);ctx.stroke();ctx.setLineDash([])}
+    ctx.strokeStyle="#fff";ctx.lineWidth=1;ctx.stroke();
+    if(u.shielded){ctx.beginPath();ctx.arc(s.x,s.y,r+3,0,Math.PI*2);ctx.strokeStyle="#fff";ctx.lineWidth=1;ctx.setLineDash([3,3]);ctx.stroke();ctx.setLineDash([])}
     if(u.skill){ctx.font=`${HEX*0.22}px sans-serif`;ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(SKILL_DEF[u.skill].icon,s.x,s.y)}
     // Priority balloon -- translucent circle top-right with number
     if(u.player===G.myPlayer&&!isDragging){
@@ -437,15 +423,15 @@ function render(){
       if(orderIdx>=0){
         const bx=s.x+r*0.9,by=s.y-r*0.9,br=HEX*0.2;
         ctx.beginPath();ctx.arc(bx,by,br,0,Math.PI*2);
-        ctx.fillStyle=highlightCol+'0.6)';ctx.fill();
-        ctx.fillStyle='#fff';ctx.font=`600 ${br*1.3}px Inter,sans-serif`;
+        ctx.fillStyle='rgba(255,255,255,0.7)';ctx.fill();
+        ctx.fillStyle='#000';ctx.font=`600 ${br*1.3}px Inter,sans-serif`;
         ctx.textAlign='center';ctx.textBaseline='middle';
         ctx.fillText(String(orderIdx+1),bx,by);
       }
     }
   }
 
-  if(drag.unit&&!drag.moved&&drag.isHold&&drag.startPos){ctx.beginPath();ctx.arc(drag.startPos.x,drag.startPos.y,HEX*0.4,0,Math.PI*2);ctx.strokeStyle=highlightCol+'0.2)';ctx.lineWidth=1;ctx.stroke()}
+  if(drag.unit&&!drag.moved&&drag.isHold&&drag.startPos){ctx.beginPath();ctx.arc(drag.startPos.x,drag.startPos.y,HEX*0.4,0,Math.PI*2);ctx.strokeStyle='rgba(255,255,255,0.2)';ctx.lineWidth=1;ctx.stroke()}
 
   requestAnimationFrame(render);
 }
@@ -653,7 +639,7 @@ function resizeSetupCanvas(){
   setupCanvas.width=setupCW*setupDpr;setupCanvas.height=setupCH*setupDpr;
   setupCtx.setTransform(setupDpr,0,0,setupDpr,0,0);
   setupCenterX=setupCW/2;setupCenterY=setupCH/2;
-  const maxH=setupCH/(5*1.5+0.5)*0.8;const maxW=setupCW/(5*S3*HEX_ASPECT)*0.8;
+  const maxH=setupCH/8*0.98;const maxW=setupCW/(5*S3*HEX_ASPECT)*0.98;
   setupHEX=Math.min(maxH,maxW,80);setupHEX=Math.max(setupHEX,18);
 }
 function onSetupPointerDown(e){
@@ -742,9 +728,6 @@ function startPlanning(){
     }
   });
   G.units.forEach(u=>{u.shielded=false});showScreen('screenGame');setupMainCanvas();
-  // Trigger dark→light transition
-  lightStart=performance.now();lightPhase=0;
-  setTimeout(()=>document.getElementById('screenGame').classList.add('light'),50);
   const rb=document.getElementById('btnGameReady');rb.disabled=false;rb.classList.remove('is-ready');rb.querySelector('.front').textContent='READY';
   checkAutoSelectDead();
   updateGameHUD();
