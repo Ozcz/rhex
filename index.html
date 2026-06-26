@@ -19,31 +19,26 @@ h1{font-size:3em;color:#fff;letter-spacing:.15em}
 h2{color:#fff}
 .subtitle{color:#999;font-size:1.1em}
 
-/* ── 3D Pushable buttons ── */
+/* ── 3D Pushable buttons — black with white edge ── */
 .pushable{position:relative;border:none;background:transparent;padding:0;cursor:pointer;outline-offset:4px;transition:filter 250ms;font-family:inherit}
-.pushable .shadow{position:absolute;top:0;left:0;width:100%;height:100%;border-radius:12px;background:hsl(0deg 0% 0%/.25);will-change:transform;transform:translateY(2px);transition:transform 600ms cubic-bezier(.3,.7,.4,1)}
-.pushable .edge{position:absolute;top:0;left:0;width:100%;height:100%;border-radius:12px;background:linear-gradient(to left,hsl(0deg 0% 12%) 0%,hsl(0deg 0% 28%) 8%,hsl(0deg 0% 28%) 92%,hsl(0deg 0% 12%) 100%)}
-.pushable .front{display:block;position:relative;padding:12px 32px;border-radius:12px;font-size:1rem;font-weight:700;color:#000;background:#d0d0d0;will-change:transform;transform:translateY(-4px);transition:transform 600ms cubic-bezier(.3,.7,.4,1)}
-.pushable:hover{filter:brightness(110%)}
+.pushable .shadow{position:absolute;top:0;left:0;width:100%;height:100%;border-radius:10px;background:hsl(0deg 0% 100%/.08);will-change:transform;transform:translateY(2px);transition:transform 600ms cubic-bezier(.3,.7,.4,1)}
+.pushable .edge{position:absolute;top:0;left:0;width:100%;height:100%;border-radius:10px;background:linear-gradient(to left,#555 0%,#aaa 8%,#aaa 92%,#555 100%)}
+.pushable .front{display:block;position:relative;padding:12px 32px;border-radius:10px;font-size:1rem;font-weight:700;color:#fff;background:#111;will-change:transform;transform:translateY(-4px);transition:transform 600ms cubic-bezier(.3,.7,.4,1)}
+.pushable:hover{filter:brightness(120%)}
 .pushable:hover .front{transform:translateY(-6px);transition:transform 250ms cubic-bezier(.3,.7,.4,1.5)}
 .pushable:active .front{transform:translateY(-2px);transition:transform 150ms}
 .pushable:hover .shadow{transform:translateY(4px);transition:transform 250ms cubic-bezier(.3,.7,.4,1.5)}
 .pushable:active .shadow{transform:translateY(1px);transition:transform 150ms}
 .pushable:focus:not(:focus-visible){outline:none}
-.pushable:disabled{filter:brightness(40%);cursor:default}
-.pushable:disabled .front{transform:translateY(-2px)}
-.pushable:disabled:hover{filter:brightness(40%)}
-.pushable:disabled:hover .front{transform:translateY(-2px)}
-.pushable:disabled:active .front{transform:translateY(-2px)}
-/* Subtle variant (secondary buttons) */
-.pushable.subtle .edge{background:linear-gradient(to left,hsl(0deg 0% 8%) 0%,hsl(0deg 0% 18%) 8%,hsl(0deg 0% 18%) 92%,hsl(0deg 0% 8%) 100%)}
-.pushable.subtle .front{background:#333;color:#aaa;font-weight:400;padding:10px 24px;font-size:.9rem}
-/* Compact variant (small buttons) */
+.pushable:disabled{filter:brightness(30%);cursor:default}
+.pushable:disabled .front,.pushable:disabled:hover .front,.pushable:disabled:active .front{transform:translateY(-2px)}
+.pushable:disabled:hover{filter:brightness(30%)}
+/* Subtle variant */
+.pushable.subtle .edge{background:linear-gradient(to left,#333 0%,#666 8%,#666 92%,#333 100%)}
+.pushable.subtle .front{background:#0a0a0a;color:#888;font-weight:400;padding:10px 24px;font-size:.9rem}
 .pushable.compact .front{padding:8px 18px;font-size:.85rem}
-/* Ready button in game */
 #btnGameReady .front{padding:12px 36px;font-size:1.1rem}
-.pushable.is-ready .front{background:#444;color:#888}
-/* Positioned menu button */
+.pushable.is-ready .front{background:#222;color:#555}
 #btnBackToMenu{position:absolute;top:12px;left:12px;z-index:5}
 
 /* ── Lobby ── */
@@ -348,34 +343,63 @@ function screenToHex(sx,sy){
   return pixelToHexRaw((sx-centerX)*flip, (sy-centerY)*flip);
 }
 
-const HEX_COLORS = ['#1a2a22','#2a4a35','#3a5a3a','#5a5a2a','#6a3a1a'];
-function hexColor(val){ return HEX_COLORS[Math.min(val,4)] }
+const HEX_THICK = 5; // 3D thickness offset
+const HEX_ASPECT = 1.15; // wider for isometric feel
 
-function drawHexShape(cx,cy,size){
+// Draw a wider hex shape (stretched horizontally)
+function drawHexShape(cx, cy, size){
+  const w = size * HEX_ASPECT;
+  const h = size;
   ctx.beginPath();
   for(let i=0;i<6;i++){
     const a=Math.PI/3*i-Math.PI/6;
-    ctx.lineTo(cx+size*Math.cos(a), cy+size*Math.sin(a));
+    ctx.lineTo(cx + w*Math.cos(a), cy + h*Math.sin(a));
   }
   ctx.closePath();
+}
+
+// Animation helpers
+const ANIM_MS = 800;
+function easeInOutCubic(t){ return t<0.5 ? 4*t*t*t : 1-Math.pow(-2*t+2,3)/2; }
+
+function startUnitAnim(unit, fromQ, fromR){
+  unit.animStart = performance.now();
+  unit.animFromQ = fromQ;
+  unit.animFromR = fromR;
+}
+
+function getUnitScreenPos(unit){
+  if(unit.animStart){
+    const t = Math.min(1, (performance.now()-unit.animStart)/ANIM_MS);
+    const e = easeInOutCubic(t);
+    const q = unit.animFromQ + (unit.q-unit.animFromQ)*e;
+    const r = unit.animFromR + (unit.r-unit.animFromR)*e;
+    if(t>=1) unit.animStart=null;
+    return hexToScreen(q, r);
+  }
+  return hexToScreen(unit.q, unit.r);
 }
 
 function render(){
   ctx.clearRect(0,0,cw,ch);
 
-  // ── Board hexes ──
+  // ── Hex board: bottom layer (3D thickness) ──
   for(const h of boardHexes){
     const s=hexToScreen(h.q,h.r);
-    const v=pointVal(h.r,G.myPlayer);
-    drawHexShape(s.x,s.y,HEX-2);
-    ctx.fillStyle=hexColor(v); ctx.fill();
-    ctx.strokeStyle='#000'; ctx.lineWidth=2; ctx.stroke();
-    ctx.fillStyle='rgba(255,255,255,0.5)';
-    ctx.font=`${HEX*0.3}px sans-serif`; ctx.textAlign='center'; ctx.textBaseline='middle';
-    ctx.fillText(v, s.x, s.y+HEX*0.28);
+    drawHexShape(s.x, s.y+HEX_THICK, HEX-2);
+    ctx.fillStyle='#0a0a0a'; ctx.fill();
+    ctx.strokeStyle='#333'; ctx.lineWidth=1; ctx.stroke();
   }
 
-  // ── Highlight valid move targets while dragging ──
+  // ── Hex board: top layer ──
+  for(const h of boardHexes){
+    const s=hexToScreen(h.q,h.r);
+    drawHexShape(s.x, s.y, HEX-2);
+    ctx.fillStyle='#151515'; ctx.fill();
+    ctx.strokeStyle='#444'; ctx.lineWidth=1.5; ctx.stroke();
+  }
+
+  // ── Drag target highlights ──
   if(drag.unit && drag.moved && G.phase==='planning'){
     for(const n of neighbors(drag.unit.q, drag.unit.r)){
       const occ=unitAt(n.q,n.r);
@@ -383,8 +407,20 @@ function render(){
       const s=hexToScreen(n.q,n.r);
       drawHexShape(s.x,s.y,HEX-4);
       const isTarget = drag.targetHex && drag.targetHex.q===n.q && drag.targetHex.r===n.r;
-      ctx.fillStyle = isTarget ? 'rgba(255,255,255,0.3)' : (occ ? 'rgba(255,80,80,0.2)' : 'rgba(80,255,80,0.15)');
+      ctx.fillStyle = isTarget ? 'rgba(255,255,255,0.15)' : 'rgba(255,255,255,0.05)';
       ctx.fill();
+    }
+  }
+
+  // ── Move-mode highlights (tap to select, then tap target) ──
+  if(G.phase==='planning' && G.actionMode==='move' && G.selectedUnit){
+    const u=unitById(G.selectedUnit);
+    if(u) for(const n of neighbors(u.q,u.r)){
+      const occ=unitAt(n.q,n.r);
+      if(occ && occ.player===G.myPlayer) continue;
+      const s=hexToScreen(n.q,n.r);
+      drawHexShape(s.x,s.y,HEX-4);
+      ctx.fillStyle='rgba(255,255,255,0.08)'; ctx.fill();
     }
   }
 
@@ -393,123 +429,106 @@ function render(){
     const u=unitById(G.selectedUnit);
     if(u) for(const d of DIRS) for(let s=1;s<=2;s++){
       const t={q:u.q+d.q*s, r:u.r+d.r*s};
-      if(onBoard(t.q,t.r)){ const sc=hexToScreen(t.q,t.r); drawHexShape(sc.x,sc.y,HEX-4); ctx.fillStyle='rgba(255,200,50,0.25)'; ctx.fill(); }
+      if(onBoard(t.q,t.r)){ const sc=hexToScreen(t.q,t.r); drawHexShape(sc.x,sc.y,HEX-4); ctx.fillStyle='rgba(255,255,255,0.1)'; ctx.fill(); }
     }
   }
   if(G.actionMode==='skill-adjacent'){
     const u=unitById(G.selectedUnit);
     if(u) for(const n of neighbors(u.q,u.r)) if(!unitAt(n.q,n.r)){
-      const s=hexToScreen(n.q,n.r); drawHexShape(s.x,s.y,HEX-4); ctx.fillStyle='rgba(255,150,50,0.3)'; ctx.fill();
+      const s=hexToScreen(n.q,n.r); drawHexShape(s.x,s.y,HEX-4); ctx.fillStyle='rgba(255,255,255,0.1)'; ctx.fill();
     }
   }
   if(G.actionMode==='skill-ally'){
     for(const a of myUnits()) if(!a.dead && a.id!==G.selectedUnit){
-      const s=hexToScreen(a.q,a.r); drawHexShape(s.x,s.y,HEX-4); ctx.fillStyle='rgba(100,200,255,0.3)'; ctx.fill();
+      const s=hexToScreen(a.q,a.r); drawHexShape(s.x,s.y,HEX-4); ctx.fillStyle='rgba(255,255,255,0.1)'; ctx.fill();
     }
   }
-
-  // ── Respawn highlights ──
   if(G.phase==='planning' && G.actionMode==='respawn'){
     for(const h of spawnHexes(G.myPlayer)) if(!unitAt(h.q,h.r)){
-      const s=hexToScreen(h.q,h.r); drawHexShape(s.x,s.y,HEX-4); ctx.fillStyle='rgba(100,255,200,0.3)'; ctx.fill();
+      const s=hexToScreen(h.q,h.r); drawHexShape(s.x,s.y,HEX-4); ctx.fillStyle='rgba(255,255,255,0.1)'; ctx.fill();
     }
   }
 
-  // ── Own traps ──
+  // ── Own traps (subtle mark) ──
   for(const t of G.traps) if(t.player===G.myPlayer){
     const s=hexToScreen(t.q,t.r);
-    ctx.fillStyle='rgba(255,150,50,0.5)'; ctx.font=`${HEX*0.35}px sans-serif`;
+    ctx.fillStyle='rgba(255,255,255,0.2)'; ctx.font=`${HEX*0.3}px sans-serif`;
     ctx.textAlign='center'; ctx.textBaseline='middle';
-    ctx.fillText('x', s.x, s.y-HEX*0.1);
-  }
-
-  // ── Units ──
-  for(const u of G.units){
-    if(u.dead) continue;
-    if(u.cloaked && u.player!==G.myPlayer) continue;
-    // If this unit is being dragged, draw it at drag position instead
-    const isDragging = drag.unit && drag.unit.id===u.id && drag.moved;
-    const s = isDragging ? drag.currentPos : hexToScreen(u.q,u.r);
-    const col = u.player===1 ? P1_COLOR : P2_COLOR;
-    const r = HEX*0.33;
-
-    // Selection ring (for skill targeting)
-    if(G.selectedUnit===u.id){
-      ctx.beginPath(); ctx.arc(s.x,s.y,r+5,0,Math.PI*2);
-      ctx.strokeStyle='#fff'; ctx.lineWidth=3; ctx.stroke();
-    }
-
-    ctx.beginPath(); ctx.arc(s.x,s.y,r,0,Math.PI*2);
-    ctx.fillStyle = u.cloaked ? col+'66' : (isDragging ? col+'aa' : col);
-    ctx.fill(); ctx.strokeStyle='#fff'; ctx.lineWidth=2; ctx.stroke();
-
-    if(u.shielded){
-      ctx.beginPath(); ctx.arc(s.x,s.y,r+3,0,Math.PI*2);
-      ctx.strokeStyle='#ff6'; ctx.lineWidth=2; ctx.setLineDash([4,3]); ctx.stroke(); ctx.setLineDash([]);
-    }
-    if(u.skill){
-      ctx.fillStyle='#000'; ctx.font=`bold ${HEX*0.25}px sans-serif`;
-      ctx.textAlign='center'; ctx.textBaseline='middle';
-      ctx.fillText(SKILL_DEF[u.skill].icon, s.x, s.y);
-    }
-    if(u.hoeBonus>0){
-      ctx.fillStyle='#ff6'; ctx.font=`${HEX*0.22}px sans-serif`;
-      ctx.fillText('+'+u.hoeBonus, s.x, s.y-r-6);
-    }
-    // Action priority number
-    const aIdx = G.myActions.findIndex(a=>a.unitId===u.id);
-    if(aIdx>=0 && u.player===G.myPlayer && !isDragging){
-      ctx.fillStyle='#fff'; ctx.font=`bold ${HEX*0.22}px sans-serif`;
-      ctx.fillText(aIdx+1, s.x+r+4, s.y-r);
-    }
+    ctx.fillText('x', s.x, s.y);
   }
 
   // ── Action lines (from unit to target) ──
   if(G.phase==='planning'){
     for(const a of G.myActions){
-      const u = unitById(a.unitId);
-      if(!u || u.dead) continue;
-      const from = hexToScreen(u.q,u.r);
-      let to = null;
-      if(a.type==='move') to = hexToScreen(a.target.q, a.target.r);
-      else if(a.type==='skill' && a.target) to = hexToScreen(a.target.q, a.target.r);
-      else if(a.type==='skill' && a.direction){
-        // Bow: draw arrow path
-        to = hexToScreen(u.q+a.direction.q*2, u.r+a.direction.r*2);
-        if(!onBoard(u.q+a.direction.q*2, u.r+a.direction.r*2))
-          to = hexToScreen(u.q+a.direction.q, u.r+a.direction.r);
+      const u=unitById(a.unitId); if(!u||u.dead) continue;
+      const from=hexToScreen(u.q,u.r);
+      let to=null;
+      if(a.type==='move') to=hexToScreen(a.target.q, a.target.r);
+      else if(a.type==='skill'&&a.target) to=hexToScreen(a.target.q, a.target.r);
+      else if(a.type==='skill'&&a.direction){
+        const end = onBoard(u.q+a.direction.q*2, u.r+a.direction.r*2) ? 2 : 1;
+        to=hexToScreen(u.q+a.direction.q*end, u.r+a.direction.r*end);
       }
-      else if(a.type==='skill' && a.targetId){
-        const ally = unitById(a.targetId);
-        if(ally) to = hexToScreen(ally.q, ally.r);
-      }
-      else if(a.type==='respawn' && a.target) to = hexToScreen(a.target.q, a.target.r);
+      else if(a.type==='skill'&&a.targetId){ const ally=unitById(a.targetId); if(ally) to=hexToScreen(ally.q,ally.r); }
+      else if(a.type==='respawn'&&a.target) to=hexToScreen(a.target.q, a.target.r);
 
       if(to){
-        ctx.beginPath(); ctx.moveTo(from.x, from.y); ctx.lineTo(to.x, to.y);
-        ctx.strokeStyle = a.type==='skill' ? 'rgba(255,200,50,0.6)' : 'rgba(255,255,255,0.6)';
-        ctx.lineWidth=2; ctx.setLineDash([6,4]); ctx.stroke(); ctx.setLineDash([]);
-        ctx.beginPath(); ctx.arc(to.x,to.y,4,0,Math.PI*2);
-        ctx.fillStyle = a.type==='skill' ? '#fc6' : '#fff'; ctx.fill();
-      } else if(a.type==='skill'){
-        // Non-targeted skill: show ring around unit
-        ctx.beginPath(); ctx.arc(from.x,from.y,HEX*0.33+7,0,Math.PI*2);
-        ctx.strokeStyle='rgba(255,200,50,0.6)'; ctx.lineWidth=2; ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(from.x,from.y); ctx.lineTo(to.x,to.y);
+        ctx.strokeStyle='rgba(255,255,255,0.3)'; ctx.lineWidth=1.5;
+        ctx.setLineDash([5,4]); ctx.stroke(); ctx.setLineDash([]);
+        ctx.beginPath(); ctx.arc(to.x,to.y,3,0,Math.PI*2);
+        ctx.fillStyle='rgba(255,255,255,0.5)'; ctx.fill();
       }
     }
   }
 
-  // ── Drag line (while actively dragging) ──
+  // ── Drag line ──
   if(drag.unit && drag.moved && drag.currentPos && G.phase==='planning'){
-    const from = hexToScreen(drag.unit.q, drag.unit.r);
+    const from=hexToScreen(drag.unit.q, drag.unit.r);
     ctx.beginPath(); ctx.moveTo(from.x,from.y); ctx.lineTo(drag.currentPos.x,drag.currentPos.y);
-    ctx.strokeStyle='rgba(255,255,255,0.4)'; ctx.lineWidth=2; ctx.stroke();
+    ctx.strokeStyle='rgba(255,255,255,0.25)'; ctx.lineWidth=1.5; ctx.stroke();
   }
 
-  // ── Hold indicator (ring grows while holding) ──
+  // ── Units (drawn with animated positions) ──
+  for(const u of G.units){
+    if(u.dead) continue;
+    if(u.cloaked && u.player!==G.myPlayer) continue;
+    const isDragging = drag.unit && drag.unit.id===u.id && drag.moved;
+    const s = isDragging ? drag.currentPos : getUnitScreenPos(u);
+    const col = u.player===1 ? P1_COLOR : P2_COLOR;
+    const r = HEX*0.3;
+
+    ctx.beginPath(); ctx.arc(s.x,s.y,r,0,Math.PI*2);
+    ctx.fillStyle = u.cloaked ? col+'44' : (isDragging ? col+'aa' : col);
+    ctx.fill(); ctx.strokeStyle='#fff'; ctx.lineWidth=1.5; ctx.stroke();
+
+    if(u.shielded){
+      ctx.beginPath(); ctx.arc(s.x,s.y,r+3,0,Math.PI*2);
+      ctx.strokeStyle='#fff'; ctx.lineWidth=1.5; ctx.setLineDash([3,3]); ctx.stroke(); ctx.setLineDash([]);
+    }
+    if(u.skill){
+      ctx.fillStyle='#000'; ctx.font=`bold ${HEX*0.22}px sans-serif`;
+      ctx.textAlign='center'; ctx.textBaseline='middle';
+      ctx.fillText(SKILL_DEF[u.skill].icon, s.x, s.y);
+    }
+    if(u.hoeBonus>0){
+      ctx.fillStyle='#fff'; ctx.font=`${HEX*0.18}px sans-serif`;
+      ctx.textAlign='center'; ctx.textBaseline='middle';
+      ctx.fillText('+'+u.hoeBonus, s.x, s.y-r-5);
+    }
+    // Priority number
+    const aIdx = G.myActions.findIndex(a=>a.unitId===u.id);
+    if(aIdx>=0 && u.player===G.myPlayer && !isDragging){
+      ctx.fillStyle='#fff'; ctx.font=`bold ${HEX*0.2}px sans-serif`;
+      ctx.textAlign='center'; ctx.textBaseline='middle';
+      ctx.fillText(aIdx+1, s.x, s.y-r-5);
+    }
+  }
+
+  // ── Hold indicator ──
   if(drag.unit && !drag.moved && drag.isHold && drag.startPos){
-    ctx.beginPath(); ctx.arc(drag.startPos.x, drag.startPos.y, HEX*0.5, 0, Math.PI*2);
-    ctx.strokeStyle='rgba(255,200,50,0.7)'; ctx.lineWidth=3; ctx.stroke();
+    ctx.beginPath(); ctx.arc(drag.startPos.x, drag.startPos.y, HEX*0.45, 0, Math.PI*2);
+    ctx.strokeStyle='rgba(255,255,255,0.4)'; ctx.lineWidth=2; ctx.stroke();
   }
 
   requestAnimationFrame(render);
@@ -854,8 +873,16 @@ async function runResolution(){
   const p1Acts=G.myPlayer===1?G.myActions:G.opActions;
   const p2Acts=G.myPlayer===2?G.myActions:G.opActions;
   for(let step=0;step<3;step++){
+    // Snapshot positions before resolving
+    const oldPos={};
+    G.units.forEach(u=>{ oldPos[u.id]={q:u.q, r:u.r}; });
     resolveStep(p1Acts[step]||null, p2Acts[step]||null);
-    if(step<2) await sleep(500);
+    // Animate units that moved
+    G.units.forEach(u=>{
+      const o=oldPos[u.id];
+      if(o && (o.q!==u.q || o.r!==u.r)) startUnitAnim(u, o.q, o.r);
+    });
+    await sleep(ANIM_MS + 200); // wait for animation + brief pause
   }
   G.turnNum++; calcScores(); updateScoreDisplay();
   if(checkWin()){
