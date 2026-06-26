@@ -19,7 +19,7 @@ h2{color:#fff;font-weight:300;letter-spacing:.15em;font-size:1.4em}
 .pushable{position:relative;border:none;background:transparent;padding:0;cursor:pointer;outline-offset:4px;transition:filter 150ms;font-family:inherit}
 .pushable .shadow{position:absolute;top:0;left:0;width:100%;height:100%;border-radius:3px;background:transparent;will-change:transform;transform:translateY(2px);transition:transform 400ms cubic-bezier(.3,.7,.4,1)}
 .pushable .edge{position:absolute;top:0;left:0;width:100%;height:100%;border-radius:3px;background:#fff}
-.pushable .front{display:block;position:relative;padding:14px 40px;border-radius:3px;font-size:.85rem;font-weight:400;letter-spacing:.12em;text-transform:uppercase;color:#fff;background:#000;border:.5px solid #fff;will-change:transform;transform:translateY(-4px);transition:transform 150ms cubic-bezier(.3,.7,.4,1)}
+.pushable .front{display:block;position:relative;padding:14px 40px;border-radius:3px;font-size:.85rem;font-weight:400;letter-spacing:.12em;text-transform:uppercase;color:#fff;background:#000;border:1px solid #fff;will-change:transform;transform:translateY(-4px);transition:transform 150ms cubic-bezier(.3,.7,.4,1)}
 .pushable:hover{filter:brightness(130%)}
 .pushable:hover .front{transform:translateY(-6px);transition:transform 150ms cubic-bezier(.3,.7,.4,1.5)}
 .pushable:active .front{transform:translateY(-2px);transition:transform 150ms}
@@ -40,7 +40,7 @@ h2{color:#fff;font-weight:300;letter-spacing:.15em;font-size:1.4em}
 /* -- Lobby -- */
 .lobby-row{display:flex;gap:10px;align-items:stretch}
 .link-box{display:flex;gap:8px;width:100%;max-width:420px}
-.link-box input{flex:1;background:#000;border:.5px solid #444;color:#fff;padding:12px 14px;border-radius:3px;font-size:.8em;font-family:inherit;letter-spacing:.05em}
+.link-box input{flex:1;background:#000;border:1px solid #444;color:#fff;padding:12px 14px;border-radius:3px;font-size:.8em;font-family:inherit;letter-spacing:.05em}
 .waiting{color:#555;margin-top:8px;animation:pulse 1.5s infinite;font-size:.8em;letter-spacing:.1em}
 @keyframes pulse{0%,100%{opacity:.4}50%{opacity:1}}
 #shareArea{max-width:420px;width:100%}
@@ -49,7 +49,7 @@ h2{color:#fff;font-weight:300;letter-spacing:.15em;font-size:1.4em}
 /* -- Modals -- */
 .modal{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.92);z-index:20;display:none;align-items:center;justify-content:center;padding:20px}
 .modal.visible{display:flex}
-.modal-content{background:#000;border:.5px solid #333;border-radius:4px;padding:28px;max-width:460px;width:100%;max-height:80vh;overflow-y:auto;color:#888;font-size:.82em;line-height:1.7}
+.modal-content{background:#000;border:1px solid #333;border-radius:4px;padding:28px;max-width:460px;width:100%;max-height:80vh;overflow-y:auto;color:#888;font-size:.82em;line-height:1.7}
 .modal-content h3{color:#fff;margin:16px 0 6px;font-size:.85em;letter-spacing:.15em;text-transform:uppercase;font-weight:400}
 .modal-content h3:first-child{margin-top:0}
 .modal-content p{margin-bottom:8px}
@@ -70,7 +70,8 @@ h2{color:#fff;font-weight:300;letter-spacing:.15em;font-size:1.4em}
 
 /* -- Game screen -- */
 /* Centered cluster: bounded board on top, HUD below (timer, badges, ready). */
-#screenGame{justify-content:center;align-items:center;gap:20px;padding:24px;height:100vh;background:#f0f0f0;color:#222}
+#screenGame{justify-content:center;align-items:center;gap:20px;padding:24px;height:100vh;background:#000;color:#e8e8e8;transition:background-color 1.8s ease,color 1.8s ease}
+#screenGame.light{background:#f0f0f0;color:#222}
 #boardWrap{width:min(86vw,680px);aspect-ratio:1/1;flex:none}
 #board{width:100%;height:100%;display:block;touch-action:none}
 .game-hud{display:flex;flex-direction:column;align-items:center;gap:14px}
@@ -85,7 +86,7 @@ h2{color:#fff;font-weight:300;letter-spacing:.15em;font-size:1.4em}
 .badge .crown{font-size:24px;line-height:1}
 .badge.p1 .crown{color:#4ecdc4}
 .badge.p2 .crown{color:#e85d75}
-.badge .ribbon{font-size:.55rem;letter-spacing:.12em;color:#666;border:.5px solid #bbb;border-radius:2px;padding:2px 8px;text-transform:uppercase}
+.badge .ribbon{font-size:.55rem;letter-spacing:.12em;color:#666;border:1px solid #bbb;border-radius:2px;padding:2px 8px;text-transform:uppercase}
 .diff-hex{position:relative;width:52px;height:58px;display:grid;place-items:center}
 .diff-hex svg{position:absolute;inset:0;width:100%;height:100%}
 .diff-hex span{position:relative;font-size:1rem;color:#aaa;font-weight:400}
@@ -95,7 +96,7 @@ h2{color:#fff;font-weight:300;letter-spacing:.15em;font-size:1.4em}
 .overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.85);align-items:center;justify-content:center;z-index:10;display:none}
 .overlay.visible{display:flex}
 .overlay-text{font-size:1.4em;font-weight:300;color:#fff;text-align:center;letter-spacing:.15em;animation:pulse 1.5s infinite}
-.skill-target-hint{position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:#111;border:.5px solid #333;padding:10px 20px;border-radius:3px;color:#888;font-size:.78em;z-index:5;display:none;letter-spacing:.06em;text-transform:uppercase}
+.skill-target-hint{position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:#111;border:1px solid #333;padding:10px 20px;border-radius:3px;color:#888;font-size:.78em;z-index:5;display:none;letter-spacing:.06em;text-transform:uppercase}
 .skill-target-hint.visible{display:block}
 
 /* -- Game over -- */
@@ -281,6 +282,8 @@ let G={phase:'lobby',myPlayer:0,units:[],scores:[0,0,0],myActions:{},unitOrder:[
 let peer=null,conn=null;
 let canvas,ctx,cw,ch,dpr,centerX,centerY;
 let drag={unit:null,startHex:null,startPos:null,currentPos:null,targetHex:null,moved:false,holdTimer:null,isHold:false,tapHex:null};
+let lightPhase=0; // 0=dark, 1=light — animated over time
+let lightStart=0;
 
 // Setup screen state
 let setupCanvas,setupCtx,setupCW,setupCH,setupDpr,setupCenterX,setupCenterY,setupHEX=40;
@@ -308,6 +311,8 @@ function backToMenu(){
   G.phase='lobby';G.myPlayer=0;G.myReady=false;G.opReady=false;
   hideOverlay();
   document.getElementById('settingsModal').classList.remove('visible');
+  document.getElementById('screenGame').classList.remove('light');
+  lightPhase=0;lightStart=0;
   document.getElementById('shareArea').style.display='none';
   document.getElementById('joinArea').style.display='none';
   document.getElementById('btnCreate').style.display='';
@@ -355,11 +360,18 @@ function drawSmallHex(c, cx, cy, size){
 function render(){
   ctx.clearRect(0,0,cw,ch);
 
-  // -- Board (HUD is rendered as HTML below the canvas, not here) --
-  // Hex thickness (dark bottom layer for depth on light bg)
-  for(const h of boardHexes){const s=hexToScreen(h.q,h.r);drawHexShape(ctx,s.x,s.y+HEX_THICK,HEX-2);ctx.fillStyle='#222';ctx.fill()}
-  // Hex top face (white with thin black contour)
-  for(const h of boardHexes){const s=hexToScreen(h.q,h.r);drawHexShape(ctx,s.x,s.y,HEX-2);ctx.fillStyle='#fff';ctx.fill();ctx.strokeStyle='#000';ctx.lineWidth=.5;ctx.stroke()}
+  // Animate dark→light transition
+  if(lightStart>0){lightPhase=Math.min(1,(performance.now()-lightStart)/1800);}
+  function lerpC(dark,light){return Math.round(dark+(light-dark)*lightPhase);}
+  const hexFill=`rgb(${lerpC(0,255)},${lerpC(0,255)},${lerpC(0,255)})`;
+  const hexStroke=`rgb(${lerpC(255,0)},${lerpC(255,0)},${lerpC(255,0)})`;
+  const hexThick=`rgb(${lerpC(255,34)},${lerpC(255,34)},${lerpC(255,34)})`;
+  const highlightCol=lightPhase>0.5?'rgba(0,0,0,':'rgba(255,255,255,';
+  const unitStroke=hexStroke;
+
+  // -- Board --
+  for(const h of boardHexes){const s=hexToScreen(h.q,h.r);drawHexShape(ctx,s.x,s.y+HEX_THICK,HEX-2);ctx.fillStyle=hexThick;ctx.fill()}
+  for(const h of boardHexes){const s=hexToScreen(h.q,h.r);drawHexShape(ctx,s.x,s.y,HEX-2);ctx.fillStyle=hexFill;ctx.fill();ctx.strokeStyle=hexStroke;ctx.lineWidth=1;ctx.stroke()}
 
   // Highlights -- during active drag (include current hex as valid stay)
   if(drag.unit&&drag.moved&&G.phase==='planning'){
@@ -367,20 +379,20 @@ function render(){
     const stayS=hexToScreen(drag.unit.q,drag.unit.r);
     const isStayTarget=drag.targetHex&&drag.targetHex.q===drag.unit.q&&drag.targetHex.r===drag.unit.r;
     drawHexShape(ctx,stayS.x,stayS.y,HEX-4);
-    ctx.fillStyle=isStayTarget?'rgba(0,0,0,0.12)':'rgba(0,0,0,0.08)';
+    ctx.fillStyle=isStayTarget?highlightCol+'0.12)':highlightCol+'0.08)';
     ctx.fill();
     // Neighbor hexes
     for(const n of neighbors(drag.unit.q,drag.unit.r)){
       const s=hexToScreen(n.q,n.r);
       drawHexShape(ctx,s.x,s.y,HEX-4);
       const isT=drag.targetHex&&drag.targetHex.q===n.q&&drag.targetHex.r===n.r;
-      ctx.fillStyle=isT?'rgba(0,0,0,0.12)':'rgba(0,0,0,0.08)';
+      ctx.fillStyle=isT?highlightCol+'0.12)':highlightCol+'0.08)';
       ctx.fill();
     }
   }
   // Skill targeting highlights
-  if(G.actionMode==='skill-direction'){const u=unitById(G.selectedUnit);if(u)for(const d of DIRS)for(let s=1;s<=2;s++){const t={q:u.q+d.q*s,r:u.r+d.r*s};if(onBoard(t.q,t.r)){const sc=hexToScreen(t.q,t.r);drawHexShape(ctx,sc.x,sc.y,HEX-4);ctx.fillStyle='rgba(0,0,0,0.08)';ctx.fill()}}}
-  if(G.phase==='planning'&&G.actionMode==='respawn'){for(const h of spawnHexes(G.myPlayer))if(!unitAt(h.q,h.r)){const s=hexToScreen(h.q,h.r);drawHexShape(ctx,s.x,s.y,HEX-4);ctx.fillStyle='rgba(0,0,0,0.08)';ctx.fill()}}
+  if(G.actionMode==='skill-direction'){const u=unitById(G.selectedUnit);if(u)for(const d of DIRS)for(let s=1;s<=2;s++){const t={q:u.q+d.q*s,r:u.r+d.r*s};if(onBoard(t.q,t.r)){const sc=hexToScreen(t.q,t.r);drawHexShape(ctx,sc.x,sc.y,HEX-4);ctx.fillStyle=highlightCol+'0.08)';ctx.fill()}}}
+  if(G.phase==='planning'&&G.actionMode==='respawn'){for(const h of spawnHexes(G.myPlayer))if(!unitAt(h.q,h.r)){const s=hexToScreen(h.q,h.r);drawHexShape(ctx,s.x,s.y,HEX-4);ctx.fillStyle=highlightCol+'0.08)';ctx.fill()}}
 
   // Action lines
   if(G.phase==='planning'){
@@ -389,7 +401,7 @@ function render(){
     if(a.type==='move')to=hexToScreen(a.target.q,a.target.r);
     else if(a.type==='skill'&&a.direction){const end=onBoard(u.q+a.direction.q*2,u.r+a.direction.r*2)?2:1;to=hexToScreen(u.q+a.direction.q*end,u.r+a.direction.r*end)}
     else if(a.type==='respawn'&&a.target)to=hexToScreen(a.target.q,a.target.r);
-    if(to){ctx.beginPath();ctx.moveTo(from.x,from.y);ctx.lineTo(to.x,to.y);ctx.strokeStyle='rgba(0,0,0,0.12)';ctx.lineWidth=.5;ctx.setLineDash([4,4]);ctx.stroke();ctx.setLineDash([]);ctx.beginPath();ctx.arc(to.x,to.y,2,0,Math.PI*2);ctx.fillStyle='rgba(0,0,0,0.25)';ctx.fill()}
+    if(to){ctx.beginPath();ctx.moveTo(from.x,from.y);ctx.lineTo(to.x,to.y);ctx.strokeStyle=highlightCol+'0.12)';ctx.lineWidth=1;ctx.setLineDash([4,4]);ctx.stroke();ctx.setLineDash([]);ctx.beginPath();ctx.arc(to.x,to.y,2,0,Math.PI*2);ctx.fillStyle=highlightCol+'0.25)';ctx.fill()}
     // Balloon on respawn target hex (unit not there yet)
     if(a.type==='respawn'&&a.target){
       const ts=hexToScreen(a.target.q,a.target.r);
@@ -397,7 +409,7 @@ function render(){
       if(orderIdx>=0){
         const br=HEX*0.2;
         ctx.beginPath();ctx.arc(ts.x,ts.y,br,0,Math.PI*2);
-        ctx.fillStyle='rgba(0,0,0,0.5)';ctx.fill();
+        ctx.fillStyle=highlightCol+'0.5)';ctx.fill();
         ctx.fillStyle='#fff';ctx.font=`600 ${br*1.3}px Inter,sans-serif`;
         ctx.textAlign='center';ctx.textBaseline='middle';
         ctx.fillText(String(orderIdx+1),ts.x,ts.y);
@@ -406,7 +418,7 @@ function render(){
   }
 
   // Drag line
-  if(drag.unit&&drag.moved&&drag.currentPos&&G.phase==='planning'){const from=hexToScreen(drag.unit.q,drag.unit.r);ctx.beginPath();ctx.moveTo(from.x,from.y);ctx.lineTo(drag.currentPos.x,drag.currentPos.y);ctx.strokeStyle='rgba(0,0,0,0.08)';ctx.lineWidth=.5;ctx.stroke()}
+  if(drag.unit&&drag.moved&&drag.currentPos&&G.phase==='planning'){const from=hexToScreen(drag.unit.q,drag.unit.r);ctx.beginPath();ctx.moveTo(from.x,from.y);ctx.lineTo(drag.currentPos.x,drag.currentPos.y);ctx.strokeStyle=highlightCol+'0.08)';ctx.lineWidth=1;ctx.stroke()}
 
   // Units
   for(const u of G.units){
@@ -416,8 +428,8 @@ function render(){
     const col=u.player===1?P1_COLOR:P2_COLOR;const r=HEX*0.28;
     ctx.beginPath();ctx.arc(s.x,s.y,r,0,Math.PI*2);
     ctx.fillStyle=u.cloaked?col+'44':(isDragging?col+'aa':col);ctx.fill();
-    ctx.strokeStyle='#000';ctx.lineWidth=.5;ctx.stroke();
-    if(u.shielded){ctx.beginPath();ctx.arc(s.x,s.y,r+3,0,Math.PI*2);ctx.strokeStyle='#000';ctx.lineWidth=.5;ctx.setLineDash([3,3]);ctx.stroke();ctx.setLineDash([])}
+    ctx.strokeStyle=unitStroke;ctx.lineWidth=1;ctx.stroke();
+    if(u.shielded){ctx.beginPath();ctx.arc(s.x,s.y,r+3,0,Math.PI*2);ctx.strokeStyle=unitStroke;ctx.lineWidth=1;ctx.setLineDash([3,3]);ctx.stroke();ctx.setLineDash([])}
     if(u.skill){ctx.font=`${HEX*0.22}px sans-serif`;ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(SKILL_DEF[u.skill].icon,s.x,s.y)}
     // Priority balloon -- translucent circle top-right with number
     if(u.player===G.myPlayer&&!isDragging){
@@ -425,7 +437,7 @@ function render(){
       if(orderIdx>=0){
         const bx=s.x+r*0.9,by=s.y-r*0.9,br=HEX*0.2;
         ctx.beginPath();ctx.arc(bx,by,br,0,Math.PI*2);
-        ctx.fillStyle='rgba(0,0,0,0.6)';ctx.fill();
+        ctx.fillStyle=highlightCol+'0.6)';ctx.fill();
         ctx.fillStyle='#fff';ctx.font=`600 ${br*1.3}px Inter,sans-serif`;
         ctx.textAlign='center';ctx.textBaseline='middle';
         ctx.fillText(String(orderIdx+1),bx,by);
@@ -433,7 +445,7 @@ function render(){
     }
   }
 
-  if(drag.unit&&!drag.moved&&drag.isHold&&drag.startPos){ctx.beginPath();ctx.arc(drag.startPos.x,drag.startPos.y,HEX*0.4,0,Math.PI*2);ctx.strokeStyle='rgba(0,0,0,0.2)';ctx.lineWidth=.5;ctx.stroke()}
+  if(drag.unit&&!drag.moved&&drag.isHold&&drag.startPos){ctx.beginPath();ctx.arc(drag.startPos.x,drag.startPos.y,HEX*0.4,0,Math.PI*2);ctx.strokeStyle=highlightCol+'0.2)';ctx.lineWidth=1;ctx.stroke()}
 
   requestAnimationFrame(render);
 }
@@ -452,16 +464,23 @@ function resizeCanvas(){
 
 // -- INPUT --
 // Sequential ordering: each tap assigns the next slot (I→II→III→I→...)
+// All 3 slots always filled — tapping swaps positions, never removes.
 function addToOrder(unitId){
-  const slot = orderCounter % 3; // 0=I, 1=II, 2=III
-  // Remove unit from any existing slot
-  G.unitOrder = G.unitOrder.filter(id=>id!==unitId);
-  // Pad array to ensure slot exists
-  while(G.unitOrder.length<=slot) G.unitOrder.push(null);
-  // Remove whatever was in this slot (it gets replaced)
-  G.unitOrder[slot] = unitId;
-  // Clean nulls from end
-  while(G.unitOrder.length>0 && G.unitOrder[G.unitOrder.length-1]===null) G.unitOrder.pop();
+  const slot = orderCounter % 3;
+  const currentIdx = G.unitOrder.indexOf(unitId);
+  if(currentIdx>=0 && currentIdx!==slot){
+    // Swap with whatever is in the target slot
+    const other = G.unitOrder[slot];
+    G.unitOrder[slot] = unitId;
+    if(other) G.unitOrder[currentIdx] = other;
+  } else if(currentIdx<0){
+    // Not in order — put in slot, push displaced one somewhere
+    const displaced = G.unitOrder[slot];
+    G.unitOrder[slot] = unitId;
+    // Find an empty slot for displaced, or append
+    const emptyIdx = G.unitOrder.indexOf(null);
+    if(emptyIdx>=0 && displaced) G.unitOrder[emptyIdx]=displaced;
+  }
   orderCounter++;
 }
 
@@ -583,7 +602,7 @@ function renderSetup(){
     const s=hexToScreenSetup(h.q,h.r);
     drawHexShape(c,s.x,s.y,HEX-2);
     c.fillStyle='#000';c.fill();
-    c.strokeStyle='#fff';c.lineWidth=.5;c.stroke();
+    c.strokeStyle='#fff';c.lineWidth=1;c.stroke();
   }
 
   // Draw only my units
@@ -594,7 +613,7 @@ function renderSetup(){
     const r=HEX*0.28;
     c.beginPath();c.arc(s.x,s.y,r,0,Math.PI*2);
     c.fillStyle=col;c.fill();
-    c.strokeStyle='#fff';c.lineWidth=.5;c.stroke();
+    c.strokeStyle='#fff';c.lineWidth=1;c.stroke();
 
     // Selection ring
     if(setupSelectedUnit===u.id){
@@ -712,15 +731,29 @@ function finishSetup(){
 
 function startPlanning(){
   G.phase='planning';G.myReady=false;G.opReady=false;G.myActions={};G.opActions=null;G.selectedUnit=null;G.actionMode=null;
-  // Auto-assign I/II/III to all alive units
-  G.unitOrder=myUnits().filter(u=>!u.dead).map(u=>u.id).slice(0,3);
-  orderCounter=G.unitOrder.length;
+  // Auto-assign I/II/III to ALL units (alive + dead)
+  G.unitOrder=myUnits().map(u=>u.id).slice(0,3);
+  orderCounter=0;
+  // Auto-assign respawn for dead units to first available spawn hex
+  myUnits().forEach(u=>{
+    if(u.dead){
+      const spawn=spawnHexes(G.myPlayer).find(h=>!unitAt(h.q,h.r));
+      if(spawn) G.myActions[u.id]={unitId:u.id,type:'respawn',target:{q:spawn.q,r:spawn.r}};
+    }
+  });
   G.units.forEach(u=>{u.shielded=false});showScreen('screenGame');setupMainCanvas();
+  // Trigger dark→light transition
+  lightStart=performance.now();lightPhase=0;
+  setTimeout(()=>document.getElementById('screenGame').classList.add('light'),50);
   const rb=document.getElementById('btnGameReady');rb.disabled=false;rb.classList.remove('is-ready');rb.querySelector('.front').textContent='READY';
   checkAutoSelectDead();
   updateGameHUD();
   if(G.timerConfig>0){
-    startTimer(G.timerConfig,()=>updateGameHUD(),()=>submitPlan());
+    startTimer(G.timerConfig,()=>{
+      updateGameHUD();
+      // Host syncs timer to guest every 5 seconds
+      if(G.myPlayer===1 && G.timerVal%5===0) send({type:'timer-sync',val:G.timerVal});
+    },()=>submitPlan());
   }else{
     G.timerVal=0;
   }
@@ -803,6 +836,7 @@ function onMessage(data){
     case'join':send({type:'start',timer:G.timerConfig});startSetup();break;
     case'start':G.myPlayer=2;G.timerConfig=data.timer||60;startSetup();break;
     case'setup-done':for(const ud of data.units){const u=unitById(ud.id);if(u){u.skill=ud.skill;u.q=ud.q;u.r=ud.r}}G.opReady=true;if(G.myReady)startPlanning();break;
+    case'timer-sync':if(G.myPlayer===2&&G.phase==='planning'&&!G.myReady){G.timerVal=data.val;updateGameHUD();}break;
     case'plan-done':G.opActions=data.actions;G.opReady=true;if(G.myReady)runResolution();break;
     case'rematch':startSetup();break;
   }
