@@ -932,7 +932,7 @@ function render() {
     const s = isDragging ? drag.currentPos : getUnitScreenPos(u);
     const isMine = u.player === G.myPlayer;
     const pawnCanvas = isMine ? pawnWhiteCanvas : pawnBlackCanvas;
-    const drawSize = HEX * 0.5;
+    const drawSize = HEX * 0.9;
 
     // Draw pawn silhouette
     if (pawnCanvas) {
@@ -950,10 +950,10 @@ function render() {
 
     // Skill icon (emoji) centered on pawn body
     if (u.skill) {
-      ctx.font = (HEX * 0.22) + 'px sans-serif';
+      ctx.font = (HEX * 0.35) + 'px sans-serif';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
-      ctx.fillText(SKILL_DEF[u.skill].icon, s.x, s.y);
+      ctx.fillText(SKILL_DEF[u.skill].icon, s.x, s.y + drawSize * 0.05);
     }
 
     // Priority balloon (I, II, III) -- only for player's units when not dragging
@@ -961,8 +961,8 @@ function render() {
       const orderIdx = G.unitOrder.indexOf(u.id);
       if (orderIdx >= 0) {
         const pr = drawSize / 2;
-        const bx = s.x + pr * 0.8, by = s.y - pr * 0.8;
-        const br = HEX * 0.2;
+        const bx = s.x + pr * 0.7, by = s.y - pr * 0.7;
+        const br = HEX * 0.22;
         ctx.beginPath(); ctx.arc(bx, by, br, 0, Math.PI * 2);
         ctx.fillStyle = 'rgba(255,255,255,0.7)'; ctx.fill();
         ctx.fillStyle = '#000';
@@ -1387,12 +1387,11 @@ function renderSetup() {
   // Draw only player's units as pawns
   const setupPawnSize = Math.round(HEX * 1.0);
   const setupPawnWhite = prerenderPawnSimple('#fff', null, setupPawnSize);
-  const drawSz = HEX * 0.5;
+  const drawSz = HEX * 0.9;
 
   for (const u of myUnits()) {
     if (u.dead) continue;
     const s = hexToScreenSetup(u.q, u.r);
-    const r = HEX * 0.28;
 
     // Draw pawn
     c.drawImage(setupPawnWhite, s.x - drawSz / 2, s.y - drawSz / 2, drawSz, drawSz);
@@ -1400,13 +1399,13 @@ function renderSetup() {
     // Selection ring
     if (setupSelectedUnit === u.id) {
       c.beginPath();
-      c.arc(s.x, s.y, r + 5, 0, Math.PI * 2);
-      c.strokeStyle = '#fff'; c.lineWidth = 1; c.stroke();
+      c.arc(s.x, s.y, drawSz * 0.45, 0, Math.PI * 2);
+      c.strokeStyle = '#fff'; c.lineWidth = 1.5; c.stroke();
     }
 
     // Skill icon
     if (u.skill) {
-      c.font = (HEX * 0.22) + 'px sans-serif';
+      c.font = (HEX * 0.35) + 'px sans-serif';
       c.textAlign = 'center'; c.textBaseline = 'middle';
       c.fillText(SKILL_DEF[u.skill].icon, s.x, s.y);
     }
