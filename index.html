@@ -56,14 +56,16 @@ h2{color:#fff;font-weight:300;letter-spacing:.15em;font-size:1.4em}
 
 /* -- Lobby -- */
 .lobby-row{display:flex;gap:10px;align-items:stretch}
-.link-box{display:flex;gap:8px;width:100%;max-width:420px}
-.link-box input{flex:1;background:#000;border:1px solid #444;color:#fff;padding:12px 14px;border-radius:3px;font-size:.8em;font-family:inherit;letter-spacing:.05em}
+.link-box{display:flex;gap:0;width:100%}
+.link-box input{flex:1;background:#000;border:1px solid #444;color:#fff;padding:12px 14px;border-radius:3px 0 0 3px;font-size:.8em;font-family:inherit;letter-spacing:.05em}
+.copy-btn{background:#000;border:1px solid #444;border-left:none;color:#888;padding:8px 14px;border-radius:0 3px 3px 0;cursor:pointer;font-size:1.1em;transition:color .15s}
+.copy-btn:hover{color:#fff}
 .waiting{color:#555;margin-top:8px;animation:pulse 1.5s infinite;font-size:.8em;letter-spacing:.1em}
 @keyframes pulse{0%,100%{opacity:.4}50%{opacity:1}}
 #shareArea{max-width:420px;width:100%}
 #btnTimer .front{min-width:80px;text-align:center}
 /* Share bottom row: timer + back buttons under the URL bar */
-.share-bottom-row{display:flex;gap:8px;align-items:stretch;margin-top:16px}
+.share-bottom-row{display:flex;gap:8px;align-items:stretch;margin-top:20px;width:100%}
 .share-bottom-row .pushable{flex:1}
 .share-bottom-row .pushable .front{width:100%;text-align:center}
 .share-label{color:#555;font-size:.8em;letter-spacing:.08em;margin-bottom:10px}
@@ -155,14 +157,13 @@ h2{color:#fff;font-weight:300;letter-spacing:.15em;font-size:1.4em}
     <p class="share-label">SHARE THIS LINK WITH A FRIEND:</p>
     <div class="link-box">
       <input id="shareLink" readonly>
-      <button class="pushable compact" id="btnCopy"><span class="shadow"></span><span class="edge"></span><span class="front">&#128203;</span></button>
-    </div>
-    <!-- Timer + Back buttons UNDER the URL bar, full width -->
-    <div class="share-bottom-row">
-      <button class="pushable compact" id="btnTimer"><span class="shadow"></span><span class="edge"></span><span class="front">60</span></button>
-      <button class="pushable subtle compact" id="btnBackToMenuShare"><span class="shadow"></span><span class="edge"></span><span class="front">BACK TO MENU</span></button>
+      <button class="copy-btn" id="btnCopy" title="Copy">&#128203;</button>
     </div>
     <p class="waiting">WAITING FOR OPPONENT</p>
+    <div class="share-bottom-row">
+      <button class="pushable compact" id="btnBackToMenuShare"><span class="shadow"></span><span class="edge"></span><span class="front">BACK TO MENU</span></button>
+      <button class="pushable compact" id="btnTimer"><span class="shadow"></span><span class="edge"></span><span class="front">60</span></button>
+    </div>
   </div>
 
   <!-- Join area (shown when joining via URL) -->
