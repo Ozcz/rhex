@@ -60,9 +60,10 @@ h2{color:#fff;font-weight:300;letter-spacing:.15em;font-size:1.4em}
 /* -- Setup (board-based skill selection) -- */
 .setup-header{text-align:center;margin-bottom:16px}
 #screenSetup{justify-content:stretch;padding:0;gap:0;height:100vh;max-height:100vh;overflow:hidden}
-#screenSetup .setup-header{padding:20px 20px 10px}
-#setupCanvasWrap{flex:1;width:100%;min-height:0;display:flex;align-items:center;justify-content:center}
+#screenSetup .setup-header{flex-shrink:0;padding:0;display:flex;align-items:center;justify-content:center;min-height:60px}
+#setupCanvasWrap{flex:1;width:100%;min-height:0}
 #setupCanvas{width:100%;height:100%;display:block;touch-action:none}
+.setup-bottom{flex-shrink:0;display:flex;flex-direction:column;align-items:center;gap:10px;padding:10px 20px;min-height:80px;justify-content:center}
 .setup-skill-row{display:flex;gap:10px;justify-content:center;padding:10px 16px}
 .setup-bottom{background:#000;padding:6px 16px 10px;width:100%;flex-shrink:0;display:flex;flex-direction:column;align-items:center;gap:10px}
 .status-msg{color:#555;font-size:.78em;text-align:center;letter-spacing:.08em}
@@ -70,7 +71,7 @@ h2{color:#fff;font-weight:300;letter-spacing:.15em;font-size:1.4em}
 /* -- Game screen -- */
 #screenGame{justify-content:stretch;padding:0;gap:0;height:100vh;max-height:100vh;overflow:hidden}
 canvas{flex:1;width:100%;min-height:0;display:block;touch-action:none}
-.action-panel{background:#000;padding:16px 16px 14px;width:100%;flex-shrink:0}
+.action-panel{background:#000;padding:10px 16px;width:100%;flex-shrink:0;display:flex;align-items:center;justify-content:center;min-height:60px}
 .action-btns{display:flex;gap:8px;justify-content:center}
 
 /* -- Overlays -- */
@@ -124,8 +125,8 @@ canvas{flex:1;width:100%;min-height:0;display:block;touch-action:none}
 <div id="screenSetup" class="screen">
   <div class="setup-header"><h2>ASSIGN SKILLS</h2></div>
   <div id="setupCanvasWrap"><canvas id="setupCanvas"></canvas></div>
-  <div class="setup-skill-row" id="setupSkillRow"></div>
   <div class="setup-bottom">
+    <div class="setup-skill-row" id="setupSkillRow"></div>
     <p class="status-msg" id="setupStatus">TAP A UNIT, THEN TAP A SKILL BELOW</p>
     <button class="pushable" id="btnSetupReady"><span class="shadow"></span><span class="edge"></span><span class="front">READY</span></button>
   </div>
@@ -309,15 +310,8 @@ function buildOrderedActions(){
   return result;
 }
 
-// Compute board center Y offset so HUD elements fit above
-function getBoardCenterY(){
-  // Reserve space above the board for timer + score diff hex
-  const timerSpace = HEX * 3.2;
-  const totalBoardH = HEX * 5 * 1.5 + HEX;
-  const availH = ch - 0; // full canvas height
-  // Center the board vertically in the remaining space below the HUD area
-  return timerSpace + (availH - timerSpace) / 2;
-}
+// Board is centered on screen. HUD drawn in the gaps above/below.
+function getBoardCenterY(){ return ch / 2; }
 
 function drawSmallHex(c, cx, cy, size){
   const w = size * HEX_ASPECT, h = size;
@@ -329,46 +323,40 @@ function drawSmallHex(c, cx, cy, size){
 function render(){
   ctx.clearRect(0,0,cw,ch);
 
-  // -- Draw HUD on canvas --
+  // -- HUD: centered in the gap ABOVE the board --
+  const boardTopY = centerY - HEX * 3.5; // top edge of board
+  const boardBotY = centerY + HEX * 3.5; // bottom edge of board
+  const gapAbove = boardTopY;             // pixels from screen top to board top
+  const gapBelow = ch - boardBotY;        // pixels from board bottom to screen bottom
+  const hudAboveY = gapAbove / 2;         // center of the gap above
+  const hudBelowY = boardBotY + gapBelow / 2; // center of the gap below
 
-  // Timer
+  // Timer (centered above board)
   const timerText = G.timerConfig > 0 ? String(G.timerVal) : '∞';
-  const timerFontSize = HEX * 2.5;
-  const timerY = HEX * 1.8;
+  const timerFontSize = Math.min(gapAbove * 0.5, 120);
   ctx.font = `300 ${timerFontSize}px Inter,sans-serif`;
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'middle';
-  ctx.fillStyle = (G.timerConfig > 0 && G.timerVal <= 3) ? '#fff' : '#444';
-  ctx.fillText(timerText, centerX, timerY);
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.fillStyle = (G.timerConfig > 0 && G.timerVal <= 3) ? '#fff' : '#333';
+  ctx.fillText(timerText, centerX, hudAboveY - timerFontSize * 0.15);
 
-  // Score difference hex (between timer and board)
-  const scoreDiff = G.scores[1] - G.scores[2];
-  const diffHexY = timerY + timerFontSize * 0.55 + HEX * 0.5;
-  const diffHexSize = HEX * 0.55;
+  // Score difference hex (below timer, still above board)
+  const diffHexY = hudAboveY + timerFontSize * 0.45;
+  const diffHexSize = Math.min(gapAbove * 0.1, 14);
   drawSmallHex(ctx, centerX, diffHexY, diffHexSize);
-  ctx.strokeStyle = '#555';
-  ctx.lineWidth = 0.5;
-  ctx.stroke();
-  ctx.font = `400 ${diffHexSize * 0.9}px Inter,sans-serif`;
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'middle';
-  ctx.fillStyle = '#888';
-  const diffStr = scoreDiff > 0 ? '+' + scoreDiff : String(scoreDiff);
-  ctx.fillText(diffStr, centerX, diffHexY);
+  ctx.strokeStyle = '#444'; ctx.lineWidth = 0.5; ctx.stroke();
+  const scoreDiff = G.scores[1] - G.scores[2];
+  ctx.font = `400 ${diffHexSize * 0.85}px Inter,sans-serif`;
+  ctx.fillStyle = '#666';
+  ctx.fillText(scoreDiff > 0 ? '+'+scoreDiff : String(scoreDiff), centerX, diffHexY);
 
-  // Score P1 (left of board)
-  const boardLeftX = centerX - HEX * S3 * HEX_ASPECT * 2.5;
-  const scoreY = centerY;
-  ctx.font = `400 ${HEX * 1.6}px Inter,sans-serif`;
-  ctx.textAlign = 'center';
+  // Scores: P1 left, P2 right (above board, flanking timer)
+  const scoreFontSize = Math.min(gapAbove * 0.18, 28);
+  ctx.font = `400 ${scoreFontSize}px Inter,sans-serif`;
   ctx.textBaseline = 'middle';
-  ctx.fillStyle = P1_COLOR;
-  ctx.fillText(String(G.scores[1]), Math.max(boardLeftX, HEX * 1.2), scoreY);
-
-  // Score P2 (right of board)
-  const boardRightX = centerX + HEX * S3 * HEX_ASPECT * 2.5;
-  ctx.fillStyle = P2_COLOR;
-  ctx.fillText(String(G.scores[2]), Math.min(boardRightX, cw - HEX * 1.2), scoreY);
+  ctx.fillStyle = P1_COLOR; ctx.textAlign = 'left';
+  ctx.fillText(String(G.scores[1]), 20, hudAboveY);
+  ctx.fillStyle = P2_COLOR; ctx.textAlign = 'right';
+  ctx.fillText(String(G.scores[2]), cw - 20, hudAboveY);
 
   // -- Board --
   // Hex thickness (white bottom layer)
@@ -447,7 +435,7 @@ function setupMainCanvas(){
 }
 function resizeCanvas(){
   dpr=window.devicePixelRatio||1;const rect=canvas.getBoundingClientRect();cw=rect.width;ch=rect.height;canvas.width=cw*dpr;canvas.height=ch*dpr;ctx.setTransform(dpr,0,0,dpr,0,0);centerX=cw/2;
-  const maxH=ch/(5*1.5+0.5)*0.65;const maxW=cw/(5*S3*HEX_ASPECT)*0.8;HEX=Math.min(maxH,maxW,50);HEX=Math.max(HEX,20);
+  const maxH=ch/(5*1.5+0.5)*0.5;const maxW=cw/(5*S3*HEX_ASPECT)*0.75;HEX=Math.min(maxH,maxW,46);HEX=Math.max(HEX,18);
   centerY=getBoardCenterY();
 }
 
