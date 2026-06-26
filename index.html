@@ -19,26 +19,27 @@ h1{font-size:3em;color:#fff;letter-spacing:.15em}
 h2{color:#fff}
 .subtitle{color:#999;font-size:1.1em}
 
-/* ── 3D Pushable buttons — black with white edge ── */
+/* ── 3D Pushable buttons — pitch black, white contour, near-square corners ── */
 .pushable{position:relative;border:none;background:transparent;padding:0;cursor:pointer;outline-offset:4px;transition:filter 250ms;font-family:inherit}
-.pushable .shadow{position:absolute;top:0;left:0;width:100%;height:100%;border-radius:10px;background:hsl(0deg 0% 100%/.08);will-change:transform;transform:translateY(2px);transition:transform 600ms cubic-bezier(.3,.7,.4,1)}
-.pushable .edge{position:absolute;top:0;left:0;width:100%;height:100%;border-radius:10px;background:linear-gradient(to left,#555 0%,#aaa 8%,#aaa 92%,#555 100%)}
-.pushable .front{display:block;position:relative;padding:12px 32px;border-radius:10px;font-size:1rem;font-weight:700;color:#fff;background:#111;will-change:transform;transform:translateY(-4px);transition:transform 600ms cubic-bezier(.3,.7,.4,1)}
-.pushable:hover{filter:brightness(120%)}
+.pushable .shadow{position:absolute;top:0;left:0;width:100%;height:100%;border-radius:4px;background:transparent;will-change:transform;transform:translateY(2px);transition:transform 600ms cubic-bezier(.3,.7,.4,1)}
+.pushable .edge{position:absolute;top:0;left:0;width:100%;height:100%;border-radius:4px;background:#fff}
+.pushable .front{display:block;position:relative;padding:12px 32px;border-radius:4px;font-size:1rem;font-weight:700;color:#fff;background:#000;border:1.5px solid #fff;will-change:transform;transform:translateY(-4px);transition:transform 600ms cubic-bezier(.3,.7,.4,1)}
+.pushable:hover{filter:brightness(130%)}
 .pushable:hover .front{transform:translateY(-6px);transition:transform 250ms cubic-bezier(.3,.7,.4,1.5)}
 .pushable:active .front{transform:translateY(-2px);transition:transform 150ms}
 .pushable:hover .shadow{transform:translateY(4px);transition:transform 250ms cubic-bezier(.3,.7,.4,1.5)}
 .pushable:active .shadow{transform:translateY(1px);transition:transform 150ms}
 .pushable:focus:not(:focus-visible){outline:none}
-.pushable:disabled{filter:brightness(30%);cursor:default}
+.pushable:disabled{opacity:.3;cursor:default}
 .pushable:disabled .front,.pushable:disabled:hover .front,.pushable:disabled:active .front{transform:translateY(-2px)}
-.pushable:disabled:hover{filter:brightness(30%)}
+.pushable:disabled:hover{filter:none}
 /* Subtle variant */
-.pushable.subtle .edge{background:linear-gradient(to left,#333 0%,#666 8%,#666 92%,#333 100%)}
-.pushable.subtle .front{background:#0a0a0a;color:#888;font-weight:400;padding:10px 24px;font-size:.9rem}
+.pushable.subtle .edge{background:#888}
+.pushable.subtle .front{background:#000;color:#888;border-color:#888;font-weight:400;padding:10px 24px;font-size:.9rem}
 .pushable.compact .front{padding:8px 18px;font-size:.85rem}
 #btnGameReady .front{padding:12px 36px;font-size:1.1rem}
-.pushable.is-ready .front{background:#222;color:#555}
+.pushable.is-ready .front{color:#555;border-color:#555}
+.pushable.is-ready .edge{background:#555}
 #btnBackToMenu{position:absolute;top:12px;left:12px;z-index:5}
 
 /* ── Lobby ── */
@@ -240,9 +241,11 @@ const DIRS = [{q:1,r:0},{q:-1,r:0},{q:0,r:1},{q:0,r:-1},{q:1,r:-1},{q:-1,r:1}];
 // HEX MATH — pointy-top, axial coords
 // ──────────────────────────────────────────────
 const S3 = Math.sqrt(3);
-function hexToPixelRaw(q,r){ return {x: HEX*(S3*q+S3/2*r), y: HEX*(1.5*r)} }
+// Grid spacing accounts for wider hex aspect
+function hexToPixelRaw(q,r){ return {x: HEX*HEX_ASPECT*(S3*q+S3/2*r), y: HEX*(1.5*r)} }
 function pixelToHexRaw(x,y){
-  return hexRound((S3/3*x - y/3)/HEX, (2/3*y)/HEX);
+  const xn = x / HEX_ASPECT; // undo aspect stretch for coord math
+  return hexRound((S3/3*xn - y/3)/HEX, (2/3*y)/HEX);
 }
 function hexRound(q,r){
   let s=-q-r, rq=Math.round(q), rr=Math.round(r), rs=Math.round(s);
@@ -343,8 +346,8 @@ function screenToHex(sx,sy){
   return pixelToHexRaw((sx-centerX)*flip, (sy-centerY)*flip);
 }
 
-const HEX_THICK = 5; // 3D thickness offset
-const HEX_ASPECT = 1.15; // wider for isometric feel
+const HEX_THICK = 6; // 3D thickness offset
+const HEX_ASPECT = 1.2; // wider for isometric feel
 
 // Draw a wider hex shape (stretched horizontally)
 function drawHexShape(cx, cy, size){
@@ -383,20 +386,19 @@ function getUnitScreenPos(unit){
 function render(){
   ctx.clearRect(0,0,cw,ch);
 
-  // ── Hex board: bottom layer (3D thickness) ──
+  // ── Hex board: bottom layer (white thickness = isometric side) ──
   for(const h of boardHexes){
     const s=hexToScreen(h.q,h.r);
     drawHexShape(s.x, s.y+HEX_THICK, HEX-2);
-    ctx.fillStyle='#0a0a0a'; ctx.fill();
-    ctx.strokeStyle='#333'; ctx.lineWidth=1; ctx.stroke();
+    ctx.fillStyle='#fff'; ctx.fill();
   }
 
-  // ── Hex board: top layer ──
+  // ── Hex board: top layer (pitch black with white contour) ──
   for(const h of boardHexes){
     const s=hexToScreen(h.q,h.r);
     drawHexShape(s.x, s.y, HEX-2);
-    ctx.fillStyle='#151515'; ctx.fill();
-    ctx.strokeStyle='#444'; ctx.lineWidth=1.5; ctx.stroke();
+    ctx.fillStyle='#000'; ctx.fill();
+    ctx.strokeStyle='#fff'; ctx.lineWidth=1.5; ctx.stroke();
   }
 
   // ── Drag target highlights ──
@@ -562,8 +564,8 @@ function resizeCanvas(){
   // Scale hex size to fit board in available space
   // Board spans ~5 hex heights vertically and ~5 hex widths horizontally
   const S3=Math.sqrt(3);
-  const maxByHeight = ch / (5 * 1.5 + 0.5) * 0.85;
-  const maxByWidth  = cw / (5 * S3) * 0.85;
+  const maxByHeight = ch / (5 * 1.5 + 0.5) * 0.8;
+  const maxByWidth  = cw / (5 * S3 * HEX_ASPECT) * 0.8;
   HEX = Math.min(maxByHeight, maxByWidth, 50); // cap at 50
   HEX = Math.max(HEX, 20); // floor at 20
 }
