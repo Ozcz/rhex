@@ -6,21 +6,53 @@
 <title>Rhex</title>
 <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
 <style>
+/* ── Reset & base ── */
 *{margin:0;padding:0;box-sizing:border-box}
 body{background:#000;color:#e8e8e8;font-family:'Segoe UI',system-ui,sans-serif;height:100vh;overflow:hidden;display:flex;flex-direction:column}
+
+/* ── Screen system: only .active screen is visible ── */
 .screen{display:none;flex:1;flex-direction:column;align-items:center;justify-content:center;padding:20px;gap:16px}
 .screen.active{display:flex}
+
+/* ── Typography ── */
 h1{font-size:3em;color:#fff;letter-spacing:.15em}
+h2{color:#fff}
 .subtitle{color:#999;font-size:1.1em}
+
+/* ── Buttons ── */
 button{background:#fff;color:#000;border:none;padding:12px 28px;border-radius:8px;font-size:1em;font-weight:700;cursor:pointer;transition:all .2s}
 button:hover{background:#ddd;transform:scale(1.03)}
 button:disabled{background:#333;color:#666;cursor:default;transform:none}
+.ready-btn{background:#fff!important;color:#000!important}
+.ready-btn:hover{background:#ddd!important}
+.ready-btn.is-ready{background:#666!important;color:#ccc!important}
+#btnSkill{background:#888;color:#000}
+#btnSkill:hover{background:#aaa}
+#btnUndo{background:#444;color:#ccc}
+#btnUndo:hover{background:#555}
+#btnInstructions{background:transparent;color:#999;border:1px solid #444;padding:8px 20px;font-weight:400;font-size:.9em}
+#btnInstructions:hover{color:#fff;border-color:#888;background:transparent}
+#btnBackToMenu{background:transparent;color:#999;border:1px solid #444;padding:6px 16px;font-weight:400;font-size:.8em;position:absolute;top:12px;left:12px}
+#btnBackToMenu:hover{color:#fff;border-color:#888;background:transparent}
+
+/* ── Lobby ── */
 .link-box{display:flex;gap:8px;width:100%;max-width:400px}
 .link-box input{flex:1;background:#111;border:1px solid #444;color:#fff;padding:10px;border-radius:6px;font-size:.9em}
 .waiting{color:#999;margin-top:8px;animation:pulse 1.5s infinite}
 @keyframes pulse{0%,100%{opacity:.5}50%{opacity:1}}
+
+/* ── Instructions modal ── */
+.modal{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.9);z-index:20;display:none;align-items:center;justify-content:center;padding:20px}
+.modal.visible{display:flex}
+.modal-content{background:#111;border:1px solid #333;border-radius:12px;padding:24px;max-width:500px;width:100%;max-height:80vh;overflow-y:auto;color:#ccc;font-size:.9em;line-height:1.6}
+.modal-content h3{color:#fff;margin:12px 0 6px;font-size:1em}
+.modal-content h3:first-child{margin-top:0}
+.modal-content p{margin-bottom:8px}
+.modal-content .skill-list{margin:4px 0 8px 16px}
+.modal-content .skill-list li{margin:2px 0}
+
+/* ── Setup phase ── */
 .setup-header{text-align:center;margin-bottom:12px}
-.timer{font-size:2em;color:#fff;font-weight:700;font-variant-numeric:tabular-nums}
 .unit-cards{display:flex;gap:12px;flex-wrap:wrap;justify-content:center;margin:12px 0}
 .unit-card{background:#111;border:2px solid #333;border-radius:12px;padding:16px;width:160px;text-align:center}
 .unit-card .unit-label{font-weight:700;margin-bottom:10px;font-size:1.1em;color:#fff}
@@ -28,12 +60,18 @@ button:disabled{background:#333;color:#666;cursor:default;transform:none}
 .skill-btn{padding:8px 4px;font-size:.75em;border-radius:6px;background:#222;color:#bbb;border:2px solid transparent}
 .skill-btn:hover{background:#333;transform:none}
 .skill-btn.selected{border-color:#fff;background:#333;color:#fff}
+.status-msg{color:#999;font-size:.9em;text-align:center}
+
+/* ── Game HUD ── */
 .game-hud{display:flex;align-items:center;justify-content:space-between;padding:8px 16px;background:#0a0a0a;border-bottom:1px solid #222;width:100%;flex-shrink:0}
 .score{font-size:1.4em;font-weight:700;min-width:60px}
 .score.p1{color:#4ecdc4;text-align:left}
 .score.p2{color:#e85d75;text-align:right}
 .phase-info{text-align:center}
 .phase-label{font-size:.85em;color:#999;text-transform:uppercase;letter-spacing:.1em}
+.timer{font-size:2em;color:#fff;font-weight:700;font-variant-numeric:tabular-nums}
+
+/* ── Game canvas & action panel ── */
 canvas{flex:1;width:100%;display:block;touch-action:none}
 .action-panel{background:#0a0a0a;border-top:1px solid #222;padding:8px 16px;width:100%;flex-shrink:0}
 .action-queue{display:flex;gap:6px;margin-bottom:8px;min-height:36px;flex-wrap:wrap}
@@ -42,19 +80,17 @@ canvas{flex:1;width:100%;display:block;touch-action:none}
 .action-tag .num{color:#fff;font-weight:700}
 .action-btns{display:flex;gap:8px;justify-content:center}
 .action-btns button{padding:8px 16px;font-size:.85em}
-#btnSkill{background:#888;color:#000}
-#btnSkill:hover{background:#aaa}
-#btnUndo{background:#444;color:#ccc}
-#btnUndo:hover{background:#555}
-.ready-btn{background:#fff!important;color:#000!important}
-.ready-btn:hover{background:#ddd!important}
-.ready-btn.is-ready{background:#666!important;color:#ccc!important}
+
+/* ── Overlay (resolving, disconnected) ── */
 .overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.8);align-items:center;justify-content:center;z-index:10;display:none}
 .overlay.visible{display:flex}
 .overlay-text{font-size:2em;font-weight:700;color:#fff;text-align:center;animation:pulse 1s infinite}
+
+/* ── Skill target hint tooltip ── */
 .skill-target-hint{position:fixed;bottom:100px;left:50%;transform:translateX(-50%);background:#222;padding:10px 20px;border-radius:8px;color:#fff;font-size:.9em;z-index:5;display:none}
 .skill-target-hint.visible{display:block}
-.status-msg{color:#999;font-size:.9em;text-align:center}
+
+/* ── Game over ── */
 #screenGameover{gap:20px}
 #screenGameover h2{font-size:2.5em;color:#fff}
 #finalScore{font-size:1.2em;color:#999}
@@ -62,10 +98,12 @@ canvas{flex:1;width:100%;display:block;touch-action:none}
 </head>
 <body>
 
+<!-- ════════════════ LOBBY SCREEN ════════════════ -->
 <div id="lobby" class="screen active">
   <h1>RHEX</h1>
   <p class="subtitle">Hex Strategy</p>
   <button id="btnCreate">Create Game</button>
+  <button id="btnInstructions">How to Play</button>
   <div id="shareArea" style="display:none">
     <p>Share this link with a friend:</p>
     <div class="link-box">
@@ -79,16 +117,17 @@ canvas{flex:1;width:100%;display:block;touch-action:none}
   </div>
 </div>
 
+<!-- ════════════════ SETUP SCREEN ════════════════ -->
 <div id="screenSetup" class="screen">
   <div class="setup-header">
     <h2>Choose Skills</h2>
-    <div class="timer" id="setupTimer">60</div>
   </div>
   <div class="unit-cards" id="unitCards"></div>
-  <p class="status-msg" id="setupStatus"></p>
+  <p class="status-msg" id="setupStatus">Pick a skill for each unit, then press Ready.</p>
   <button id="btnSetupReady" class="ready-btn">Ready</button>
 </div>
 
+<!-- ════════════════ GAME SCREEN ════════════════ -->
 <div id="screenGame" class="screen">
   <div class="game-hud">
     <div class="score p1">P1: <span id="scoreP1">0</span></div>
@@ -109,230 +148,385 @@ canvas{flex:1;width:100%;display:block;touch-action:none}
   </div>
 </div>
 
+<!-- ════════════════ GAME OVER SCREEN ════════════════ -->
 <div id="screenGameover" class="screen">
   <h2 id="winText"></h2>
   <div id="finalScore"></div>
   <button id="btnRematch">Play Again</button>
+  <button id="btnBackToMenuEnd" style="background:transparent;color:#999;border:1px solid #444;padding:8px 20px;font-weight:400;font-size:.9em">Back to Menu</button>
 </div>
 
+<!-- ════════════════ INSTRUCTIONS MODAL ════════════════ -->
+<div id="instructions" class="modal">
+  <div class="modal-content">
+    <h3>Goal</h3>
+    <p>Be the first player to lead by 6 points. Points come from where your units stand on the board.</p>
+    <h3>Board</h3>
+    <p>19 hexes in a big hexagon (3-4-5-4-3 rows). Your spawn row = 0 pts. Moving forward: 1, 2, 3 pts. Enemy spawn row = 6 pts.</p>
+    <h3>Turns</h3>
+    <p><b>Setup:</b> Pick 1 skill per unit (duplicates OK). Press Ready when done.</p>
+    <p><b>Planning (60s):</b> Assign actions to your 3 units — drag to move or tap skill. The order you assign them sets their priority (1st > 2nd > 3rd).</p>
+    <p><b>Resolution:</b> Both players' actions resolve simultaneously. Moves beat skills. Equal priority = cancel.</p>
+    <h3>Combat</h3>
+    <p>Move onto an enemy = kill. Shielded enemies block the kill. Dead units respawn on your spawn row next turn.</p>
+    <h3>Skills</h3>
+    <ul class="skill-list">
+      <li><b>Shield</b> — Block one attack this turn</li>
+      <li><b>Bow</b> — Fire an arrow in a straight line (2 hex range)</li>
+      <li><b>Hoe</b> — +1 point while staying on this tile (stacks)</li>
+      <li><b>Trap</b> — Place a hidden trap on an adjacent hex (once per game)</li>
+      <li><b>Cloak</b> — Go invisible, but score 0 points while hidden</li>
+      <li><b>Decoy</b> — Swap positions with an ally (once per game)</li>
+    </ul>
+    <br>
+    <button id="btnCloseInstructions">Got it</button>
+  </div>
+</div>
+
+<!-- ════════════════ OVERLAYS ════════════════ -->
 <div id="overlay" class="overlay">
   <div class="overlay-text" id="overlayText"></div>
 </div>
 <div id="skillHint" class="skill-target-hint"></div>
 
+<!-- Back to menu button (shown during setup/game) -->
+<button id="btnBackToMenu" style="display:none">Menu</button>
+
 <script>
 (function(){
 'use strict';
 
-const HEX = 40;
-const RAD = 2;
-const TIMER_S = 60;
-const WIN_DIFF = 6;
-const P1_COLOR = '#4ecdc4';
-const P2_COLOR = '#e85d75';
-const ROW_VALS = [0,1,2,3,6];
+// ──────────────────────────────────────────────
+// CONFIG — game constants
+// ──────────────────────────────────────────────
+const HEX   = 40;       // hex radius in pixels
+const RAD   = 2;        // board radius (2 = 19 hexes)
+const TIMER_S = 60;     // planning phase timer
+const WIN_DIFF = 6;     // point lead needed to win
+const P1_COLOR = '#4ecdc4';  // player 1 teal
+const P2_COLOR = '#e85d75';  // player 2 coral
+const ROW_VALS = [0,1,2,3,6]; // point values per row distance from spawn
+
+// Skill definitions: targeted = false | 'direction' | 'adjacent' | 'ally'
 const SKILL_DEF = {
-  shield:{name:'Shield',desc:'Block 1 attack',icon:'SH',targeted:false,once:false},
-  bow:{name:'Bow',desc:'Arrow 2 tiles',icon:'BW',targeted:'direction',once:false},
-  hoe:{name:'Hoe',desc:'+1 pt this tile',icon:'HO',targeted:false,once:false},
-  trap:{name:'Trap',desc:'Hidden trap adj.',icon:'TR',targeted:'adjacent',once:true},
-  cloak:{name:'Cloak',desc:'Stealth, 0 pts',icon:'CL',targeted:false,once:false},
-  decoy:{name:'Decoy',desc:'Swap w/ ally',icon:'DC',targeted:'ally',once:true}
+  shield: {name:'Shield', desc:'Block 1 attack',        icon:'SH', targeted:false,       once:false},
+  bow:    {name:'Bow',    desc:'Arrow 2 tiles',          icon:'BW', targeted:'direction',  once:false},
+  hoe:    {name:'Hoe',    desc:'+1 pt this tile',        icon:'HO', targeted:false,       once:false},
+  trap:   {name:'Trap',   desc:'Hidden trap adj.',       icon:'TR', targeted:'adjacent',   once:true},
+  cloak:  {name:'Cloak',  desc:'Stealth, 0 pts',        icon:'CL', targeted:false,       once:false},
+  decoy:  {name:'Decoy',  desc:'Swap w/ ally',           icon:'DC', targeted:'ally',       once:true}
 };
+
+// 6 hex directions in axial coordinates (q,r)
 const DIRS = [{q:1,r:0},{q:-1,r:0},{q:0,r:1},{q:0,r:-1},{q:1,r:-1},{q:-1,r:1}];
 
+
+// ──────────────────────────────────────────────
+// HEX MATH — axial coordinate system, pointy-top hexagons
+// Reference: https://www.redblobgames.com/grids/hexagons/
+// ──────────────────────────────────────────────
 const S3 = Math.sqrt(3);
-function hexToPixelRaw(q,r){return{x:HEX*(S3*q+S3/2*r),y:HEX*(1.5*r)}}
+
+// Convert axial (q,r) to pixel position
+function hexToPixelRaw(q,r){ return {x: HEX*(S3*q + S3/2*r), y: HEX*(1.5*r)} }
+
+// Convert pixel position to axial (q,r) — needs rounding
 function pixelToHexRaw(x,y){
-  const q=(S3/3*x-y/3)/HEX, r=(2/3*y)/HEX;
+  const q = (S3/3*x - y/3) / HEX;
+  const r = (2/3*y) / HEX;
   return hexRound(q,r);
 }
+
+// Round fractional hex coords to nearest integer hex (cube rounding)
 function hexRound(q,r){
-  let s=-q-r, rq=Math.round(q),rr=Math.round(r),rs=Math.round(s);
-  const dq=Math.abs(rq-q),dr=Math.abs(rr-r),ds=Math.abs(rs-s);
-  if(dq>dr&&dq>ds)rq=-rr-rs;else if(dr>ds)rr=-rq-rs;
-  return{q:rq,r:rr};
+  let s=-q-r, rq=Math.round(q), rr=Math.round(r), rs=Math.round(s);
+  const dq=Math.abs(rq-q), dr=Math.abs(rr-r), ds=Math.abs(rs-s);
+  if(dq>dr && dq>ds) rq=-rr-rs;
+  else if(dr>ds) rr=-rq-rs;
+  return {q:rq, r:rr};
 }
-function onBoard(q,r){return Math.abs(q)<=RAD&&Math.abs(r)<=RAD&&Math.abs(q+r)<=RAD}
-function neighbors(q,r){return DIRS.map(d=>({q:q+d.q,r:r+d.r})).filter(h=>onBoard(h.q,h.r))}
-function rowDist(r,player){return player===1?r+2:2-r}
-function pointVal(r,player){return ROW_VALS[rowDist(r,player)]}
 
+// Check if hex (q,r) is within the board (radius RAD)
+function onBoard(q,r){ return Math.abs(q)<=RAD && Math.abs(r)<=RAD && Math.abs(q+r)<=RAD }
+
+// Get all valid neighboring hexes
+function neighbors(q,r){ return DIRS.map(d=>({q:q+d.q, r:r+d.r})).filter(h=>onBoard(h.q,h.r)) }
+
+// How many rows away from spawn (0=spawn, 4=enemy spawn)
+function rowDist(r,player){ return player===1 ? r+2 : 2-r }
+
+// Point value for a unit on row r
+function pointVal(r,player){ return ROW_VALS[rowDist(r,player)] }
+
+
+// ──────────────────────────────────────────────
+// BOARD — generate the 19 hex cells
+// Rows: r=-2 (3 hexes), r=-1 (4), r=0 (5), r=1 (4), r=2 (3)
+// ──────────────────────────────────────────────
 const boardHexes = [];
-for(let r=-RAD;r<=RAD;r++)for(let q=-RAD;q<=RAD;q++)if(onBoard(q,r))boardHexes.push({q,r});
-function spawnRow(p){return p===1?-2:2}
-function spawnHexes(p){return boardHexes.filter(h=>h.r===spawnRow(p))}
+for(let r=-RAD; r<=RAD; r++)
+  for(let q=-RAD; q<=RAD; q++)
+    if(onBoard(q,r)) boardHexes.push({q,r});
 
+// P1 spawns at row -2 (top), P2 at row 2 (bottom)
+function spawnRow(p){ return p===1 ? -2 : 2 }
+function spawnHexes(p){ return boardHexes.filter(h => h.r===spawnRow(p)) }
+
+
+// ──────────────────────────────────────────────
+// GAME STATE — single object tracks everything
+// ──────────────────────────────────────────────
 let G = {
-  phase:'lobby',myPlayer:0,
-  units:[],traps:[],
-  scores:[0,0,0],
-  myActions:[],opActions:null,
-  myReady:false,opReady:false,
-  selectedUnit:null,actionMode:null,
-  timerVal:0,timerH:null,
-  winner:0,turnNum:0
+  phase: 'lobby',    // lobby | setup | planning | resolution | gameover
+  myPlayer: 0,       // 1 or 2 (assigned on connection)
+  units: [],         // all 6 units (3 per player)
+  traps: [],         // placed traps [{q, r, player}]
+  scores: [0,0,0],   // index 1=P1, 2=P2
+  myActions: [],     // this player's planned actions (up to 3)
+  opActions: null,   // opponent's actions (received via network)
+  myReady: false,    // has this player pressed Ready?
+  opReady: false,    // has opponent pressed Ready?
+  selectedUnit: null, // currently selected unit id
+  actionMode: null,  // null | 'move' | 'respawn' | 'skill-direction' | 'skill-adjacent' | 'skill-ally'
+  timerVal: 0,
+  timerH: null,      // timer interval handle
+  winner: 0,
+  turnNum: 0
 };
-let peer=null,conn=null;
-let canvas,ctx,cw,ch,dpr,centerX,centerY;
 
+let peer=null, conn=null;  // PeerJS connection objects
+let canvas, ctx, cw, ch, dpr, centerX, centerY;  // canvas rendering state
+
+
+// ──────────────────────────────────────────────
+// UNITS — create, query
+// ──────────────────────────────────────────────
+
+// Reset all units to starting positions
 function initUnits(){
-  G.units=[];
-  spawnHexes(1).forEach((h,i)=>G.units.push({id:'p1-'+i,player:1,q:h.q,r:h.r,skill:null,dead:false,cloaked:false,hoeBonus:0,shielded:false,trapUsed:false,decoyUsed:false}));
-  spawnHexes(2).forEach((h,i)=>G.units.push({id:'p2-'+i,player:2,q:h.q,r:h.r,skill:null,dead:false,cloaked:false,hoeBonus:0,shielded:false,trapUsed:false,decoyUsed:false}));
-  G.traps=[];G.scores=[0,0,0];G.turnNum=0;G.winner=0;
+  G.units = [];
+  spawnHexes(1).forEach((h,i) => G.units.push({
+    id:'p1-'+i, player:1, q:h.q, r:h.r,
+    skill:null, dead:false, cloaked:false,
+    hoeBonus:0, shielded:false, trapUsed:false, decoyUsed:false
+  }));
+  spawnHexes(2).forEach((h,i) => G.units.push({
+    id:'p2-'+i, player:2, q:h.q, r:h.r,
+    skill:null, dead:false, cloaked:false,
+    hoeBonus:0, shielded:false, trapUsed:false, decoyUsed:false
+  }));
+  G.traps=[]; G.scores=[0,0,0]; G.turnNum=0; G.winner=0;
 }
 
-function myUnits(){return G.units.filter(u=>u.player===G.myPlayer)}
-function opUnits(){return G.units.filter(u=>u.player!==G.myPlayer)}
-function unitAt(q,r){return G.units.find(u=>!u.dead&&u.q===q&&u.r===r)}
-function unitById(id){return G.units.find(u=>u.id===id)}
+function myUnits(){ return G.units.filter(u => u.player===G.myPlayer) }
+function opUnits(){ return G.units.filter(u => u.player!==G.myPlayer) }
+function unitAt(q,r){ return G.units.find(u => !u.dead && u.q===q && u.r===r) }
+function unitById(id){ return G.units.find(u => u.id===id) }
 
+
+// ──────────────────────────────────────────────
+// SCREEN MANAGEMENT
+// ──────────────────────────────────────────────
 function showScreen(id){
-  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   document.getElementById(id).classList.add('active');
+  // Show back-to-menu button during setup/game, hide on lobby/gameover
+  document.getElementById('btnBackToMenu').style.display =
+    (id==='screenSetup' || id==='screenGame') ? '' : 'none';
 }
 
-// ===== RENDERING =====
+// Return to lobby, tear down any peer connection
+function backToMenu(){
+  stopTimer();
+  if(conn){ conn.close(); conn=null; }
+  if(peer){ peer.destroy(); peer=null; }
+  G.phase='lobby'; G.myPlayer=0;
+  G.myReady=false; G.opReady=false;
+  hideOverlay();
+  // Reset lobby UI
+  document.getElementById('shareArea').style.display='none';
+  document.getElementById('joinArea').style.display='none';
+  document.getElementById('btnCreate').style.display='';
+  showScreen('lobby');
+}
+
+
+// ──────────────────────────────────────────────
+// RENDERING — canvas drawing
+// Board is flipped 180° for Player 2 so their spawn is at the bottom
+// ──────────────────────────────────────────────
+
+// Convert hex coords to screen pixel coords (with board flip for P2)
 function hexToScreen(q,r){
-  const raw=hexToPixelRaw(q,r);
-  const flip=G.myPlayer===2?-1:1;
-  return{x:centerX+raw.x*flip,y:centerY+raw.y*flip};
+  const raw = hexToPixelRaw(q,r);
+  const flip = G.myPlayer===2 ? -1 : 1;
+  return { x: centerX + raw.x*flip, y: centerY + raw.y*flip };
 }
+
+// Convert screen pixel to hex coords (inverse of above)
 function screenToHex(sx,sy){
-  const flip=G.myPlayer===2?-1:1;
-  return pixelToHexRaw((sx-centerX)*flip,(sy-centerY)*flip);
+  const flip = G.myPlayer===2 ? -1 : 1;
+  return pixelToHexRaw((sx-centerX)*flip, (sy-centerY)*flip);
 }
 
-const HEX_COLORS=['#1a2a22','#2a4a35','#3a5a3a','#5a5a2a','#6a3a1a'];
-function hexColor(val){return HEX_COLORS[Math.min(val,4)]}
+// Hex fill colors by point value (darker=low value, warmer=high value)
+const HEX_COLORS = ['#1a2a22','#2a4a35','#3a5a3a','#5a5a2a','#6a3a1a'];
+function hexColor(val){ return HEX_COLORS[Math.min(val,4)] }
 
-function drawHexShape(cx,cy,size){
+// Draw a pointy-top hexagon path at (cx,cy)
+function drawHexShape(cx, cy, size){
   ctx.beginPath();
-  for(let i=0;i<6;i++){
-    const a=Math.PI/3*i-Math.PI/6;
-    const x=cx+size*Math.cos(a),y=cy+size*Math.sin(a);
-    i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);
+  for(let i=0; i<6; i++){
+    const a = Math.PI/3*i - Math.PI/6;
+    const x = cx + size*Math.cos(a);
+    const y = cy + size*Math.sin(a);
+    i===0 ? ctx.moveTo(x,y) : ctx.lineTo(x,y);
   }
   ctx.closePath();
 }
 
+// Main render loop — redraws every frame
 function render(){
-  ctx.clearRect(0,0,cw,ch);
+  ctx.clearRect(0, 0, cw, ch);
 
+  // ── Draw board hexes with point values ──
   for(const h of boardHexes){
-    const s=hexToScreen(h.q,h.r);
-    const v=pointVal(h.r,G.myPlayer);
-    drawHexShape(s.x,s.y,HEX-2);
-    ctx.fillStyle=hexColor(v);ctx.fill();
-    ctx.strokeStyle='#000';ctx.lineWidth=2;ctx.stroke();
-    ctx.fillStyle='rgba(255,255,255,0.5)';
-    ctx.font=`${HEX*0.3}px sans-serif`;ctx.textAlign='center';ctx.textBaseline='middle';
-    ctx.fillText(v,s.x,s.y+HEX*0.28);
+    const s = hexToScreen(h.q, h.r);
+    const v = pointVal(h.r, G.myPlayer);
+    drawHexShape(s.x, s.y, HEX-2);
+    ctx.fillStyle = hexColor(v); ctx.fill();
+    ctx.strokeStyle = '#000'; ctx.lineWidth = 2; ctx.stroke();
+    // Point value label
+    ctx.fillStyle = 'rgba(255,255,255,0.5)';
+    ctx.font = `${HEX*0.3}px sans-serif`;
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText(v, s.x, s.y + HEX*0.28);
   }
 
-  if(G.phase==='planning'&&G.selectedUnit!==null&&G.actionMode==='move'){
-    const u=unitById(G.selectedUnit);
-    if(u&&!u.dead){
-      for(const n of neighbors(u.q,u.r)){
-        const occ=unitAt(n.q,n.r);
-        if(occ&&occ.player===G.myPlayer)continue;
-        const s=hexToScreen(n.q,n.r);
-        drawHexShape(s.x,s.y,HEX-4);
-        ctx.fillStyle=occ?'rgba(255,80,80,0.3)':'rgba(80,255,80,0.25)';ctx.fill();
+  // ── Highlight valid move targets ──
+  if(G.phase==='planning' && G.selectedUnit!==null && G.actionMode==='move'){
+    const u = unitById(G.selectedUnit);
+    if(u && !u.dead){
+      for(const n of neighbors(u.q, u.r)){
+        const occ = unitAt(n.q, n.r);
+        if(occ && occ.player===G.myPlayer) continue; // can't move onto own unit
+        const s = hexToScreen(n.q, n.r);
+        drawHexShape(s.x, s.y, HEX-4);
+        ctx.fillStyle = occ ? 'rgba(255,80,80,0.3)' : 'rgba(80,255,80,0.25)';
+        ctx.fill();
       }
     }
   }
+
+  // ── Highlight bow direction targets ──
   if(G.actionMode==='skill-direction'){
-    const u=unitById(G.selectedUnit);
+    const u = unitById(G.selectedUnit);
     if(u){
       for(const d of DIRS){
-        for(let s=1;s<=2;s++){
-          const t={q:u.q+d.q*s,r:u.r+d.r*s};
-          if(onBoard(t.q,t.r)){
-            const sc=hexToScreen(t.q,t.r);
-            drawHexShape(sc.x,sc.y,HEX-4);
-            ctx.fillStyle='rgba(255,200,50,0.25)';ctx.fill();
+        for(let s=1; s<=2; s++){
+          const t = {q: u.q+d.q*s, r: u.r+d.r*s};
+          if(onBoard(t.q, t.r)){
+            const sc = hexToScreen(t.q, t.r);
+            drawHexShape(sc.x, sc.y, HEX-4);
+            ctx.fillStyle = 'rgba(255,200,50,0.25)'; ctx.fill();
           }
         }
       }
     }
   }
+
+  // ── Highlight adjacent hexes for trap placement ──
   if(G.actionMode==='skill-adjacent'){
-    const u=unitById(G.selectedUnit);
+    const u = unitById(G.selectedUnit);
     if(u){
-      for(const n of neighbors(u.q,u.r)){
-        if(!unitAt(n.q,n.r)){
-          const s=hexToScreen(n.q,n.r);
-          drawHexShape(s.x,s.y,HEX-4);
-          ctx.fillStyle='rgba(255,150,50,0.3)';ctx.fill();
+      for(const n of neighbors(u.q, u.r)){
+        if(!unitAt(n.q, n.r)){
+          const s = hexToScreen(n.q, n.r);
+          drawHexShape(s.x, s.y, HEX-4);
+          ctx.fillStyle = 'rgba(255,150,50,0.3)'; ctx.fill();
         }
       }
     }
   }
+
+  // ── Highlight ally units for decoy swap ──
   if(G.actionMode==='skill-ally'){
     for(const a of myUnits()){
-      if(!a.dead&&a.id!==G.selectedUnit){
-        const s=hexToScreen(a.q,a.r);
-        drawHexShape(s.x,s.y,HEX-4);
-        ctx.fillStyle='rgba(100,200,255,0.3)';ctx.fill();
+      if(!a.dead && a.id!==G.selectedUnit){
+        const s = hexToScreen(a.q, a.r);
+        drawHexShape(s.x, s.y, HEX-4);
+        ctx.fillStyle = 'rgba(100,200,255,0.3)'; ctx.fill();
       }
     }
   }
 
+  // ── Draw own traps (hidden from opponent) ──
   for(const t of G.traps){
-    if(t.player!==G.myPlayer)continue;
-    const s=hexToScreen(t.q,t.r);
-    ctx.fillStyle='rgba(255,150,50,0.5)';
-    ctx.font=`${HEX*0.35}px sans-serif`;ctx.textAlign='center';ctx.textBaseline='middle';
-    ctx.fillText('x',s.x,s.y-HEX*0.1);
+    if(t.player !== G.myPlayer) continue;
+    const s = hexToScreen(t.q, t.r);
+    ctx.fillStyle = 'rgba(255,150,50,0.5)';
+    ctx.font = `${HEX*0.35}px sans-serif`;
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText('x', s.x, s.y - HEX*0.1);
   }
 
+  // ── Draw units ──
   for(const u of G.units){
-    if(u.dead)continue;
-    if(u.cloaked&&u.player!==G.myPlayer)continue;
-    const s=hexToScreen(u.q,u.r);
-    const col=u.player===1?P1_COLOR:P2_COLOR;
-    const r=HEX*0.33;
+    if(u.dead) continue;
+    if(u.cloaked && u.player!==G.myPlayer) continue; // hidden from opponent
+    const s = hexToScreen(u.q, u.r);
+    const col = u.player===1 ? P1_COLOR : P2_COLOR;
+    const r = HEX * 0.33;
 
-    if(G.selectedUnit===u.id){
-      ctx.beginPath();ctx.arc(s.x,s.y,r+5,0,Math.PI*2);
-      ctx.strokeStyle='#fff';ctx.lineWidth=3;ctx.stroke();
+    // Selection ring
+    if(G.selectedUnit === u.id){
+      ctx.beginPath(); ctx.arc(s.x, s.y, r+5, 0, Math.PI*2);
+      ctx.strokeStyle = '#fff'; ctx.lineWidth = 3; ctx.stroke();
     }
 
-    ctx.beginPath();ctx.arc(s.x,s.y,r,0,Math.PI*2);
-    ctx.fillStyle=u.cloaked?col+'66':col;ctx.fill();
-    ctx.strokeStyle='#fff';ctx.lineWidth=2;ctx.stroke();
+    // Unit body
+    ctx.beginPath(); ctx.arc(s.x, s.y, r, 0, Math.PI*2);
+    ctx.fillStyle = u.cloaked ? col+'66' : col; ctx.fill();
+    ctx.strokeStyle = '#fff'; ctx.lineWidth = 2; ctx.stroke();
 
+    // Shield active indicator (dashed ring)
     if(u.shielded){
-      ctx.beginPath();ctx.arc(s.x,s.y,r+3,0,Math.PI*2);
-      ctx.strokeStyle='#ff6';ctx.lineWidth=2;ctx.setLineDash([4,3]);ctx.stroke();ctx.setLineDash([]);
+      ctx.beginPath(); ctx.arc(s.x, s.y, r+3, 0, Math.PI*2);
+      ctx.strokeStyle = '#ff6'; ctx.lineWidth = 2;
+      ctx.setLineDash([4,3]); ctx.stroke(); ctx.setLineDash([]);
     }
 
+    // Skill abbreviation inside unit
     if(u.skill){
-      ctx.fillStyle='#000';ctx.font=`bold ${HEX*0.25}px sans-serif`;
-      ctx.textAlign='center';ctx.textBaseline='middle';
-      ctx.fillText(SKILL_DEF[u.skill].icon,s.x,s.y);
+      ctx.fillStyle = '#000';
+      ctx.font = `bold ${HEX*0.25}px sans-serif`;
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillText(SKILL_DEF[u.skill].icon, s.x, s.y);
     }
 
-    if(u.hoeBonus>0){
-      ctx.fillStyle='#ff6';ctx.font=`${HEX*0.22}px sans-serif`;
-      ctx.fillText('+'+u.hoeBonus,s.x,s.y-r-6);
+    // Hoe bonus indicator
+    if(u.hoeBonus > 0){
+      ctx.fillStyle = '#ff6';
+      ctx.font = `${HEX*0.22}px sans-serif`;
+      ctx.fillText('+'+u.hoeBonus, s.x, s.y - r - 6);
     }
 
-    const aIdx=G.myActions.findIndex(a=>a.unitId===u.id);
-    if(aIdx>=0&&u.player===G.myPlayer){
-      ctx.fillStyle='#fff';ctx.font=`bold ${HEX*0.22}px sans-serif`;
-      ctx.fillText(aIdx+1,s.x+r+4,s.y-r);
+    // Action priority number (shows which action slot this unit is in)
+    const aIdx = G.myActions.findIndex(a => a.unitId===u.id);
+    if(aIdx >= 0 && u.player===G.myPlayer){
+      ctx.fillStyle = '#fff';
+      ctx.font = `bold ${HEX*0.22}px sans-serif`;
+      ctx.fillText(aIdx+1, s.x + r + 4, s.y - r);
     }
   }
 
-  if(G.phase==='planning'&&G.actionMode==='respawn'){
+  // ── Highlight spawn hexes for respawning dead units ──
+  if(G.phase==='planning' && G.actionMode==='respawn'){
     for(const h of spawnHexes(G.myPlayer)){
-      if(!unitAt(h.q,h.r)){
-        const s=hexToScreen(h.q,h.r);
-        drawHexShape(s.x,s.y,HEX-4);
-        ctx.fillStyle='rgba(100,255,200,0.3)';ctx.fill();
+      if(!unitAt(h.q, h.r)){
+        const s = hexToScreen(h.q, h.r);
+        drawHexShape(s.x, s.y, HEX-4);
+        ctx.fillStyle = 'rgba(100,255,200,0.3)'; ctx.fill();
       }
     }
   }
@@ -340,291 +534,347 @@ function render(){
   requestAnimationFrame(render);
 }
 
-// ===== CANVAS =====
+
+// ──────────────────────────────────────────────
+// CANVAS SETUP — sizing, retina support
+// ──────────────────────────────────────────────
 function setupCanvas(){
-  canvas=document.getElementById('board');
-  ctx=canvas.getContext('2d');
+  canvas = document.getElementById('board');
+  ctx = canvas.getContext('2d');
   resizeCanvas();
-  window.addEventListener('resize',resizeCanvas);
-  canvas.addEventListener('click',onCanvasClick);
+  window.addEventListener('resize', resizeCanvas);
+  canvas.addEventListener('click', onCanvasClick);
   requestAnimationFrame(render);
 }
+
 function resizeCanvas(){
-  dpr=window.devicePixelRatio||1;
-  const rect=canvas.getBoundingClientRect();
-  cw=rect.width;ch=rect.height;
-  canvas.width=cw*dpr;canvas.height=ch*dpr;
-  ctx.setTransform(dpr,0,0,dpr,0,0);
-  centerX=cw/2;centerY=ch/2;
+  dpr = window.devicePixelRatio || 1;
+  const rect = canvas.getBoundingClientRect();
+  cw = rect.width; ch = rect.height;
+  canvas.width = cw * dpr; canvas.height = ch * dpr;
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  centerX = cw/2; centerY = ch/2;
 }
 
-// ===== INPUT =====
+
+// ──────────────────────────────────────────────
+// INPUT — click handling on the game board
+// ──────────────────────────────────────────────
 function onCanvasClick(e){
-  const rect=canvas.getBoundingClientRect();
-  const sx=e.clientX-rect.left,sy=e.clientY-rect.top;
-  const hex=screenToHex(sx,sy);
-  if(!onBoard(hex.q,hex.r))return;
-  if(G.phase==='planning')handlePlanClick(hex);
+  const rect = canvas.getBoundingClientRect();
+  const sx = e.clientX - rect.left;
+  const sy = e.clientY - rect.top;
+  const hex = screenToHex(sx, sy);
+  if(!onBoard(hex.q, hex.r)) return;
+  if(G.phase==='planning') handlePlanClick(hex);
 }
 
+// Route click based on current action mode
 function handlePlanClick(hex){
-  if(G.myReady)return;
-  const clicked=unitAt(hex.q,hex.r);
+  if(G.myReady) return;
+  const clicked = unitAt(hex.q, hex.r);
 
+  // ── Respawn mode: place dead unit on spawn row ──
   if(G.actionMode==='respawn'){
-    const deadUnit=myUnits().find(u=>u.dead&&!G.myActions.find(a=>a.unitId===u.id));
-    if(deadUnit&&hex.r===spawnRow(G.myPlayer)&&!unitAt(hex.q,hex.r)){
-      addAction({unitId:deadUnit.id,type:'respawn',target:{q:hex.q,r:hex.r}});
-      G.actionMode=null;G.selectedUnit=null;hideHint();
+    const deadUnit = myUnits().find(u => u.dead && !G.myActions.find(a => a.unitId===u.id));
+    if(deadUnit && hex.r===spawnRow(G.myPlayer) && !unitAt(hex.q, hex.r)){
+      addAction({unitId:deadUnit.id, type:'respawn', target:{q:hex.q, r:hex.r}});
+      G.actionMode = null; G.selectedUnit = null; hideHint();
     }
     return;
   }
 
+  // ── Bow: pick a direction (click any hex along a line) ──
   if(G.actionMode==='skill-direction'){
-    const u=unitById(G.selectedUnit);
-    if(!u)return;
-    const dir=DIRS.find(d=>{
-      for(let s=1;s<=2;s++)if(u.q+d.q*s===hex.q&&u.r+d.r*s===hex.r)return true;
+    const u = unitById(G.selectedUnit);
+    if(!u) return;
+    const dir = DIRS.find(d => {
+      for(let s=1; s<=2; s++)
+        if(u.q+d.q*s===hex.q && u.r+d.r*s===hex.r) return true;
       return false;
     });
     if(dir){
-      addAction({unitId:u.id,type:'skill',skill:'bow',direction:dir});
-      G.actionMode=null;G.selectedUnit=null;hideHint();
+      addAction({unitId:u.id, type:'skill', skill:'bow', direction:dir});
+      G.actionMode = null; G.selectedUnit = null; hideHint();
     }
     return;
   }
+
+  // ── Trap: pick an adjacent empty hex ──
   if(G.actionMode==='skill-adjacent'){
-    const u=unitById(G.selectedUnit);
-    if(u&&neighbors(u.q,u.r).some(n=>n.q===hex.q&&n.r===hex.r)&&!unitAt(hex.q,hex.r)){
-      addAction({unitId:u.id,type:'skill',skill:'trap',target:{q:hex.q,r:hex.r}});
-      G.actionMode=null;G.selectedUnit=null;hideHint();
+    const u = unitById(G.selectedUnit);
+    if(u && neighbors(u.q,u.r).some(n => n.q===hex.q && n.r===hex.r) && !unitAt(hex.q,hex.r)){
+      addAction({unitId:u.id, type:'skill', skill:'trap', target:{q:hex.q, r:hex.r}});
+      G.actionMode = null; G.selectedUnit = null; hideHint();
     }
     return;
   }
+
+  // ── Decoy: pick an ally unit to swap with ──
   if(G.actionMode==='skill-ally'){
-    if(clicked&&clicked.player===G.myPlayer&&!clicked.dead&&clicked.id!==G.selectedUnit){
-      addAction({unitId:G.selectedUnit,type:'skill',skill:'decoy',targetId:clicked.id});
-      G.actionMode=null;G.selectedUnit=null;hideHint();
+    if(clicked && clicked.player===G.myPlayer && !clicked.dead && clicked.id!==G.selectedUnit){
+      addAction({unitId:G.selectedUnit, type:'skill', skill:'decoy', targetId:clicked.id});
+      G.actionMode = null; G.selectedUnit = null; hideHint();
     }
     return;
   }
 
-  if(G.actionMode==='move'&&G.selectedUnit){
-    const u=unitById(G.selectedUnit);
-    if(!u)return;
-    if(neighbors(u.q,u.r).some(n=>n.q===hex.q&&n.r===hex.r)){
-      const occ=unitAt(hex.q,hex.r);
-      if(occ&&occ.player===G.myPlayer)return;
-      addAction({unitId:u.id,type:'move',target:{q:hex.q,r:hex.r}});
-      G.actionMode=null;G.selectedUnit=null;
+  // ── Move mode: click adjacent hex to move there ──
+  if(G.actionMode==='move' && G.selectedUnit){
+    const u = unitById(G.selectedUnit);
+    if(!u) return;
+    if(neighbors(u.q,u.r).some(n => n.q===hex.q && n.r===hex.r)){
+      const occ = unitAt(hex.q, hex.r);
+      if(occ && occ.player===G.myPlayer) return; // can't move onto own unit
+      addAction({unitId:u.id, type:'move', target:{q:hex.q, r:hex.r}});
+      G.actionMode = null; G.selectedUnit = null;
     }
     return;
   }
 
-  if(clicked&&clicked.player===G.myPlayer&&!clicked.dead){
-    if(G.myActions.find(a=>a.unitId===clicked.id))return;
-    G.selectedUnit=clicked.id;
-    G.actionMode='move';
+  // ── Select own unit ──
+  if(clicked && clicked.player===G.myPlayer && !clicked.dead){
+    if(G.myActions.find(a => a.unitId===clicked.id)) return; // already assigned
+    G.selectedUnit = clicked.id;
+    G.actionMode = 'move';
     updateSkillBtn(clicked);
     return;
   }
 
-  G.selectedUnit=null;G.actionMode=null;
-  document.getElementById('btnSkill').style.display='none';
+  // ── Click empty space: deselect ──
+  G.selectedUnit = null; G.actionMode = null;
+  document.getElementById('btnSkill').style.display = 'none';
   hideHint();
 }
 
+// Show/hide the skill button based on selected unit
 function updateSkillBtn(u){
-  const btn=document.getElementById('btnSkill');
-  if(!u||!u.skill){btn.style.display='none';return;}
-  const sd=SKILL_DEF[u.skill];
-  if(sd.once&&((u.skill==='trap'&&u.trapUsed)||(u.skill==='decoy'&&u.decoyUsed))){
-    btn.style.display='none';return;
+  const btn = document.getElementById('btnSkill');
+  if(!u || !u.skill){ btn.style.display='none'; return; }
+  const sd = SKILL_DEF[u.skill];
+  // Hide if once-per-game skill already used
+  if(sd.once && ((u.skill==='trap' && u.trapUsed) || (u.skill==='decoy' && u.decoyUsed))){
+    btn.style.display='none'; return;
   }
-  btn.style.display='';
-  btn.textContent=sd.name;
+  btn.style.display = '';
+  btn.textContent = sd.name;
 }
 
+
+// ──────────────────────────────────────────────
+// ACTION QUEUE — track assigned actions (up to 3)
+// ──────────────────────────────────────────────
 function addAction(action){
-  if(G.myActions.length>=3)return;
+  if(G.myActions.length >= 3) return;
   G.myActions.push(action);
   updateActionQueue();
   autoSelectNext();
 }
 
+// Auto-select next unassigned unit after an action is assigned
 function autoSelectNext(){
-  const assigned=new Set(G.myActions.map(a=>a.unitId));
-  const next=myUnits().find(u=>!assigned.has(u.id)&&!u.dead);
-  const deadUnassigned=myUnits().find(u=>u.dead&&!assigned.has(u.id));
+  const assigned = new Set(G.myActions.map(a => a.unitId));
+  const next = myUnits().find(u => !assigned.has(u.id) && !u.dead);
+  const deadUnassigned = myUnits().find(u => u.dead && !assigned.has(u.id));
   if(next){
-    G.selectedUnit=next.id;G.actionMode='move';
+    G.selectedUnit = next.id; G.actionMode = 'move';
     updateSkillBtn(next);
-  }else if(deadUnassigned){
-    G.selectedUnit=deadUnassigned.id;G.actionMode='respawn';
+  } else if(deadUnassigned){
+    G.selectedUnit = deadUnassigned.id; G.actionMode = 'respawn';
     showHint('Click a spawn tile to respawn');
-  }else{
-    G.selectedUnit=null;G.actionMode=null;
-    document.getElementById('btnSkill').style.display='none';
+  } else {
+    G.selectedUnit = null; G.actionMode = null;
+    document.getElementById('btnSkill').style.display = 'none';
   }
 }
 
+// Render the action queue tags in the bottom panel
 function updateActionQueue(){
-  const aq=document.getElementById('actionQueue');
-  aq.innerHTML='';
-  G.myActions.forEach((a,i)=>{
-    const tag=document.createElement('div');tag.className='action-tag';
-    const u=unitById(a.unitId);
-    let desc=a.type==='move'?'Move':'';
-    if(a.type==='skill')desc=SKILL_DEF[a.skill].name;
-    if(a.type==='respawn')desc='Respawn';
-    tag.innerHTML=`<span class="num">${i+1}</span> ${u&&u.skill?SKILL_DEF[u.skill].icon:'U'}: ${desc}`;
-    tag.onclick=()=>undoAction(i);
+  const aq = document.getElementById('actionQueue');
+  aq.innerHTML = '';
+  G.myActions.forEach((a,i) => {
+    const tag = document.createElement('div');
+    tag.className = 'action-tag';
+    const u = unitById(a.unitId);
+    let desc = a.type==='move' ? 'Move' : '';
+    if(a.type==='skill') desc = SKILL_DEF[a.skill].name;
+    if(a.type==='respawn') desc = 'Respawn';
+    tag.innerHTML = `<span class="num">${i+1}</span> ${u&&u.skill ? SKILL_DEF[u.skill].icon : 'U'}: ${desc}`;
+    tag.onclick = () => undoAction(i);
     aq.appendChild(tag);
   });
 }
 
+// Undo from index onward (removes this action and all after it)
 function undoAction(idx){
   G.myActions.splice(idx);
   updateActionQueue();
   autoSelectNext();
 }
 
-function showHint(msg){const el=document.getElementById('skillHint');el.textContent=msg;el.classList.add('visible');}
-function hideHint(){document.getElementById('skillHint').classList.remove('visible');}
+function showHint(msg){ const el=document.getElementById('skillHint'); el.textContent=msg; el.classList.add('visible'); }
+function hideHint(){ document.getElementById('skillHint').classList.remove('visible'); }
 
-document.addEventListener('DOMContentLoaded',()=>{
-  document.getElementById('btnSkill').addEventListener('click',()=>{
-    const u=unitById(G.selectedUnit);
-    if(!u||!u.skill)return;
-    const sd=SKILL_DEF[u.skill];
+// Skill button click handler — enters targeting mode for targeted skills
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('btnSkill').addEventListener('click', () => {
+    const u = unitById(G.selectedUnit);
+    if(!u || !u.skill) return;
+    const sd = SKILL_DEF[u.skill];
     if(sd.targeted==='direction'){
-      G.actionMode='skill-direction';
+      G.actionMode = 'skill-direction';
       showHint('Click a hex in the direction to fire');
-    }else if(sd.targeted==='adjacent'){
-      G.actionMode='skill-adjacent';
+    } else if(sd.targeted==='adjacent'){
+      G.actionMode = 'skill-adjacent';
       showHint('Click an adjacent empty hex for trap');
-    }else if(sd.targeted==='ally'){
-      G.actionMode='skill-ally';
+    } else if(sd.targeted==='ally'){
+      G.actionMode = 'skill-ally';
       showHint('Click an ally unit to swap with');
-    }else{
-      addAction({unitId:u.id,type:'skill',skill:u.skill});
-      G.actionMode=null;G.selectedUnit=null;hideHint();
+    } else {
+      // Non-targeted skills (shield, hoe, cloak) activate immediately
+      addAction({unitId:u.id, type:'skill', skill:u.skill});
+      G.actionMode = null; G.selectedUnit = null; hideHint();
     }
   });
 });
 
-// ===== TIMER =====
-function startTimer(sec,onTick,onDone){
+
+// ──────────────────────────────────────────────
+// TIMER — countdown used in planning phase
+// ──────────────────────────────────────────────
+function startTimer(sec, onTick, onDone){
   clearInterval(G.timerH);
-  G.timerVal=sec;
+  G.timerVal = sec;
   onTick(G.timerVal);
-  G.timerH=setInterval(()=>{
+  G.timerH = setInterval(() => {
     G.timerVal--;
     onTick(G.timerVal);
-    if(G.timerVal<=0){clearInterval(G.timerH);onDone();}
-  },1000);
+    if(G.timerVal <= 0){ clearInterval(G.timerH); onDone(); }
+  }, 1000);
 }
-function stopTimer(){clearInterval(G.timerH);}
+function stopTimer(){ clearInterval(G.timerH); }
 
-// ===== SETUP PHASE =====
+
+// ──────────────────────────────────────────────
+// SETUP PHASE — pick skills, no timer
+// Both players press Ready at their own pace, then planning begins
+// ──────────────────────────────────────────────
 function startSetup(){
-  G.phase='setup';G.myReady=false;G.opReady=false;
+  G.phase = 'setup';
+  G.myReady = false; G.opReady = false;
   initUnits();
   showScreen('screenSetup');
   buildSetupUI();
-  startTimer(TIMER_S,
-    v=>document.getElementById('setupTimer').textContent=v,
-    ()=>finishSetup()
-  );
 }
 
+// Build skill selection cards for each unit
 function buildSetupUI(){
-  const container=document.getElementById('unitCards');
-  container.innerHTML='';
-  myUnits().forEach((u,i)=>{
-    const card=document.createElement('div');
-    card.className='unit-card';
-    let html=`<div class="unit-label">Unit ${i+1}</div><div class="skill-grid">`;
-    for(const[key,sd]of Object.entries(SKILL_DEF)){
-      html+=`<button class="skill-btn" data-uid="${u.id}" data-skill="${key}">${sd.icon} ${sd.name}</button>`;
+  const container = document.getElementById('unitCards');
+  container.innerHTML = '';
+  myUnits().forEach((u,i) => {
+    const card = document.createElement('div');
+    card.className = 'unit-card';
+    let html = `<div class="unit-label">Unit ${i+1}</div><div class="skill-grid">`;
+    for(const [key,sd] of Object.entries(SKILL_DEF)){
+      html += `<button class="skill-btn" data-uid="${u.id}" data-skill="${key}">${sd.icon} ${sd.name}</button>`;
     }
-    html+='</div>';
-    card.innerHTML=html;
+    html += '</div>';
+    card.innerHTML = html;
     container.appendChild(card);
   });
-  container.addEventListener('click',e=>{
-    const btn=e.target.closest('.skill-btn');
-    if(!btn)return;
-    const uid=btn.dataset.uid,skill=btn.dataset.skill;
-    const u=unitById(uid);if(!u)return;
-    u.skill=skill;
-    container.querySelectorAll(`.skill-btn[data-uid="${uid}"]`).forEach(b=>b.classList.remove('selected'));
+  // Delegate click handler for skill buttons
+  container.addEventListener('click', e => {
+    const btn = e.target.closest('.skill-btn');
+    if(!btn) return;
+    const uid = btn.dataset.uid, skill = btn.dataset.skill;
+    const u = unitById(uid); if(!u) return;
+    u.skill = skill;
+    // Update selection highlight
+    container.querySelectorAll(`.skill-btn[data-uid="${uid}"]`).forEach(b => b.classList.remove('selected'));
     btn.classList.add('selected');
   });
-  document.getElementById('btnSetupReady').onclick=()=>finishSetup();
-  document.getElementById('btnSetupReady').disabled=false;
-  document.getElementById('setupStatus').textContent='';
+  document.getElementById('btnSetupReady').onclick = () => finishSetup();
+  document.getElementById('btnSetupReady').disabled = false;
+  document.getElementById('btnSetupReady').classList.remove('is-ready');
+  document.getElementById('btnSetupReady').textContent = 'Ready';
+  document.getElementById('setupStatus').textContent = 'Pick a skill for each unit, then press Ready.';
 }
 
+// Lock in skill choices and wait for opponent
 function finishSetup(){
-  if(G.myReady)return;
-  myUnits().forEach(u=>{if(!u.skill)u.skill='shield';});
-  G.myReady=true;
-  stopTimer();
-  document.getElementById('setupStatus').textContent='Waiting for opponent...';
-  document.getElementById('btnSetupReady').disabled=true;
-  send({type:'setup-done',units:myUnits().map(u=>({id:u.id,q:u.q,r:u.r,skill:u.skill}))});
-  if(G.opReady)startPlanning();
+  if(G.myReady) return;
+  // Default unassigned units to Shield
+  myUnits().forEach(u => { if(!u.skill) u.skill = 'shield'; });
+  G.myReady = true;
+  document.getElementById('setupStatus').textContent = 'Waiting for opponent...';
+  document.getElementById('btnSetupReady').disabled = true;
+  document.getElementById('btnSetupReady').classList.add('is-ready');
+  document.getElementById('btnSetupReady').textContent = 'Waiting...';
+  send({type:'setup-done', units: myUnits().map(u => ({id:u.id, q:u.q, r:u.r, skill:u.skill}))});
+  if(G.opReady) startPlanning();
 }
 
-// ===== PLANNING PHASE =====
+
+// ──────────────────────────────────────────────
+// PLANNING PHASE — assign actions with 60s timer
+// ──────────────────────────────────────────────
 function startPlanning(){
-  G.phase='planning';G.myReady=false;G.opReady=false;
-  G.myActions=[];G.opActions=null;G.selectedUnit=null;G.actionMode=null;
-  G.units.forEach(u=>{u.shielded=false;});
+  G.phase = 'planning';
+  G.myReady = false; G.opReady = false;
+  G.myActions = []; G.opActions = null;
+  G.selectedUnit = null; G.actionMode = null;
+  G.units.forEach(u => { u.shielded = false; });
   showScreen('screenGame');
   setupCanvas();
-  document.getElementById('phaseLabel').textContent='Planning';
-  document.getElementById('btnGameReady').disabled=false;
+  document.getElementById('phaseLabel').textContent = 'Planning';
+  document.getElementById('btnGameReady').disabled = false;
   document.getElementById('btnGameReady').classList.remove('is-ready');
-  document.getElementById('btnGameReady').textContent='Ready';
-  document.getElementById('btnSkill').style.display='none';
+  document.getElementById('btnGameReady').textContent = 'Ready';
+  document.getElementById('btnSkill').style.display = 'none';
   updateActionQueue();
   updateScoreDisplay();
   autoSelectNext();
+  // 60 second countdown — auto-submits when it hits 0
   startTimer(TIMER_S,
-    v=>document.getElementById('gameTimer').textContent=v,
-    ()=>submitPlan()
+    v => document.getElementById('gameTimer').textContent = v,
+    () => submitPlan()
   );
-  document.getElementById('btnGameReady').onclick=()=>submitPlan();
-  document.getElementById('btnUndo').onclick=()=>{
-    if(G.myActions.length>0){G.myActions.pop();updateActionQueue();autoSelectNext();}
+  document.getElementById('btnGameReady').onclick = () => submitPlan();
+  document.getElementById('btnUndo').onclick = () => {
+    if(G.myActions.length > 0){ G.myActions.pop(); updateActionQueue(); autoSelectNext(); }
   };
 }
 
+// Lock in actions and wait for opponent
 function submitPlan(){
-  if(G.myReady)return;
-  G.myReady=true;
+  if(G.myReady) return;
+  G.myReady = true;
   stopTimer();
-  document.getElementById('btnGameReady').disabled=true;
+  document.getElementById('btnGameReady').disabled = true;
   document.getElementById('btnGameReady').classList.add('is-ready');
-  document.getElementById('btnGameReady').textContent='Waiting...';
-  G.selectedUnit=null;G.actionMode=null;hideHint();
-  send({type:'plan-done',actions:G.myActions});
-  if(G.opActions)runResolution();
+  document.getElementById('btnGameReady').textContent = 'Waiting...';
+  G.selectedUnit = null; G.actionMode = null; hideHint();
+  send({type:'plan-done', actions: G.myActions});
+  if(G.opActions) runResolution();
 }
 
-// ===== RESOLUTION =====
+
+// ──────────────────────────────────────────────
+// RESOLUTION — process both players' actions simultaneously
+// 3 steps (one per action priority slot), each with a delay
+// ──────────────────────────────────────────────
 async function runResolution(){
-  G.phase='resolution';
-  document.getElementById('phaseLabel').textContent='Resolving...';
+  G.phase = 'resolution';
+  document.getElementById('phaseLabel').textContent = 'Resolving...';
   showOverlay('Resolving...');
 
-  const p1Acts=G.myPlayer===1?G.myActions:G.opActions;
-  const p2Acts=G.myPlayer===2?G.myActions:G.opActions;
+  // Arrange actions by player number (not by who "I" am)
+  const p1Acts = G.myPlayer===1 ? G.myActions : G.opActions;
+  const p2Acts = G.myPlayer===2 ? G.myActions : G.opActions;
 
-  for(let step=0;step<3;step++){
-    resolveStep(p1Acts[step]||null,p2Acts[step]||null);
+  // Resolve 3 priority steps with pauses between
+  for(let step=0; step<3; step++){
+    resolveStep(p1Acts[step] || null, p2Acts[step] || null);
     await sleep(1200);
   }
 
@@ -634,194 +884,244 @@ async function runResolution(){
   hideOverlay();
 
   if(checkWin()){
-    G.phase='gameover';
+    G.phase = 'gameover';
     showScreen('screenGameover');
-    document.getElementById('winText').textContent=G.winner===G.myPlayer?'You Win!':'You Lose!';
-    document.getElementById('finalScore').textContent=`Score: P1 ${G.scores[1]} - P2 ${G.scores[2]}`;
-    document.getElementById('btnRematch').onclick=()=>{send({type:'rematch'});startSetup();};
-  }else{
+    document.getElementById('winText').textContent = G.winner===G.myPlayer ? 'You Win!' : 'You Lose!';
+    document.getElementById('finalScore').textContent = `Score: P1 ${G.scores[1]} - P2 ${G.scores[2]}`;
+    document.getElementById('btnRematch').onclick = () => { send({type:'rematch'}); startSetup(); };
+  } else {
     startPlanning();
   }
 }
 
-function resolveStep(a1,a2){
-  const actions=[];
-  if(a1)actions.push({...a1,player:1});
-  if(a2)actions.push({...a2,player:2});
+// Resolve one priority step: both players' Nth action
+// Order: respawns → shields activate → moves (with collision) → other skills → trap checks
+function resolveStep(a1, a2){
+  const actions = [];
+  if(a1) actions.push({...a1, player:1});
+  if(a2) actions.push({...a2, player:2});
 
+  // ── Respawns happen first ──
   for(const a of actions){
     if(a.type==='respawn'){
-      const u=unitById(a.unitId);
-      if(u&&u.dead&&!unitAt(a.target.q,a.target.r)){
-        u.dead=false;u.q=a.target.q;u.r=a.target.r;
-        u.cloaked=false;u.hoeBonus=0;u.shielded=false;
+      const u = unitById(a.unitId);
+      if(u && u.dead && !unitAt(a.target.q, a.target.r)){
+        u.dead=false; u.q=a.target.q; u.r=a.target.r;
+        u.cloaked=false; u.hoeBonus=0; u.shielded=false;
       }
     }
   }
 
-  const movers=actions.filter(a=>a.type==='move');
-  const skillers=actions.filter(a=>a.type==='skill');
+  const movers = actions.filter(a => a.type==='move');
+  const skillers = actions.filter(a => a.type==='skill');
 
+  // ── Shields activate before moves (defensive) ──
   for(const a of skillers){
     if(a.skill==='shield'){
-      const u=unitById(a.unitId);
-      if(u&&!u.dead)u.shielded=true;
+      const u = unitById(a.unitId);
+      if(u && !u.dead) u.shielded = true;
     }
   }
 
-  if(movers.length===2&&movers[0].target.q===movers[1].target.q&&movers[0].target.r===movers[1].target.r){
-    // same target - cancel both
-  }else if(movers.length===2){
-    const u0=unitById(movers[0].unitId),u1=unitById(movers[1].unitId);
-    if(u0&&u1&&movers[0].target.q===u1.q&&movers[0].target.r===u1.r&&movers[1].target.q===u0.q&&movers[1].target.r===u0.r){
-      // head-on - cancel both
-    }else{
-      for(const m of movers)processMove(m);
+  // ── Resolve moves with collision detection ──
+  if(movers.length===2){
+    const t0 = movers[0].target, t1 = movers[1].target;
+    const u0 = unitById(movers[0].unitId), u1 = unitById(movers[1].unitId);
+    if(t0.q===t1.q && t0.r===t1.r){
+      // Same target hex — both cancel
+    } else if(u0 && u1 && t0.q===u1.q && t0.r===u1.r && t1.q===u0.q && t1.r===u0.r){
+      // Head-on swap — both cancel
+    } else {
+      for(const m of movers) processMove(m);
     }
-  }else{
-    for(const m of movers)processMove(m);
+  } else {
+    for(const m of movers) processMove(m);
   }
 
+  // ── Resolve non-shield skills ──
   for(const a of skillers){
-    const u=unitById(a.unitId);
-    if(!u||u.dead)continue;
+    const u = unitById(a.unitId);
+    if(!u || u.dead) continue;
     switch(a.skill){
-      case 'bow':resolveBow(u,a.direction);break;
-      case 'hoe':u.hoeBonus++;break;
-      case 'trap':
-        if(!u.trapUsed){G.traps.push({q:a.target.q,r:a.target.r,player:u.player});u.trapUsed=true;}
+      case 'bow':
+        resolveBow(u, a.direction);
         break;
-      case 'cloak':u.cloaked=!u.cloaked;if(u.cloaked)u.hoeBonus=0;break;
+      case 'hoe':
+        u.hoeBonus++;
+        break;
+      case 'trap':
+        if(!u.trapUsed){
+          G.traps.push({q:a.target.q, r:a.target.r, player:u.player});
+          u.trapUsed = true;
+        }
+        break;
+      case 'cloak':
+        u.cloaked = !u.cloaked;
+        if(u.cloaked) u.hoeBonus = 0;
+        break;
       case 'decoy':
         if(!u.decoyUsed){
-          const ally=unitById(a.targetId);
-          if(ally&&!ally.dead){const tq=u.q,tr=u.r;u.q=ally.q;u.r=ally.r;ally.q=tq;ally.r=tr;u.decoyUsed=true;}
+          const ally = unitById(a.targetId);
+          if(ally && !ally.dead){
+            const tq=u.q, tr=u.r;
+            u.q=ally.q; u.r=ally.r;
+            ally.q=tq; ally.r=tr;
+            u.decoyUsed = true;
+          }
         }
         break;
     }
   }
 
+  // ── Check trap triggers after all movement ──
   for(const u of G.units){
-    if(u.dead)continue;
-    const trap=G.traps.find(t=>t.q===u.q&&t.r===u.r&&t.player!==u.player);
+    if(u.dead) continue;
+    const trap = G.traps.find(t => t.q===u.q && t.r===u.r && t.player!==u.player);
     if(trap){
-      if(u.shielded){u.shielded=false;}
-      else{u.dead=true;u.hoeBonus=0;u.cloaked=false;}
-      G.traps=G.traps.filter(t=>t!==trap);
+      if(u.shielded){ u.shielded = false; }
+      else { u.dead=true; u.hoeBonus=0; u.cloaked=false; }
+      G.traps = G.traps.filter(t => t!==trap);
     }
   }
 }
 
+// Process a single move action: move unit, kill enemy if occupied
 function processMove(m){
-  const u=unitById(m.unitId);
-  if(!u||u.dead)return;
-  const enemy=unitAt(m.target.q,m.target.r);
-  if(enemy&&enemy.player!==u.player){
-    if(enemy.shielded){enemy.shielded=false;return;}
-    enemy.dead=true;enemy.hoeBonus=0;enemy.cloaked=false;
-  }else if(enemy&&enemy.player===u.player){return;}
-  u.q=m.target.q;u.r=m.target.r;
-  u.cloaked=false;
-  if(u.hoeBonus>0)u.hoeBonus=0;
+  const u = unitById(m.unitId);
+  if(!u || u.dead) return;
+  const enemy = unitAt(m.target.q, m.target.r);
+  if(enemy && enemy.player!==u.player){
+    if(enemy.shielded){ enemy.shielded=false; return; } // shield blocks the kill
+    enemy.dead=true; enemy.hoeBonus=0; enemy.cloaked=false;
+  } else if(enemy && enemy.player===u.player){
+    return; // can't move onto own unit
+  }
+  u.q = m.target.q; u.r = m.target.r;
+  u.cloaked = false;
+  if(u.hoeBonus > 0) u.hoeBonus = 0; // moving breaks hoe bonus
 }
 
-function resolveBow(u,dir){
-  if(!dir)return;
-  for(let s=1;s<=2;s++){
-    const tq=u.q+dir.q*s,tr=u.r+dir.r*s;
-    if(!onBoard(tq,tr))break;
-    const target=unitAt(tq,tr);
-    if(target&&target.player!==u.player){
-      if(target.shielded){target.shielded=false;}
-      else{target.dead=true;target.hoeBonus=0;target.cloaked=false;}
-      return;
+// Resolve bow: fire arrow in direction, hits first enemy within 2 hexes
+function resolveBow(u, dir){
+  if(!dir) return;
+  for(let s=1; s<=2; s++){
+    const tq = u.q + dir.q*s, tr = u.r + dir.r*s;
+    if(!onBoard(tq, tr)) break;
+    const target = unitAt(tq, tr);
+    if(target && target.player!==u.player){
+      if(target.shielded){ target.shielded=false; }
+      else { target.dead=true; target.hoeBonus=0; target.cloaked=false; }
+      return; // arrow stops on hit
     }
-    if(target&&target.player===u.player)return;
+    if(target && target.player===u.player) return; // blocked by own unit
   }
 }
 
-// ===== SCORING =====
+
+// ──────────────────────────────────────────────
+// SCORING — snapshot based, checked after each resolution
+// ──────────────────────────────────────────────
 function calcScores(){
-  G.scores[1]=0;G.scores[2]=0;
+  G.scores[1] = 0; G.scores[2] = 0;
   for(const u of G.units){
-    if(u.dead||u.cloaked)continue;
-    G.scores[u.player]+=pointVal(u.r,u.player)+u.hoeBonus;
+    if(u.dead || u.cloaked) continue; // dead/cloaked units score 0
+    G.scores[u.player] += pointVal(u.r, u.player) + u.hoeBonus;
   }
 }
+
 function updateScoreDisplay(){
-  document.getElementById('scoreP1').textContent=G.scores[1];
-  document.getElementById('scoreP2').textContent=G.scores[2];
+  document.getElementById('scoreP1').textContent = G.scores[1];
+  document.getElementById('scoreP2').textContent = G.scores[2];
 }
+
+// Win when score difference >= WIN_DIFF
 function checkWin(){
-  if(Math.abs(G.scores[1]-G.scores[2])>=WIN_DIFF){
-    G.winner=G.scores[1]>G.scores[2]?1:2;
+  if(Math.abs(G.scores[1] - G.scores[2]) >= WIN_DIFF){
+    G.winner = G.scores[1] > G.scores[2] ? 1 : 2;
     return true;
   }
   return false;
 }
 
-// ===== NETWORKING =====
+
+// ──────────────────────────────────────────────
+// NETWORKING — PeerJS peer-to-peer connection
+// Flow: P1 creates room → P2 joins via link → P2 sends 'join' →
+//       P1 sends 'start' → both enter setup
+// ──────────────────────────────────────────────
+
+// Host: create a PeerJS peer with a room code, show share link
 function createGame(){
-  const roomId=Math.random().toString(36).substr(2,6).toUpperCase();
-  peer=new Peer('rhex-'+roomId,{debug:0});
-  peer.on('open',()=>{
-    const url=location.origin+location.pathname+'?room='+roomId;
-    document.getElementById('shareLink').value=url;
-    document.getElementById('shareArea').style.display='';
-    document.getElementById('btnCreate').style.display='none';
+  const roomId = Math.random().toString(36).substr(2,6).toUpperCase();
+  peer = new Peer('rhex-' + roomId, {debug:0});
+  peer.on('open', () => {
+    const url = location.origin + location.pathname + '?room=' + roomId;
+    document.getElementById('shareLink').value = url;
+    document.getElementById('shareArea').style.display = '';
+    document.getElementById('btnCreate').style.display = 'none';
+    document.getElementById('btnInstructions').style.display = 'none';
   });
-  peer.on('connection',c=>{
-    conn=c;G.myPlayer=1;
+  // When guest connects, wire up but wait for their 'join' message
+  peer.on('connection', c => {
+    conn = c; G.myPlayer = 1;
     wireConn();
   });
-  peer.on('error',e=>console.error('Peer error:',e));
+  peer.on('error', e => console.error('Peer error:', e));
 }
 
+// Guest: connect to host's peer ID from the room code in URL
 function joinGame(roomId){
-  document.getElementById('btnCreate').style.display='none';
-  document.getElementById('joinArea').style.display='';
-  peer=new Peer(undefined,{debug:0});
-  peer.on('open',()=>{
-    conn=peer.connect('rhex-'+roomId,{reliable:true});
-    conn.on('open',()=>{
+  document.getElementById('btnCreate').style.display = 'none';
+  document.getElementById('btnInstructions').style.display = 'none';
+  document.getElementById('joinArea').style.display = '';
+  peer = new Peer(undefined, {debug:0});
+  peer.on('open', () => {
+    conn = peer.connect('rhex-' + roomId, {reliable:true});
+    conn.on('open', () => {
       wireConn();
-      send({type:'join'});
+      send({type:'join'}); // tell host we're ready
     });
   });
-  peer.on('error',e=>console.error('Peer error:',e));
+  peer.on('error', e => console.error('Peer error:', e));
 }
 
+// Set up data and close handlers on the connection
 function wireConn(){
-  conn.on('data',onMessage);
-  conn.on('close',()=>showOverlay('Opponent disconnected'));
+  conn.on('data', onMessage);
+  conn.on('close', () => showOverlay('Opponent disconnected'));
 }
 
 function send(data){
-  if(conn&&conn.open)conn.send(data);
+  if(conn && conn.open) conn.send(data);
 }
 
+// Handle incoming messages from the other player
 function onMessage(data){
   switch(data.type){
     case 'join':
+      // Guest connected and ready — start the game
       send({type:'start'});
       startSetup();
       break;
     case 'start':
-      G.myPlayer=2;
+      // Host confirmed — we're player 2, start setup
+      G.myPlayer = 2;
       startSetup();
       break;
     case 'setup-done':
+      // Opponent finished skill selection
       for(const ud of data.units){
-        const u=unitById(ud.id);
-        if(u){u.skill=ud.skill;u.q=ud.q;u.r=ud.r;}
+        const u = unitById(ud.id);
+        if(u){ u.skill=ud.skill; u.q=ud.q; u.r=ud.r; }
       }
-      G.opReady=true;
-      if(G.myReady)startPlanning();
+      G.opReady = true;
+      if(G.myReady) startPlanning();
       break;
     case 'plan-done':
-      G.opActions=data.actions;
-      G.opReady=true;
-      if(G.myReady)runResolution();
+      // Opponent submitted their actions
+      G.opActions = data.actions;
+      G.opReady = true;
+      if(G.myReady) runResolution();
       break;
     case 'rematch':
       startSetup();
@@ -829,27 +1129,54 @@ function onMessage(data){
   }
 }
 
-function sleep(ms){return new Promise(r=>setTimeout(r,ms));}
+
+// ──────────────────────────────────────────────
+// HELPERS
+// ──────────────────────────────────────────────
+function sleep(ms){ return new Promise(r => setTimeout(r, ms)); }
+
 function showOverlay(msg){
-  document.getElementById('overlayText').textContent=msg;
+  document.getElementById('overlayText').textContent = msg;
   document.getElementById('overlay').classList.add('visible');
 }
-function hideOverlay(){document.getElementById('overlay').classList.remove('visible');}
-
-function init(){
-  const params=new URLSearchParams(location.search);
-  const room=params.get('room');
-  if(room){
-    joinGame(room);
-  }else{
-    document.getElementById('btnCreate').onclick=createGame;
-  }
-  document.getElementById('btnCopy').onclick=()=>{
-    navigator.clipboard.writeText(document.getElementById('shareLink').value).catch(()=>{});
-  };
+function hideOverlay(){
+  document.getElementById('overlay').classList.remove('visible');
 }
 
-document.addEventListener('DOMContentLoaded',init);
+
+// ──────────────────────────────────────────────
+// INIT — entry point, route based on URL params
+// ──────────────────────────────────────────────
+function init(){
+  const params = new URLSearchParams(location.search);
+  const room = params.get('room');
+
+  // If URL has ?room=XXX, auto-join that game
+  if(room){
+    joinGame(room);
+  } else {
+    document.getElementById('btnCreate').onclick = createGame;
+  }
+
+  // Copy share link button
+  document.getElementById('btnCopy').onclick = () => {
+    navigator.clipboard.writeText(document.getElementById('shareLink').value).catch(()=>{});
+  };
+
+  // Instructions modal
+  document.getElementById('btnInstructions').onclick = () => {
+    document.getElementById('instructions').classList.add('visible');
+  };
+  document.getElementById('btnCloseInstructions').onclick = () => {
+    document.getElementById('instructions').classList.remove('visible');
+  };
+
+  // Back to menu buttons (during game and on game over)
+  document.getElementById('btnBackToMenu').onclick = backToMenu;
+  document.getElementById('btnBackToMenuEnd').onclick = backToMenu;
+}
+
+document.addEventListener('DOMContentLoaded', init);
 
 })();
 </script>
