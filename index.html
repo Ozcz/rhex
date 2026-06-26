@@ -58,20 +58,37 @@ h2{color:#fff;font-weight:300;letter-spacing:.15em;font-size:1.4em}
 .settings-list{display:flex;flex-direction:column;gap:12px;margin-top:16px}
 
 /* -- Setup (board-based skill selection) -- */
-.setup-header{text-align:center;margin-bottom:16px}
-#screenSetup{justify-content:stretch;padding:0;gap:0;height:100vh;max-height:100vh;overflow:hidden}
-#screenSetup .setup-header{flex-shrink:0;padding:0;display:flex;align-items:center;justify-content:center;min-height:60px}
-#setupCanvasWrap{flex:1;width:100%;min-height:0}
+/* Centered cluster: title + bounded board + skills/ready. Nothing glued to edges. */
+#screenSetup{justify-content:center;align-items:center;gap:22px;padding:24px;height:100vh}
+.setup-header{text-align:center}
+.setup-header h2{font-size:1.2em}
+#setupCanvasWrap{width:min(86vw,440px);aspect-ratio:1/1;flex:none}
 #setupCanvas{width:100%;height:100%;display:block;touch-action:none}
-.setup-bottom{flex-shrink:0;display:flex;flex-direction:column;align-items:center;gap:10px;padding:10px 20px;min-height:80px;justify-content:center}
-.setup-skill-row{display:flex;gap:10px;justify-content:center;padding:10px 16px}
-.setup-bottom{background:#000;padding:6px 16px 10px;width:100%;flex-shrink:0;display:flex;flex-direction:column;align-items:center;gap:10px}
-.status-msg{color:#555;font-size:.78em;text-align:center;letter-spacing:.08em}
+.setup-bottom{display:flex;flex-direction:column;align-items:center;gap:12px}
+.setup-skill-row{display:flex;gap:10px;justify-content:center}
+.status-msg{color:#555;font-size:.7rem;text-align:center;letter-spacing:.08em}
 
 /* -- Game screen -- */
-#screenGame{justify-content:stretch;padding:0;gap:0;height:100vh;max-height:100vh;overflow:hidden}
-canvas{flex:1;width:100%;min-height:0;display:block;touch-action:none}
-.action-panel{background:#000;padding:10px 16px;width:100%;flex-shrink:0;display:flex;align-items:center;justify-content:center;min-height:60px}
+/* Centered cluster: bounded board on top, HUD below (timer, badges, ready). */
+#screenGame{justify-content:center;align-items:center;gap:20px;padding:24px;height:100vh}
+#boardWrap{width:min(86vw,440px);aspect-ratio:1/1;flex:none}
+#board{width:100%;height:100%;display:block;touch-action:none}
+.game-hud{display:flex;flex-direction:column;align-items:center;gap:14px}
+.timer-big{font-size:3rem;font-weight:300;color:#333;font-variant-numeric:tabular-nums;line-height:1;letter-spacing:.06em}
+.timer-big.urgent{color:#fff}
+.badges-row{display:flex;align-items:flex-end;justify-content:center;gap:24px}
+.badge{display:flex;flex-direction:column;align-items:center;gap:4px}
+.badge .pts{display:flex;flex-direction:column-reverse;gap:2px;justify-content:flex-end;min-height:0}
+.badge .pts .bar{width:24px;height:4px;border-radius:1px}
+.badge.p1 .pts .bar{background:#4ecdc4}
+.badge.p2 .pts .bar{background:#e85d75}
+.badge .crown{font-size:18px;line-height:1}
+.badge.p1 .crown{color:#4ecdc4}
+.badge.p2 .crown{color:#e85d75}
+.badge .ribbon{font-size:.55rem;letter-spacing:.12em;color:#999;border:.5px solid #444;border-radius:2px;padding:2px 8px;text-transform:uppercase}
+.diff-hex{position:relative;width:44px;height:50px;display:grid;place-items:center}
+.diff-hex svg{position:absolute;inset:0;width:100%;height:100%}
+.diff-hex span{position:relative;font-size:.85rem;color:#aaa;font-weight:400}
 .action-btns{display:flex;gap:8px;justify-content:center}
 
 /* -- Overlays -- */
@@ -134,11 +151,26 @@ canvas{flex:1;width:100%;min-height:0;display:block;touch-action:none}
 
 <!-- GAME -->
 <div id="screenGame" class="screen">
-  <canvas id="board"></canvas>
-  <div class="action-panel">
-    <div class="action-btns">
-      <button class="pushable" id="btnGameReady"><span class="shadow"></span><span class="edge"></span><span class="front">READY</span></button>
+  <div id="boardWrap"><canvas id="board"></canvas></div>
+  <div class="game-hud">
+    <div class="timer-big" id="gameTimer">60</div>
+    <div class="badges-row">
+      <div class="badge p1">
+        <div class="pts" id="p1pts"></div>
+        <div class="crown">&#9819;</div>
+        <div class="ribbon">P1</div>
+      </div>
+      <div class="diff-hex">
+        <svg viewBox="0 0 44 50" preserveAspectRatio="none"><polygon points="22,1 43,13 43,37 22,49 1,37 1,13" fill="none" stroke="#555" stroke-width="1"/></svg>
+        <span id="scoreDiff">0</span>
+      </div>
+      <div class="badge p2">
+        <div class="pts" id="p2pts"></div>
+        <div class="crown">&#9819;</div>
+        <div class="ribbon">P2</div>
+      </div>
     </div>
+    <button class="pushable" id="btnGameReady"><span class="shadow"></span><span class="edge"></span><span class="front">READY</span></button>
   </div>
 </div>
 
@@ -323,42 +355,7 @@ function drawSmallHex(c, cx, cy, size){
 function render(){
   ctx.clearRect(0,0,cw,ch);
 
-  // -- HUD: centered in the gap ABOVE the board --
-  const boardTopY = centerY - HEX * 3.5; // top edge of board
-  const boardBotY = centerY + HEX * 3.5; // bottom edge of board
-  const gapAbove = boardTopY;             // pixels from screen top to board top
-  const gapBelow = ch - boardBotY;        // pixels from board bottom to screen bottom
-  const hudAboveY = gapAbove / 2;         // center of the gap above
-  const hudBelowY = boardBotY + gapBelow / 2; // center of the gap below
-
-  // Timer (centered above board)
-  const timerText = G.timerConfig > 0 ? String(G.timerVal) : '∞';
-  const timerFontSize = Math.min(gapAbove * 0.5, 120);
-  ctx.font = `300 ${timerFontSize}px Inter,sans-serif`;
-  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-  ctx.fillStyle = (G.timerConfig > 0 && G.timerVal <= 3) ? '#fff' : '#333';
-  ctx.fillText(timerText, centerX, hudAboveY - timerFontSize * 0.15);
-
-  // Score difference hex (below timer, still above board)
-  const diffHexY = hudAboveY + timerFontSize * 0.45;
-  const diffHexSize = Math.min(gapAbove * 0.1, 14);
-  drawSmallHex(ctx, centerX, diffHexY, diffHexSize);
-  ctx.strokeStyle = '#444'; ctx.lineWidth = 0.5; ctx.stroke();
-  const scoreDiff = G.scores[1] - G.scores[2];
-  ctx.font = `400 ${diffHexSize * 0.85}px Inter,sans-serif`;
-  ctx.fillStyle = '#666';
-  ctx.fillText(scoreDiff > 0 ? '+'+scoreDiff : String(scoreDiff), centerX, diffHexY);
-
-  // Scores: P1 left, P2 right (above board, flanking timer)
-  const scoreFontSize = Math.min(gapAbove * 0.18, 28);
-  ctx.font = `400 ${scoreFontSize}px Inter,sans-serif`;
-  ctx.textBaseline = 'middle';
-  ctx.fillStyle = P1_COLOR; ctx.textAlign = 'left';
-  ctx.fillText(String(G.scores[1]), 20, hudAboveY);
-  ctx.fillStyle = P2_COLOR; ctx.textAlign = 'right';
-  ctx.fillText(String(G.scores[2]), cw - 20, hudAboveY);
-
-  // -- Board --
+  // -- Board (HUD is rendered as HTML below the canvas, not here) --
   // Hex thickness (white bottom layer)
   for(const h of boardHexes){const s=hexToScreen(h.q,h.r);drawHexShape(ctx,s.x,s.y+HEX_THICK,HEX-2);ctx.fillStyle='#fff';ctx.fill()}
   // Hex top face (black with thin white contour)
@@ -435,7 +432,7 @@ function setupMainCanvas(){
 }
 function resizeCanvas(){
   dpr=window.devicePixelRatio||1;const rect=canvas.getBoundingClientRect();cw=rect.width;ch=rect.height;canvas.width=cw*dpr;canvas.height=ch*dpr;ctx.setTransform(dpr,0,0,dpr,0,0);centerX=cw/2;
-  const maxH=ch/(5*1.5+0.5)*0.5;const maxW=cw/(5*S3*HEX_ASPECT)*0.75;HEX=Math.min(maxH,maxW,46);HEX=Math.max(HEX,18);
+  const maxH=ch/8*0.98;const maxW=cw/(5*S3*HEX_ASPECT)*0.98;HEX=Math.min(maxH,maxW,60);HEX=Math.max(HEX,16);
   centerY=getBoardCenterY();
 }
 
@@ -682,12 +679,32 @@ function startPlanning(){
   G.units.forEach(u=>{u.shielded=false});showScreen('screenGame');setupMainCanvas();
   const rb=document.getElementById('btnGameReady');rb.disabled=false;rb.classList.remove('is-ready');rb.querySelector('.front').textContent='READY';
   checkAutoSelectDead();
+  updateGameHUD();
   if(G.timerConfig>0){
-    startTimer(G.timerConfig,()=>{},()=>submitPlan());
+    startTimer(G.timerConfig,()=>updateGameHUD(),()=>submitPlan());
   }else{
     G.timerVal=0;
   }
   rb.onclick=()=>submitPlan();
+}
+
+// Update the HTML HUD (timer, point bars, score-diff hex)
+function updateGameHUD(){
+  const t=document.getElementById('gameTimer');
+  if(t){
+    t.textContent = G.timerConfig>0 ? String(G.timerVal) : '∞';
+    t.classList.toggle('urgent', G.timerConfig>0 && G.timerVal<=3);
+  }
+  buildPts('p1pts',G.scores[1]);
+  buildPts('p2pts',G.scores[2]);
+  const sd=document.getElementById('scoreDiff');
+  if(sd)sd.textContent=String(Math.abs(G.scores[1]-G.scores[2]));
+}
+function buildPts(id,score){
+  const el=document.getElementById(id);
+  if(!el)return;
+  el.innerHTML='';
+  for(let i=0;i<score;i++){const b=document.createElement('div');b.className='bar';el.appendChild(b);}
 }
 function submitPlan(){
   if(G.myReady)return;G.myReady=true;stopTimer();
@@ -708,7 +725,7 @@ async function runResolution(){
     G.units.forEach(u=>{const o=oldPos[u.id];if(o&&(o.q!==u.q||o.r!==u.r))startUnitAnim(u,o.q,o.r)});
     await sleep(ANIM_MS+200);
   }
-  G.turnNum++;calcScores();
+  G.turnNum++;calcScores();updateGameHUD();
   if(checkWin()){G.phase='gameover';showScreen('screenGameover');document.getElementById('winText').textContent=G.winner===G.myPlayer?'YOU WIN':'YOU LOSE';document.getElementById('finalScore').textContent=`P1 ${G.scores[1]}  --  P2 ${G.scores[2]}`;document.getElementById('btnRematch').onclick=()=>{send({type:'rematch'});startSetup()}}
   else startPlanning();
 }
