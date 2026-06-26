@@ -74,13 +74,14 @@ button:disabled{background:#333;color:#666;cursor:default;transform:none}
 
 /* ── Game canvas & action panel ── */
 canvas{flex:1;width:100%;display:block;touch-action:none}
-.action-panel{background:#0a0a0a;border-top:1px solid #222;padding:8px 16px;width:100%;flex-shrink:0}
+.action-panel{background:#0a0a0a;border-top:1px solid #222;padding:10px 16px;width:100%;flex-shrink:0;min-height:80px}
 .action-queue{display:flex;gap:6px;margin-bottom:8px;min-height:36px;flex-wrap:wrap}
 .action-tag{background:#222;padding:6px 12px;border-radius:6px;font-size:.8em;display:flex;align-items:center;gap:6px;cursor:pointer;color:#ccc}
 .action-tag:hover{background:#333}
 .action-tag .num{color:#fff;font-weight:700}
 .action-btns{display:flex;gap:8px;justify-content:center}
-.action-btns button{padding:8px 16px;font-size:.85em}
+.action-btns button{padding:10px 20px;font-size:1em}
+#btnGameReady{padding:12px 32px;font-size:1.1em}
 
 /* ── Overlays ── */
 .overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.8);align-items:center;justify-content:center;z-index:10;display:none}
@@ -192,7 +193,12 @@ canvas{flex:1;width:100%;display:block;touch-action:none}
 </div>
 
 <!-- ════════ OVERLAYS ════════ -->
-<div id="overlay" class="overlay"><div class="overlay-text" id="overlayText"></div></div>
+<div id="overlay" class="overlay">
+  <div style="text-align:center">
+    <div class="overlay-text" id="overlayText"></div>
+    <button id="btnOverlayMenu" style="display:none;margin-top:20px">Back to Menu</button>
+  </div>
+</div>
 <div id="skillHint" class="skill-target-hint"></div>
 <button id="btnBackToMenu" style="display:none">Menu</button>
 
@@ -957,7 +963,7 @@ function joinGame(roomId){
 
 function wireConn(){
   conn.on('data',onMessage);
-  conn.on('close',()=>showOverlay('Opponent disconnected'));
+  conn.on('close',()=>showOverlay('Opponent disconnected', true));
 }
 function send(data){ if(conn&&conn.open) conn.send(data); }
 
@@ -989,8 +995,17 @@ function onMessage(data){
 // HELPERS
 // ──────────────────────────────────────────────
 function sleep(ms){ return new Promise(r=>setTimeout(r,ms)); }
-function showOverlay(msg){ document.getElementById('overlayText').textContent=msg; document.getElementById('overlay').classList.add('visible'); }
-function hideOverlay(){ document.getElementById('overlay').classList.remove('visible'); }
+function showOverlay(msg, showMenu){
+  document.getElementById('overlayText').textContent=msg;
+  const menuBtn = document.getElementById('btnOverlayMenu');
+  menuBtn.style.display = showMenu ? '' : 'none';
+  menuBtn.onclick = backToMenu;
+  document.getElementById('overlay').classList.add('visible');
+}
+function hideOverlay(){
+  document.getElementById('overlay').classList.remove('visible');
+  document.getElementById('btnOverlayMenu').style.display='none';
+}
 
 // ──────────────────────────────────────────────
 // INIT
