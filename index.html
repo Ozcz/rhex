@@ -15,10 +15,10 @@ h1{font-size:2.8em;color:#fff;letter-spacing:.25em;font-weight:300}
 h2{color:#fff;font-weight:300;letter-spacing:.15em;font-size:1.4em}
 .version{color:#555;font-size:.75em;letter-spacing:.2em;text-transform:uppercase;margin-bottom:32px}
 
-/* ── 3D Pushable buttons ── */
+/* -- 3D Pushable buttons -- */
 .pushable{position:relative;border:none;background:transparent;padding:0;cursor:pointer;outline-offset:4px;transition:filter 150ms;font-family:inherit}
 .pushable .shadow{position:absolute;top:0;left:0;width:100%;height:100%;border-radius:3px;background:transparent;will-change:transform;transform:translateY(2px);transition:transform 400ms cubic-bezier(.3,.7,.4,1)}
-.pushable .edge{position:absolute;top:1px;left:0;width:100%;height:100%;border-radius:3px;background:#fff}
+.pushable .edge{position:absolute;top:0;left:0;width:100%;height:100%;border-radius:3px;background:#fff}
 .pushable .front{display:block;position:relative;padding:14px 40px;border-radius:3px;font-size:.85rem;font-weight:400;letter-spacing:.12em;text-transform:uppercase;color:#fff;background:#000;border:.5px solid #fff;will-change:transform;transform:translateY(-4px);transition:transform 150ms cubic-bezier(.3,.7,.4,1)}
 .pushable:hover{filter:brightness(130%)}
 .pushable:hover .front{transform:translateY(-6px);transition:transform 150ms cubic-bezier(.3,.7,.4,1.5)}
@@ -27,7 +27,7 @@ h2{color:#fff;font-weight:300;letter-spacing:.15em;font-size:1.4em}
 .pushable:active .shadow{transform:translateY(1px);transition:transform 150ms}
 .pushable:focus:not(:focus-visible){outline:none}
 .pushable:disabled{opacity:.25;cursor:default}
-.pushable:disabled .front,.pushable:disabled:hover .front,.pushable:disabled:active .front{transform:translateY(-2px)}
+.pushable:disabled .front,.pushable:disabled:hover .front,.pushable:disabled:active .front{transform:translateY(-4px)}
 .pushable:disabled:hover{filter:none}
 .pushable.subtle .edge{background:#666}
 .pushable.subtle .front{color:#666;border-color:#666}
@@ -37,14 +37,16 @@ h2{color:#fff;font-weight:300;letter-spacing:.15em;font-size:1.4em}
 .pushable.is-ready .edge{background:#444}
 #btnGameReady .front{padding:14px 44px;font-size:.9rem}
 
-/* ── Lobby ── */
+/* -- Lobby -- */
 .lobby-row{display:flex;gap:10px;align-items:stretch}
 .link-box{display:flex;gap:8px;width:100%;max-width:420px}
 .link-box input{flex:1;background:#000;border:.5px solid #444;color:#fff;padding:12px 14px;border-radius:3px;font-size:.8em;font-family:inherit;letter-spacing:.05em}
 .waiting{color:#555;margin-top:8px;animation:pulse 1.5s infinite;font-size:.8em;letter-spacing:.1em}
 @keyframes pulse{0%,100%{opacity:.4}50%{opacity:1}}
+#shareArea{max-width:420px;width:100%}
+#btnTimer .front{min-width:80px;text-align:center}
 
-/* ── Modals ── */
+/* -- Modals -- */
 .modal{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.92);z-index:20;display:none;align-items:center;justify-content:center;padding:20px}
 .modal.visible{display:flex}
 .modal-content{background:#000;border:.5px solid #333;border-radius:4px;padding:28px;max-width:460px;width:100%;max-height:80vh;overflow-y:auto;color:#888;font-size:.82em;line-height:1.7}
@@ -55,43 +57,35 @@ h2{color:#fff;font-weight:300;letter-spacing:.15em;font-size:1.4em}
 .modal-content .skill-list li{margin:3px 0}
 .settings-list{display:flex;flex-direction:column;gap:12px;margin-top:16px}
 
-/* ── Setup ── */
+/* -- Setup (board-based skill selection) -- */
 .setup-header{text-align:center;margin-bottom:16px}
-.unit-cards{display:flex;gap:14px;flex-wrap:wrap;justify-content:center;margin:14px 0}
-.unit-card{background:#000;border:.5px solid #333;border-radius:4px;padding:18px;width:160px;text-align:center}
-.unit-card .unit-label{font-weight:400;margin-bottom:12px;font-size:.9em;color:#fff;letter-spacing:.1em;text-transform:uppercase}
-.skill-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px}
-.skill-btn{padding:8px 4px;font-size:.7em;border-radius:3px;background:#000;color:#666;border:.5px solid #333;cursor:pointer;font-family:inherit;letter-spacing:.05em;transition:all .15s}
-.skill-btn:hover{border-color:#888;color:#888}
-.skill-btn.selected{border-color:#fff;color:#fff}
+#screenSetup{justify-content:stretch;padding:0;gap:0;height:100vh;max-height:100vh;overflow:hidden}
+#screenSetup .setup-header{padding:20px 20px 10px}
+#setupCanvasWrap{flex:1;width:100%;min-height:0;display:flex;align-items:center;justify-content:center}
+#setupCanvas{width:100%;height:100%;display:block;touch-action:none}
+.setup-skill-row{display:flex;gap:10px;justify-content:center;padding:10px 16px}
+.setup-bottom{background:#000;padding:6px 16px 10px;width:100%;flex-shrink:0;display:flex;flex-direction:column;align-items:center;gap:10px}
 .status-msg{color:#555;font-size:.78em;text-align:center;letter-spacing:.08em}
 
-/* ── Game screen ── */
+/* -- Game screen -- */
 #screenGame{justify-content:stretch;padding:0;gap:0;height:100vh;max-height:100vh;overflow:hidden}
-.game-hud{display:flex;align-items:center;justify-content:space-between;padding:12px 20px;background:#000;width:100%;flex-shrink:0}
-.score{font-size:1.1em;font-weight:400;min-width:50px;letter-spacing:.08em}
-.score.p1{color:#4ecdc4;text-align:left}
-.score.p2{color:#e85d75;text-align:right}
-.phase-info{text-align:center}
-.game-timer{font-size:8em;color:#444;font-weight:300;font-variant-numeric:tabular-nums;letter-spacing:.1em;padding-top:2px;line-height:1}
-.game-timer.urgent{color:#fff}
 canvas{flex:1;width:100%;min-height:0;display:block;touch-action:none}
-.action-panel{background:#000;padding:6px 16px 10px;width:100%;flex-shrink:0}
+.action-panel{background:#000;padding:16px 16px 14px;width:100%;flex-shrink:0}
 .action-btns{display:flex;gap:8px;justify-content:center}
 
-/* ── Overlays ── */
+/* -- Overlays -- */
 .overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.85);align-items:center;justify-content:center;z-index:10;display:none}
 .overlay.visible{display:flex}
 .overlay-text{font-size:1.4em;font-weight:300;color:#fff;text-align:center;letter-spacing:.15em;animation:pulse 1.5s infinite}
 .skill-target-hint{position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:#111;border:.5px solid #333;padding:10px 20px;border-radius:3px;color:#888;font-size:.78em;z-index:5;display:none;letter-spacing:.06em;text-transform:uppercase}
 .skill-target-hint.visible{display:block}
 
-/* ── Game over ── */
+/* -- Game over -- */
 #screenGameover{gap:24px}
 #screenGameover h2{font-size:2em;color:#fff;letter-spacing:.2em}
 #finalScore{font-size:1em;color:#555;letter-spacing:.1em}
 
-/* ── Settings cog ── */
+/* -- Settings cog -- */
 #settingsCog{position:absolute;top:16px;right:16px;z-index:5;cursor:pointer;user-select:none;display:none;font-size:28px;line-height:1}
 #settingsCog .cog-shadow{position:absolute;top:3px;left:0;color:#fff}
 #settingsCog .cog-front{position:relative;color:#888}
@@ -99,7 +93,7 @@ canvas{flex:1;width:100%;min-height:0;display:block;touch-action:none}
 </head>
 <body>
 
-<!-- ════════ LOBBY ════════ -->
+<!-- LOBBY -->
 <div id="lobby" class="screen active">
   <h1>RHEX</h1>
   <p class="version">PROTOTYPE V1.0</p>
@@ -109,37 +103,36 @@ canvas{flex:1;width:100%;min-height:0;display:block;touch-action:none}
   <button class="pushable subtle" id="btnInstructions"><span class="shadow"></span><span class="edge"></span><span class="front">HOW TO PLAY</span></button>
   <div id="shareArea" style="display:none">
     <div style="margin-bottom:10px">
-      <button class="pushable compact" id="btnTimer"><span class="shadow"></span><span class="edge"></span><span class="front">60S</span></button>
+      <button class="pushable compact" id="btnTimer" style="width:100%"><span class="shadow"></span><span class="edge"></span><span class="front">60S</span></button>
     </div>
-    <p style="color:#555;font-size:.8em;letter-spacing:.08em">Share this link with a friend:</p>
+    <p style="color:#555;font-size:.8em;letter-spacing:.08em">SHARE THIS LINK WITH A FRIEND:</p>
     <div class="link-box">
       <input id="shareLink" readonly>
-      <button class="pushable compact" id="btnCopy"><span class="shadow"></span><span class="edge"></span><span class="front">COPY</span></button>
+      <button class="pushable compact" id="btnCopy"><span class="shadow"></span><span class="edge"></span><span class="front">&#128203;</span></button>
     </div>
     <p class="waiting">WAITING FOR OPPONENT</p>
+    <div style="margin-top:14px;text-align:center">
+      <button class="pushable subtle compact" id="btnBackToMenuShare"><span class="shadow"></span><span class="edge"></span><span class="front">BACK TO MENU</span></button>
+    </div>
   </div>
   <div id="joinArea" style="display:none">
     <p class="waiting">CONNECTING TO GAME</p>
   </div>
 </div>
 
-<!-- ════════ SETUP ════════ -->
+<!-- SETUP (board-based skill selection) -->
 <div id="screenSetup" class="screen">
-  <div class="setup-header"><h2>CHOOSE SKILLS</h2></div>
-  <div class="unit-cards" id="unitCards"></div>
-  <p class="status-msg" id="setupStatus">PICK A SKILL FOR EACH UNIT, THEN PRESS READY</p>
-  <button class="pushable" id="btnSetupReady"><span class="shadow"></span><span class="edge"></span><span class="front">READY</span></button>
+  <div class="setup-header"><h2>ASSIGN SKILLS</h2></div>
+  <div id="setupCanvasWrap"><canvas id="setupCanvas"></canvas></div>
+  <div class="setup-skill-row" id="setupSkillRow"></div>
+  <div class="setup-bottom">
+    <p class="status-msg" id="setupStatus">TAP A UNIT, THEN TAP A SKILL BELOW</p>
+    <button class="pushable" id="btnSetupReady"><span class="shadow"></span><span class="edge"></span><span class="front">READY</span></button>
+  </div>
 </div>
 
-<!-- ════════ GAME ════════ -->
+<!-- GAME -->
 <div id="screenGame" class="screen">
-  <div class="game-hud">
-    <div class="score p1"><span id="scoreP1">0</span></div>
-    <div class="phase-info">
-      <div class="game-timer" id="gameTimer">60</div>
-    </div>
-    <div class="score p2"><span id="scoreP2">0</span></div>
-  </div>
   <canvas id="board"></canvas>
   <div class="action-panel">
     <div class="action-btns">
@@ -148,7 +141,7 @@ canvas{flex:1;width:100%;min-height:0;display:block;touch-action:none}
   </div>
 </div>
 
-<!-- ════════ GAME OVER ════════ -->
+<!-- GAME OVER -->
 <div id="screenGameover" class="screen">
   <h2 id="winText"></h2>
   <div id="finalScore"></div>
@@ -156,7 +149,7 @@ canvas{flex:1;width:100%;min-height:0;display:block;touch-action:none}
   <button class="pushable subtle" id="btnBackToMenuEnd"><span class="shadow"></span><span class="edge"></span><span class="front">BACK TO MENU</span></button>
 </div>
 
-<!-- ════════ INSTRUCTIONS ════════ -->
+<!-- INSTRUCTIONS -->
 <div id="instructions" class="modal">
   <div class="modal-content">
     <h3>Goal</h3>
@@ -176,18 +169,15 @@ canvas{flex:1;width:100%;min-height:0;display:block;touch-action:none}
     <p>Move onto an enemy = kill (unless shielded). Dead units respawn on your spawn row next turn.</p>
     <h3>Skills</h3>
     <ul class="skill-list">
-      <li><b>Shield</b> — block one attack this turn</li>
-      <li><b>Bow</b> — fire an arrow in a straight line (2 hex range). Hold, then tap direction.</li>
-      <li><b>Hoe</b> — +1 point while staying on this tile (stacks each turn)</li>
-      <li><b>Trap</b> — place a hidden trap on an adjacent hex (once per game). Hold, then tap hex.</li>
-      <li><b>Cloak</b> — become invisible, but score 0 points while hidden</li>
-      <li><b>Decoy</b> — swap positions with an ally (once per game). Hold, then tap ally.</li>
+      <li><b>Shield</b> -- block one attack this turn</li>
+      <li><b>Bow</b> -- fire an arrow in a straight line (2 hex range). Hold, then tap direction.</li>
+      <li><b>Cloak</b> -- become invisible, but score 0 points while hidden</li>
     </ul>
     <br><button class="pushable compact" id="btnCloseInstructions"><span class="shadow"></span><span class="edge"></span><span class="front">GOT IT</span></button>
   </div>
 </div>
 
-<!-- ════════ SETTINGS MODAL ════════ -->
+<!-- SETTINGS MODAL -->
 <div id="settingsModal" class="modal">
   <div class="modal-content">
     <h3>Options</h3>
@@ -198,7 +188,7 @@ canvas{flex:1;width:100%;min-height:0;display:block;touch-action:none}
   </div>
 </div>
 
-<!-- ════════ OVERLAYS ════════ -->
+<!-- OVERLAYS -->
 <div id="overlay" class="overlay">
   <div style="text-align:center">
     <div class="overlay-text" id="overlayText"></div>
@@ -226,16 +216,13 @@ const P1_COLOR = '#4ecdc4';
 const P2_COLOR = '#e85d75';
 const ROW_VALS = [0,1,2,3,6];
 const LONG_PRESS_MS = 400;
-const TIMER_OPTIONS = [30,60,90,120,0]; // 0 = infinite
-let timerIdx = 1; // default 60s
+const TIMER_OPTIONS = [30,60,90,120,0];
+let timerIdx = 1;
 
 const SKILL_DEF = {
   shield:{name:'Shield',icon:'SH',targeted:false,once:false},
   bow:{name:'Bow',icon:'BW',targeted:'direction',once:false},
-  hoe:{name:'Hoe',icon:'HO',targeted:false,once:false},
-  trap:{name:'Trap',icon:'TR',targeted:'adjacent',once:true},
-  cloak:{name:'Cloak',icon:'CL',targeted:false,once:false},
-  decoy:{name:'Decoy',icon:'DC',targeted:'ally',once:true}
+  cloak:{name:'Cloak',icon:'CL',targeted:false,once:false}
 };
 const DIRS=[{q:1,r:0},{q:-1,r:0},{q:0,r:1},{q:0,r:-1},{q:1,r:-1},{q:-1,r:1}];
 const ROMAN=['I','II','III'];
@@ -257,16 +244,20 @@ for(let r=-RAD;r<=RAD;r++)for(let q=-RAD;q<=RAD;q++)if(onBoard(q,r))boardHexes.p
 function spawnRow(p){return p===1?-2:2}
 function spawnHexes(p){return boardHexes.filter(h=>h.r===spawnRow(p))}
 
-let G={phase:'lobby',myPlayer:0,units:[],traps:[],scores:[0,0,0],myActions:{},unitOrder:[],opActions:null,myReady:false,opReady:false,selectedUnit:null,actionMode:null,timerVal:0,timerH:null,timerConfig:60,winner:0,turnNum:0};
+let G={phase:'lobby',myPlayer:0,units:[],scores:[0,0,0],myActions:{},unitOrder:[],opActions:null,myReady:false,opReady:false,selectedUnit:null,actionMode:null,timerVal:0,timerH:null,timerConfig:60,winner:0,turnNum:0};
 let peer=null,conn=null;
 let canvas,ctx,cw,ch,dpr,centerX,centerY;
 let drag={unit:null,startHex:null,startPos:null,currentPos:null,targetHex:null,moved:false,holdTimer:null,isHold:false,tapHex:null};
 
+// Setup screen state
+let setupCanvas,setupCtx,setupCW,setupCH,setupDpr,setupCenterX,setupCenterY,setupHEX=40;
+let setupSelectedUnit=null;
+
 function initUnits(){
   G.units=[];
-  spawnHexes(1).forEach((h,i)=>G.units.push({id:'p1-'+i,player:1,q:h.q,r:h.r,skill:null,dead:false,cloaked:false,hoeBonus:0,shielded:false,trapUsed:false,decoyUsed:false}));
-  spawnHexes(2).forEach((h,i)=>G.units.push({id:'p2-'+i,player:2,q:h.q,r:h.r,skill:null,dead:false,cloaked:false,hoeBonus:0,shielded:false,trapUsed:false,decoyUsed:false}));
-  G.traps=[];G.scores=[0,0,0];G.turnNum=0;G.winner=0;
+  spawnHexes(1).forEach((h,i)=>G.units.push({id:'p1-'+i,player:1,q:h.q,r:h.r,skill:null,dead:false,cloaked:false,shielded:false}));
+  spawnHexes(2).forEach((h,i)=>G.units.push({id:'p2-'+i,player:2,q:h.q,r:h.r,skill:null,dead:false,cloaked:false,shielded:false}));
+  G.scores=[0,0,0];G.turnNum=0;G.winner=0;
 }
 function myUnits(){return G.units.filter(u=>u.player===G.myPlayer)}
 function opUnits(){return G.units.filter(u=>u.player!==G.myPlayer)}
@@ -294,11 +285,11 @@ function backToMenu(){
 function hexToScreen(q,r){const raw=hexToPixelRaw(q,r);const flip=G.myPlayer===1?-1:1;return{x:centerX+raw.x*flip,y:centerY+raw.y*flip}}
 function screenToHex(sx,sy){const flip=G.myPlayer===1?-1:1;return pixelToHexRaw((sx-centerX)*flip,(sy-centerY)*flip)}
 
-function drawHexShape(cx,cy,size){
+function drawHexShape(c,cx,cy,size){
   const w=size*HEX_ASPECT,h=size;
-  ctx.beginPath();
-  for(let i=0;i<6;i++){const a=Math.PI/3*i-Math.PI/6;ctx.lineTo(cx+w*Math.cos(a),cy+h*Math.sin(a));}
-  ctx.closePath();
+  c.beginPath();
+  for(let i=0;i<6;i++){const a=Math.PI/3*i-Math.PI/6;c.lineTo(cx+w*Math.cos(a),cy+h*Math.sin(a));}
+  c.closePath();
 }
 
 const ANIM_MS=500;
@@ -309,7 +300,6 @@ function getUnitScreenPos(unit){
   return hexToScreen(unit.q,unit.r);
 }
 
-// Build ordered actions array from unitOrder + myActions map
 function buildOrderedActions(){
   const result=[];
   for(const uid of G.unitOrder){
@@ -319,34 +309,100 @@ function buildOrderedActions(){
   return result;
 }
 
+// Compute board center Y offset so HUD elements fit above
+function getBoardCenterY(){
+  // Reserve space above the board for timer + score diff hex
+  const timerSpace = HEX * 3.2;
+  const totalBoardH = HEX * 5 * 1.5 + HEX;
+  const availH = ch - 0; // full canvas height
+  // Center the board vertically in the remaining space below the HUD area
+  return timerSpace + (availH - timerSpace) / 2;
+}
+
+function drawSmallHex(c, cx, cy, size){
+  const w = size * HEX_ASPECT, h = size;
+  c.beginPath();
+  for(let i=0;i<6;i++){const a=Math.PI/3*i-Math.PI/6;c.lineTo(cx+w*Math.cos(a),cy+h*Math.sin(a));}
+  c.closePath();
+}
+
 function render(){
   ctx.clearRect(0,0,cw,ch);
-  // Hex thickness (white bottom layer) — same size as top hex, shifted down
-  for(const h of boardHexes){const s=hexToScreen(h.q,h.r);drawHexShape(s.x,s.y+HEX_THICK,HEX-2);ctx.fillStyle='#fff';ctx.fill()}
-  // Hex top face (black with thin white contour)
-  for(const h of boardHexes){const s=hexToScreen(h.q,h.r);drawHexShape(s.x,s.y,HEX-2);ctx.fillStyle='#000';ctx.fill();ctx.strokeStyle='#fff';ctx.lineWidth=.5;ctx.stroke()}
 
-  // Highlights — only during active drag
+  // -- Draw HUD on canvas --
+
+  // Timer
+  const timerText = G.timerConfig > 0 ? String(G.timerVal) : '∞';
+  const timerFontSize = HEX * 2.5;
+  const timerY = HEX * 1.8;
+  ctx.font = `300 ${timerFontSize}px Inter,sans-serif`;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillStyle = (G.timerConfig > 0 && G.timerVal <= 3) ? '#fff' : '#444';
+  ctx.fillText(timerText, centerX, timerY);
+
+  // Score difference hex (between timer and board)
+  const scoreDiff = G.scores[1] - G.scores[2];
+  const diffHexY = timerY + timerFontSize * 0.55 + HEX * 0.5;
+  const diffHexSize = HEX * 0.55;
+  drawSmallHex(ctx, centerX, diffHexY, diffHexSize);
+  ctx.strokeStyle = '#555';
+  ctx.lineWidth = 0.5;
+  ctx.stroke();
+  ctx.font = `400 ${diffHexSize * 0.9}px Inter,sans-serif`;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillStyle = '#888';
+  const diffStr = scoreDiff > 0 ? '+' + scoreDiff : String(scoreDiff);
+  ctx.fillText(diffStr, centerX, diffHexY);
+
+  // Score P1 (left of board)
+  const boardLeftX = centerX - HEX * S3 * HEX_ASPECT * 2.5;
+  const scoreY = centerY;
+  ctx.font = `400 ${HEX * 1.6}px Inter,sans-serif`;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillStyle = P1_COLOR;
+  ctx.fillText(String(G.scores[1]), Math.max(boardLeftX, HEX * 1.2), scoreY);
+
+  // Score P2 (right of board)
+  const boardRightX = centerX + HEX * S3 * HEX_ASPECT * 2.5;
+  ctx.fillStyle = P2_COLOR;
+  ctx.fillText(String(G.scores[2]), Math.min(boardRightX, cw - HEX * 1.2), scoreY);
+
+  // -- Board --
+  // Hex thickness (white bottom layer)
+  for(const h of boardHexes){const s=hexToScreen(h.q,h.r);drawHexShape(ctx,s.x,s.y+HEX_THICK,HEX-2);ctx.fillStyle='#fff';ctx.fill()}
+  // Hex top face (black with thin white contour)
+  for(const h of boardHexes){const s=hexToScreen(h.q,h.r);drawHexShape(ctx,s.x,s.y,HEX-2);ctx.fillStyle='#000';ctx.fill();ctx.strokeStyle='#fff';ctx.lineWidth=.5;ctx.stroke()}
+
+  // Highlights -- during active drag (include current hex as valid stay)
   if(drag.unit&&drag.moved&&G.phase==='planning'){
-    for(const n of neighbors(drag.unit.q,drag.unit.r)){const s=hexToScreen(n.q,n.r);drawHexShape(s.x,s.y,HEX-4);const isT=drag.targetHex&&drag.targetHex.q===n.q&&drag.targetHex.r===n.r;ctx.fillStyle=isT?'rgba(255,255,255,0.12)':'rgba(255,255,255,0.04)';ctx.fill()}
+    // Current hex (stay option)
+    const stayS=hexToScreen(drag.unit.q,drag.unit.r);
+    const isStayTarget=drag.targetHex&&drag.targetHex.q===drag.unit.q&&drag.targetHex.r===drag.unit.r;
+    drawHexShape(ctx,stayS.x,stayS.y,HEX-4);
+    ctx.fillStyle=isStayTarget?'rgba(255,255,255,0.25)':'rgba(255,255,255,0.15)';
+    ctx.fill();
+    // Neighbor hexes
+    for(const n of neighbors(drag.unit.q,drag.unit.r)){
+      const s=hexToScreen(n.q,n.r);
+      drawHexShape(ctx,s.x,s.y,HEX-4);
+      const isT=drag.targetHex&&drag.targetHex.q===n.q&&drag.targetHex.r===n.r;
+      ctx.fillStyle=isT?'rgba(255,255,255,0.25)':'rgba(255,255,255,0.15)';
+      ctx.fill();
+    }
   }
   // Skill targeting highlights
-  if(G.actionMode==='skill-direction'){const u=unitById(G.selectedUnit);if(u)for(const d of DIRS)for(let s=1;s<=2;s++){const t={q:u.q+d.q*s,r:u.r+d.r*s};if(onBoard(t.q,t.r)){const sc=hexToScreen(t.q,t.r);drawHexShape(sc.x,sc.y,HEX-4);ctx.fillStyle='rgba(255,255,255,0.08)';ctx.fill()}}}
-  if(G.actionMode==='skill-adjacent'){const u=unitById(G.selectedUnit);if(u)for(const n of neighbors(u.q,u.r))if(!unitAt(n.q,n.r)){const s=hexToScreen(n.q,n.r);drawHexShape(s.x,s.y,HEX-4);ctx.fillStyle='rgba(255,255,255,0.08)';ctx.fill()}}
-  if(G.actionMode==='skill-ally'){for(const a of myUnits())if(!a.dead&&a.id!==G.selectedUnit){const s=hexToScreen(a.q,a.r);drawHexShape(s.x,s.y,HEX-4);ctx.fillStyle='rgba(255,255,255,0.08)';ctx.fill()}}
-  if(G.phase==='planning'&&G.actionMode==='respawn'){for(const h of spawnHexes(G.myPlayer))if(!unitAt(h.q,h.r)){const s=hexToScreen(h.q,h.r);drawHexShape(s.x,s.y,HEX-4);ctx.fillStyle='rgba(255,255,255,0.08)';ctx.fill()}}
-
-  // Traps
-  for(const t of G.traps)if(t.player===G.myPlayer){const s=hexToScreen(t.q,t.r);ctx.fillStyle='rgba(255,255,255,0.15)';ctx.font=`${HEX*0.25}px Inter,sans-serif`;ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('x',s.x,s.y)}
+  if(G.actionMode==='skill-direction'){const u=unitById(G.selectedUnit);if(u)for(const d of DIRS)for(let s=1;s<=2;s++){const t={q:u.q+d.q*s,r:u.r+d.r*s};if(onBoard(t.q,t.r)){const sc=hexToScreen(t.q,t.r);drawHexShape(ctx,sc.x,sc.y,HEX-4);ctx.fillStyle='rgba(255,255,255,0.15)';ctx.fill()}}}
+  if(G.phase==='planning'&&G.actionMode==='respawn'){for(const h of spawnHexes(G.myPlayer))if(!unitAt(h.q,h.r)){const s=hexToScreen(h.q,h.r);drawHexShape(ctx,s.x,s.y,HEX-4);ctx.fillStyle='rgba(255,255,255,0.15)';ctx.fill()}}
 
   // Action lines
   if(G.phase==='planning'){
     const orderedActions=buildOrderedActions();
     for(const a of orderedActions){const u=unitById(a.unitId);if(!u||u.dead)continue;const from=hexToScreen(u.q,u.r);let to=null;
     if(a.type==='move')to=hexToScreen(a.target.q,a.target.r);
-    else if(a.type==='skill'&&a.target)to=hexToScreen(a.target.q,a.target.r);
     else if(a.type==='skill'&&a.direction){const end=onBoard(u.q+a.direction.q*2,u.r+a.direction.r*2)?2:1;to=hexToScreen(u.q+a.direction.q*end,u.r+a.direction.r*end)}
-    else if(a.type==='skill'&&a.targetId){const ally=unitById(a.targetId);if(ally)to=hexToScreen(ally.q,ally.r)}
     else if(a.type==='respawn'&&a.target)to=hexToScreen(a.target.q,a.target.r);
     if(to){ctx.beginPath();ctx.moveTo(from.x,from.y);ctx.lineTo(to.x,to.y);ctx.strokeStyle='rgba(255,255,255,0.2)';ctx.lineWidth=.5;ctx.setLineDash([4,4]);ctx.stroke();ctx.setLineDash([]);ctx.beginPath();ctx.arc(to.x,to.y,2,0,Math.PI*2);ctx.fillStyle='rgba(255,255,255,0.4)';ctx.fill()}}
   }
@@ -365,8 +421,7 @@ function render(){
     ctx.strokeStyle='#fff';ctx.lineWidth=.5;ctx.stroke();
     if(u.shielded){ctx.beginPath();ctx.arc(s.x,s.y,r+3,0,Math.PI*2);ctx.strokeStyle='#fff';ctx.lineWidth=.5;ctx.setLineDash([3,3]);ctx.stroke();ctx.setLineDash([])}
     if(u.skill){ctx.fillStyle='#000';ctx.font=`600 ${HEX*0.18}px Inter,sans-serif`;ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(SKILL_DEF[u.skill].icon,s.x,s.y)}
-    if(u.hoeBonus>0){ctx.fillStyle='#fff';ctx.font=`${HEX*0.15}px Inter,sans-serif`;ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('+'+u.hoeBonus,s.x,s.y-r-4)}
-    // Priority order — large roman numeral centered on unit
+    // Priority order -- large roman numeral centered on unit
     if(u.player===G.myPlayer&&!isDragging){
       const orderIdx=G.unitOrder.indexOf(u.id);
       if(orderIdx>=0){
@@ -385,17 +440,18 @@ function render(){
 }
 
 let canvasReady=false;
-function setupCanvas(){
+function setupMainCanvas(){
   canvas=document.getElementById('board');ctx=canvas.getContext('2d');resizeCanvas();
   if(!canvasReady){window.addEventListener('resize',resizeCanvas);canvas.addEventListener('pointerdown',onPointerDown);canvas.addEventListener('pointermove',onPointerMove);canvas.addEventListener('pointerup',onPointerUp);canvas.addEventListener('pointercancel',onPointerUp);canvasReady=true}
   requestAnimationFrame(render);
 }
 function resizeCanvas(){
-  dpr=window.devicePixelRatio||1;const rect=canvas.getBoundingClientRect();cw=rect.width;ch=rect.height;canvas.width=cw*dpr;canvas.height=ch*dpr;ctx.setTransform(dpr,0,0,dpr,0,0);centerX=cw/2;centerY=ch/2;
-  const maxH=ch/(5*1.5+0.5)*0.8;const maxW=cw/(5*S3*HEX_ASPECT)*0.8;HEX=Math.min(maxH,maxW,50);HEX=Math.max(HEX,20);
+  dpr=window.devicePixelRatio||1;const rect=canvas.getBoundingClientRect();cw=rect.width;ch=rect.height;canvas.width=cw*dpr;canvas.height=ch*dpr;ctx.setTransform(dpr,0,0,dpr,0,0);centerX=cw/2;
+  const maxH=ch/(5*1.5+0.5)*0.65;const maxW=cw/(5*S3*HEX_ASPECT)*0.8;HEX=Math.min(maxH,maxW,50);HEX=Math.max(HEX,20);
+  centerY=getBoardCenterY();
 }
 
-// ── INPUT ──
+// -- INPUT --
 function addToOrder(unitId){
   G.unitOrder=G.unitOrder.filter(id=>id!==unitId);
   G.unitOrder.unshift(unitId);
@@ -415,20 +471,24 @@ function onPointerDown(e){
 function onPointerMove(e){
   if(!drag.unit)return;e.preventDefault();const rect=canvas.getBoundingClientRect();const sx=e.clientX-rect.left,sy=e.clientY-rect.top;drag.currentPos={x:sx,y:sy};
   const dx=sx-drag.startPos.x,dy=sy-drag.startPos.y;if(Math.sqrt(dx*dx+dy*dy)>12&&!drag.moved){drag.moved=true;clearTimeout(drag.holdTimer);drag.isHold=false}
-  if(drag.moved){const hex=screenToHex(sx,sy);const nb=neighbors(drag.unit.q,drag.unit.r);const valid=nb.find(n=>n.q===hex.q&&n.r===hex.r);if(valid){drag.targetHex=hex}else{drag.targetHex=null}}
+  if(drag.moved){const hex=screenToHex(sx,sy);const nb=neighbors(drag.unit.q,drag.unit.r);const isCurrent=hex.q===drag.unit.q&&hex.r===drag.unit.r;const valid=nb.find(n=>n.q===hex.q&&n.r===hex.r);if(valid||isCurrent){drag.targetHex=hex}else{drag.targetHex=null}}
 }
 function onPointerUp(e){
   e.preventDefault();clearTimeout(drag.holdTimer);
   if(drag.unit){
     if(drag.isHold&&!drag.moved)toggleSkill(drag.unit);
     else if(drag.moved&&drag.targetHex){
-      // Drag to assign move — also auto-add to order
-      addToOrder(drag.unit.id);
-      assignAction({unitId:drag.unit.id,type:'move',target:{q:drag.targetHex.q,r:drag.targetHex.r}});
+      // If target is the current hex, treat as "stay" (remove any move action)
+      if(drag.targetHex.q===drag.unit.q&&drag.targetHex.r===drag.unit.r){
+        delete G.myActions[drag.unit.id];
+        addToOrder(drag.unit.id);
+      } else {
+        addToOrder(drag.unit.id);
+        assignAction({unitId:drag.unit.id,type:'move',target:{q:drag.targetHex.q,r:drag.targetHex.r}});
+      }
       G.selectedUnit=null;G.actionMode=null;
     }
     else if(!drag.moved&&!drag.isHold){
-      // Tap: cycle priority order (no move mode, no highlights)
       addToOrder(drag.unit.id);
       G.selectedUnit=null;G.actionMode=null;
     }
@@ -440,23 +500,18 @@ function toggleSkill(unit){
   if(existing&&existing.type==='skill'){delete G.myActions[unit.id];G.selectedUnit=null;G.actionMode=null;hideHint();return}
   if(existing)delete G.myActions[unit.id];
   if(!unit.skill)return;const sd=SKILL_DEF[unit.skill];
-  if(sd.once&&((unit.skill==='trap'&&unit.trapUsed)||(unit.skill==='decoy'&&unit.decoyUsed)))return;
-  if(sd.targeted){G.selectedUnit=unit.id;G.actionMode=sd.targeted==='direction'?'skill-direction':sd.targeted==='adjacent'?'skill-adjacent':'skill-ally';showHint({'skill-direction':'TAP A HEX IN THE ARROW DIRECTION','skill-adjacent':'TAP AN ADJACENT HEX FOR TRAP','skill-ally':'TAP AN ALLY TO SWAP WITH'}[G.actionMode])}
+  if(sd.targeted){G.selectedUnit=unit.id;G.actionMode='skill-direction';showHint('TAP A HEX IN THE ARROW DIRECTION')}
   else{addToOrder(unit.id);assignAction({unitId:unit.id,type:'skill',skill:unit.skill})}
 }
 function handleTargetTap(hex){
   const u=unitById(G.selectedUnit);if(!u)return;
   if(G.actionMode==='skill-direction'){const dir=DIRS.find(d=>{for(let s=1;s<=2;s++)if(u.q+d.q*s===hex.q&&u.r+d.r*s===hex.r)return true;return false});if(dir){addToOrder(u.id);assignAction({unitId:u.id,type:'skill',skill:'bow',direction:dir});G.actionMode=null;G.selectedUnit=null;hideHint()}}
-  else if(G.actionMode==='skill-adjacent'){if(neighbors(u.q,u.r).some(n=>n.q===hex.q&&n.r===hex.r)&&!unitAt(hex.q,hex.r)){addToOrder(u.id);assignAction({unitId:u.id,type:'skill',skill:'trap',target:{q:hex.q,r:hex.r}});G.actionMode=null;G.selectedUnit=null;hideHint()}}
-  else if(G.actionMode==='skill-ally'){const clicked=unitAt(hex.q,hex.r);if(clicked&&clicked.player===G.myPlayer&&!clicked.dead&&clicked.id!==G.selectedUnit){addToOrder(u.id);assignAction({unitId:G.selectedUnit,type:'skill',skill:'decoy',targetId:clicked.id});G.actionMode=null;G.selectedUnit=null;hideHint()}}
 }
 
 function assignAction(action){
   G.myActions[action.unitId]=action;
-  // Cap total actions at 3
   const actionUids=Object.keys(G.myActions);
   if(actionUids.length>3){
-    // Remove the action for the unit with lowest priority (highest index or not in order)
     let toRemove=null;
     for(const uid of actionUids){
       const idx=G.unitOrder.indexOf(uid);
@@ -474,13 +529,157 @@ function hideHint(){document.getElementById('skillHint').classList.remove('visib
 function startTimer(sec,onTick,onDone){clearInterval(G.timerH);G.timerVal=sec;onTick(G.timerVal);G.timerH=setInterval(()=>{G.timerVal--;onTick(G.timerVal);if(G.timerVal<=0){clearInterval(G.timerH);onDone()}},1000)}
 function stopTimer(){clearInterval(G.timerH)}
 
-function startSetup(){G.phase='setup';G.myReady=false;G.opReady=false;initUnits();showScreen('screenSetup');buildSetupUI()}
+// == SETUP SCREEN (board-based skill selection) ==
+
+function hexToScreenSetup(q,r){
+  const raw=hexToPixelRaw(q,r);
+  const flip=G.myPlayer===1?-1:1;
+  return{x:setupCenterX+raw.x*flip,y:setupCenterY+raw.y*flip};
+}
+function screenToHexSetup(sx,sy){
+  const flip=G.myPlayer===1?-1:1;
+  const oldHEX=HEX;HEX=setupHEX;
+  const result=pixelToHexRaw((sx-setupCenterX)*flip,(sy-setupCenterY)*flip);
+  HEX=oldHEX;
+  return result;
+}
+
+function renderSetup(){
+  if(!setupCtx)return;
+  const c=setupCtx;
+  c.clearRect(0,0,setupCW,setupCH);
+
+  const savedHEX=HEX;
+  HEX=setupHEX;
+
+  // Draw board hexes (thickness layer)
+  for(const h of boardHexes){
+    const s=hexToScreenSetup(h.q,h.r);
+    drawHexShape(c,s.x,s.y+HEX_THICK,HEX-2);
+    c.fillStyle='#fff';c.fill();
+  }
+  // Draw board hexes (top face)
+  for(const h of boardHexes){
+    const s=hexToScreenSetup(h.q,h.r);
+    drawHexShape(c,s.x,s.y,HEX-2);
+    c.fillStyle='#000';c.fill();
+    c.strokeStyle='#fff';c.lineWidth=.5;c.stroke();
+  }
+
+  // Draw only my units
+  for(const u of myUnits()){
+    if(u.dead)continue;
+    const s=hexToScreenSetup(u.q,u.r);
+    const col=u.player===1?P1_COLOR:P2_COLOR;
+    const r=HEX*0.28;
+    c.beginPath();c.arc(s.x,s.y,r,0,Math.PI*2);
+    c.fillStyle=col;c.fill();
+    c.strokeStyle='#fff';c.lineWidth=.5;c.stroke();
+
+    // Selection ring
+    if(setupSelectedUnit===u.id){
+      c.beginPath();c.arc(s.x,s.y,r+5,0,Math.PI*2);
+      c.strokeStyle='#fff';c.lineWidth=1;c.stroke();
+    }
+
+    // Skill icon
+    if(u.skill){
+      c.fillStyle='#000';
+      c.font=`600 ${HEX*0.18}px Inter,sans-serif`;
+      c.textAlign='center';c.textBaseline='middle';
+      c.fillText(SKILL_DEF[u.skill].icon,s.x,s.y);
+    }
+  }
+
+  HEX=savedHEX;
+  requestAnimationFrame(renderSetup);
+}
+
+let setupCanvasReady=false;
+function initSetupCanvas(){
+  setupCanvas=document.getElementById('setupCanvas');
+  setupCtx=setupCanvas.getContext('2d');
+  resizeSetupCanvas();
+  if(!setupCanvasReady){
+    window.addEventListener('resize',resizeSetupCanvas);
+    setupCanvas.addEventListener('pointerdown',onSetupPointerDown);
+    setupCanvasReady=true;
+  }
+  requestAnimationFrame(renderSetup);
+}
+function resizeSetupCanvas(){
+  if(!setupCanvas)return;
+  setupDpr=window.devicePixelRatio||1;
+  const rect=setupCanvas.getBoundingClientRect();
+  setupCW=rect.width;setupCH=rect.height;
+  setupCanvas.width=setupCW*setupDpr;setupCanvas.height=setupCH*setupDpr;
+  setupCtx.setTransform(setupDpr,0,0,setupDpr,0,0);
+  setupCenterX=setupCW/2;setupCenterY=setupCH/2;
+  const maxH=setupCH/(5*1.5+0.5)*0.8;const maxW=setupCW/(5*S3*HEX_ASPECT)*0.8;
+  setupHEX=Math.min(maxH,maxW,50);setupHEX=Math.max(setupHEX,20);
+}
+function onSetupPointerDown(e){
+  e.preventDefault();
+  const rect=setupCanvas.getBoundingClientRect();
+  const sx=e.clientX-rect.left,sy=e.clientY-rect.top;
+  const savedHEX=HEX;HEX=setupHEX;
+  const hex=screenToHexSetup(sx,sy);
+  HEX=savedHEX;
+  if(!onBoard(hex.q,hex.r))return;
+  const unit=myUnits().find(u=>!u.dead&&u.q===hex.q&&u.r===hex.r);
+  if(unit){
+    setupSelectedUnit=unit.id;
+    updateSetupSkillButtons();
+    document.getElementById('setupStatus').textContent='TAP A SKILL BELOW TO ASSIGN IT';
+  }
+}
+
 function buildSetupUI(){
-  const container=document.getElementById('unitCards');container.innerHTML='';
-  myUnits().forEach((u,i)=>{const card=document.createElement('div');card.className='unit-card';let html=`<div class="unit-label">UNIT ${i+1}</div><div class="skill-grid">`;for(const[key,sd]of Object.entries(SKILL_DEF))html+=`<button class="skill-btn" data-uid="${u.id}" data-skill="${key}">${sd.icon} ${sd.name}</button>`;html+='</div>';card.innerHTML=html;container.appendChild(card)});
-  container.addEventListener('click',e=>{const btn=e.target.closest('.skill-btn');if(!btn)return;const u=unitById(btn.dataset.uid);if(!u)return;u.skill=btn.dataset.skill;container.querySelectorAll(`.skill-btn[data-uid="${btn.dataset.uid}"]`).forEach(b=>b.classList.remove('selected'));btn.classList.add('selected')});
-  const rb=document.getElementById('btnSetupReady');rb.onclick=()=>finishSetup();rb.disabled=false;rb.classList.remove('is-ready');rb.querySelector('.front').textContent='READY';
-  document.getElementById('setupStatus').textContent='PICK A SKILL FOR EACH UNIT, THEN PRESS READY';
+  setupSelectedUnit=null;
+  // Set default skill to shield for all units
+  myUnits().forEach(u=>{u.skill='shield'});
+
+  // Build skill buttons
+  const row=document.getElementById('setupSkillRow');
+  row.innerHTML='';
+  for(const[key,sd]of Object.entries(SKILL_DEF)){
+    const btn=document.createElement('button');
+    btn.className='pushable compact';
+    btn.dataset.skill=key;
+    btn.innerHTML=`<span class="shadow"></span><span class="edge"></span><span class="front">${sd.icon} ${sd.name.toUpperCase()}</span>`;
+    btn.addEventListener('click',()=>{
+      if(!setupSelectedUnit)return;
+      const u=unitById(setupSelectedUnit);
+      if(!u)return;
+      u.skill=key;
+      updateSetupSkillButtons();
+    });
+    row.appendChild(btn);
+  }
+  updateSetupSkillButtons();
+
+  const rb=document.getElementById('btnSetupReady');
+  rb.onclick=()=>finishSetup();rb.disabled=false;rb.classList.remove('is-ready');rb.querySelector('.front').textContent='READY';
+  document.getElementById('setupStatus').textContent='TAP A UNIT, THEN TAP A SKILL BELOW';
+}
+
+function updateSetupSkillButtons(){
+  const row=document.getElementById('setupSkillRow');
+  const btns=row.querySelectorAll('.pushable');
+  const selUnit=setupSelectedUnit?unitById(setupSelectedUnit):null;
+  btns.forEach(btn=>{
+    const sk=btn.dataset.skill;
+    const isActive=selUnit&&selUnit.skill===sk;
+    if(isActive){
+      btn.classList.remove('subtle');
+    } else {
+      btn.classList.add('subtle');
+    }
+  });
+}
+
+function startSetup(){G.phase='setup';G.myReady=false;G.opReady=false;initUnits();showScreen('screenSetup');buildSetupUI();
+  setTimeout(()=>initSetupCanvas(),50);
 }
 function finishSetup(){
   if(G.myReady)return;myUnits().forEach(u=>{if(!u.skill)u.skill='shield'});G.myReady=true;
@@ -490,22 +689,15 @@ function finishSetup(){
   if(G.opReady)startPlanning();
 }
 
-function updateTimerDisplay(v){
-  const el=document.getElementById('gameTimer');
-  el.textContent=v;
-  el.classList.toggle('urgent',v<=3);
-}
-
 function startPlanning(){
   G.phase='planning';G.myReady=false;G.opReady=false;G.myActions={};G.unitOrder=[];G.opActions=null;G.selectedUnit=null;G.actionMode=null;
-  G.units.forEach(u=>{u.shielded=false});showScreen('screenGame');setupCanvas();
+  G.units.forEach(u=>{u.shielded=false});showScreen('screenGame');setupMainCanvas();
   const rb=document.getElementById('btnGameReady');rb.disabled=false;rb.classList.remove('is-ready');rb.querySelector('.front').textContent='READY';
-  updateScoreDisplay();checkAutoSelectDead();
+  checkAutoSelectDead();
   if(G.timerConfig>0){
-    startTimer(G.timerConfig,updateTimerDisplay,()=>submitPlan());
+    startTimer(G.timerConfig,()=>{},()=>submitPlan());
   }else{
-    document.getElementById('gameTimer').textContent='∞';
-    document.getElementById('gameTimer').classList.remove('urgent');
+    G.timerVal=0;
   }
   rb.onclick=()=>submitPlan();
 }
@@ -528,24 +720,22 @@ async function runResolution(){
     G.units.forEach(u=>{const o=oldPos[u.id];if(o&&(o.q!==u.q||o.r!==u.r))startUnitAnim(u,o.q,o.r)});
     await sleep(ANIM_MS+200);
   }
-  G.turnNum++;calcScores();updateScoreDisplay();
-  if(checkWin()){G.phase='gameover';showScreen('screenGameover');document.getElementById('winText').textContent=G.winner===G.myPlayer?'YOU WIN':'YOU LOSE';document.getElementById('finalScore').textContent=`P1 ${G.scores[1]}  —  P2 ${G.scores[2]}`;document.getElementById('btnRematch').onclick=()=>{send({type:'rematch'});startSetup()}}
+  G.turnNum++;calcScores();
+  if(checkWin()){G.phase='gameover';showScreen('screenGameover');document.getElementById('winText').textContent=G.winner===G.myPlayer?'YOU WIN':'YOU LOSE';document.getElementById('finalScore').textContent=`P1 ${G.scores[1]}  --  P2 ${G.scores[2]}`;document.getElementById('btnRematch').onclick=()=>{send({type:'rematch'});startSetup()}}
   else startPlanning();
 }
 function resolveStep(a1,a2){
   const actions=[];if(a1)actions.push({...a1,player:1});if(a2)actions.push({...a2,player:2});
-  for(const a of actions)if(a.type==='respawn'){const u=unitById(a.unitId);if(u&&u.dead&&!unitAt(a.target.q,a.target.r)){u.dead=false;u.q=a.target.q;u.r=a.target.r;u.cloaked=false;u.hoeBonus=0;u.shielded=false}}
+  for(const a of actions)if(a.type==='respawn'){const u=unitById(a.unitId);if(u&&u.dead&&!unitAt(a.target.q,a.target.r)){u.dead=false;u.q=a.target.q;u.r=a.target.r;u.cloaked=false;u.shielded=false}}
   const movers=actions.filter(a=>a.type==='move');const skillers=actions.filter(a=>a.type==='skill');
   for(const a of skillers)if(a.skill==='shield'){const u=unitById(a.unitId);if(u&&!u.dead)u.shielded=true}
   if(movers.length===2){const t0=movers[0].target,t1=movers[1].target;const u0=unitById(movers[0].unitId),u1=unitById(movers[1].unitId);if(t0.q===t1.q&&t0.r===t1.r){}else if(u0&&u1&&t0.q===u1.q&&t0.r===u1.r&&t1.q===u0.q&&t1.r===u0.r){}else{for(const m of movers)processMove(m)}}else{for(const m of movers)processMove(m)}
-  for(const a of skillers){const u=unitById(a.unitId);if(!u||u.dead)continue;switch(a.skill){case'bow':resolveBow(u,a.direction);break;case'hoe':u.hoeBonus++;break;case'trap':if(!u.trapUsed){G.traps.push({q:a.target.q,r:a.target.r,player:u.player});u.trapUsed=true}break;case'cloak':u.cloaked=!u.cloaked;if(u.cloaked)u.hoeBonus=0;break;case'decoy':if(!u.decoyUsed){const ally=unitById(a.targetId);if(ally&&!ally.dead){const tq=u.q,tr=u.r;u.q=ally.q;u.r=ally.r;ally.q=tq;ally.r=tr;u.decoyUsed=true}}break}}
-  for(const u of G.units){if(u.dead)continue;const trap=G.traps.find(t=>t.q===u.q&&t.r===u.r&&t.player!==u.player);if(trap){if(u.shielded)u.shielded=false;else{u.dead=true;u.hoeBonus=0;u.cloaked=false}G.traps=G.traps.filter(t=>t!==trap)}}
+  for(const a of skillers){const u=unitById(a.unitId);if(!u||u.dead)continue;switch(a.skill){case'bow':resolveBow(u,a.direction);break;case'cloak':u.cloaked=!u.cloaked;break}}
 }
-function processMove(m){const u=unitById(m.unitId);if(!u||u.dead)return;const enemy=unitAt(m.target.q,m.target.r);if(enemy&&enemy.player!==u.player){if(enemy.shielded){enemy.shielded=false;return}enemy.dead=true;enemy.hoeBonus=0;enemy.cloaked=false}else if(enemy&&enemy.player===u.player)return;u.q=m.target.q;u.r=m.target.r;u.cloaked=false;if(u.hoeBonus>0)u.hoeBonus=0}
-function resolveBow(u,dir){if(!dir)return;for(let s=1;s<=2;s++){const tq=u.q+dir.q*s,tr=u.r+dir.r*s;if(!onBoard(tq,tr))break;const target=unitAt(tq,tr);if(target&&target.player!==u.player){if(target.shielded)target.shielded=false;else{target.dead=true;target.hoeBonus=0;target.cloaked=false}return}if(target&&target.player===u.player)return}}
+function processMove(m){const u=unitById(m.unitId);if(!u||u.dead)return;const enemy=unitAt(m.target.q,m.target.r);if(enemy&&enemy.player!==u.player){if(enemy.shielded){enemy.shielded=false;return}enemy.dead=true;enemy.cloaked=false}else if(enemy&&enemy.player===u.player)return;u.q=m.target.q;u.r=m.target.r;u.cloaked=false}
+function resolveBow(u,dir){if(!dir)return;for(let s=1;s<=2;s++){const tq=u.q+dir.q*s,tr=u.r+dir.r*s;if(!onBoard(tq,tr))break;const target=unitAt(tq,tr);if(target&&target.player!==u.player){if(target.shielded)target.shielded=false;else{target.dead=true;target.cloaked=false}return}if(target&&target.player===u.player)return}}
 
-function calcScores(){G.scores[1]=0;G.scores[2]=0;for(const u of G.units){if(u.dead||u.cloaked)continue;G.scores[u.player]+=pointVal(u.r,u.player)+u.hoeBonus}}
-function updateScoreDisplay(){document.getElementById('scoreP1').textContent=G.scores[1];document.getElementById('scoreP2').textContent=G.scores[2]}
+function calcScores(){G.scores[1]=0;G.scores[2]=0;for(const u of G.units){if(u.dead||u.cloaked)continue;G.scores[u.player]+=pointVal(u.r,u.player)}}
 function checkWin(){if(Math.abs(G.scores[1]-G.scores[2])>=WIN_DIFF){G.winner=G.scores[1]>G.scores[2]?1:2;return true}return false}
 
 function createGame(){
@@ -593,6 +783,7 @@ function init(){
   document.getElementById('btnCopy').onclick=()=>{navigator.clipboard.writeText(document.getElementById('shareLink').value).catch(()=>{})};
   document.getElementById('btnInstructions').onclick=()=>document.getElementById('instructions').classList.add('visible');
   document.getElementById('btnCloseInstructions').onclick=()=>document.getElementById('instructions').classList.remove('visible');
+  document.getElementById('btnBackToMenuShare').onclick=backToMenu;
 
   // Settings cog
   document.getElementById('settingsCog').onclick=()=>document.getElementById('settingsModal').classList.add('visible');
