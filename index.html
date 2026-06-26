@@ -6,21 +6,31 @@
 <title>Rhex</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
 <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
+
+<!-- ===================== CSS ===================== -->
 <style>
+/* -- Reset & base -- */
 *{margin:0;padding:0;box-sizing:border-box}
-body{background:#000;color:#e8e8e8;font-family:'Inter',system-ui,sans-serif;font-weight:300;letter-spacing:.04em;height:100vh;overflow:hidden;display:flex;flex-direction:column}
+body{
+  background:#000;color:#e8e8e8;
+  font-family:'Inter',system-ui,sans-serif;font-weight:300;
+  letter-spacing:.04em;height:100vh;overflow:hidden;
+  display:flex;flex-direction:column;
+}
+
+/* -- Screen containers -- */
 .screen{display:none;flex:1;flex-direction:column;align-items:center;justify-content:center;padding:20px;gap:20px}
 .screen.active{display:flex}
 h1{font-size:2.8em;color:#fff;letter-spacing:.25em;font-weight:300}
 h2{color:#fff;font-weight:300;letter-spacing:.15em;font-size:1.4em}
 .version{color:#555;font-size:.75em;letter-spacing:.2em;text-transform:uppercase;margin-bottom:32px}
 
-/* -- App Title (fixed at top, shared across screens) -- */
+/* -- App title (fixed top center, hidden during game) -- */
 #appTitle{position:absolute;top:60px;left:50%;transform:translateX(-50%);z-index:6;text-align:center;pointer-events:none}
 #appTitle h1{margin:0}
 #appTitle .version{margin-bottom:0}
 
-/* -- 3D Pushable buttons -- */
+/* -- 3D pushable buttons -- */
 .pushable{position:relative;border:none;background:transparent;padding:0;cursor:pointer;outline-offset:4px;transition:filter 150ms;font-family:inherit}
 .pushable .shadow{position:absolute;top:0;left:0;width:100%;height:100%;border-radius:3px;background:transparent;will-change:transform;transform:translateY(2px);transition:transform 400ms cubic-bezier(.3,.7,.4,1)}
 .pushable .edge{position:absolute;top:0;left:0;width:100%;height:100%;border-radius:3px;background:#fff}
@@ -41,6 +51,8 @@ h2{color:#fff;font-weight:300;letter-spacing:.15em;font-size:1.4em}
 .pushable.is-ready .front{color:#444;border-color:#444}
 .pushable.is-ready .edge{background:#444}
 #btnGameReady .front{padding:14px 44px;font-size:.9rem}
+.pushable.full-width{width:100%}
+.pushable.full-width .front{width:100%;text-align:center}
 
 /* -- Lobby -- */
 .lobby-row{display:flex;gap:10px;align-items:stretch}
@@ -50,7 +62,11 @@ h2{color:#fff;font-weight:300;letter-spacing:.15em;font-size:1.4em}
 @keyframes pulse{0%,100%{opacity:.4}50%{opacity:1}}
 #shareArea{max-width:420px;width:100%}
 #btnTimer .front{min-width:80px;text-align:center}
-.share-top-row{display:flex;gap:8px;align-items:stretch;margin-bottom:10px}
+/* Share bottom row: timer + back buttons under the URL bar */
+.share-bottom-row{display:flex;gap:8px;align-items:stretch;margin-top:16px}
+.share-bottom-row .pushable{flex:1}
+.share-bottom-row .pushable .front{width:100%;text-align:center}
+.share-label{color:#555;font-size:.8em;letter-spacing:.08em;margin-bottom:10px}
 
 /* -- Modals -- */
 .modal{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.92);z-index:20;display:none;align-items:center;justify-content:center;padding:20px}
@@ -63,8 +79,7 @@ h2{color:#fff;font-weight:300;letter-spacing:.15em;font-size:1.4em}
 .modal-content .skill-list li{margin:3px 0}
 .settings-list{display:flex;flex-direction:column;gap:12px;margin-top:16px}
 
-/* -- Setup (board-based skill selection) -- */
-/* Centered cluster: title + bounded board + skills/ready. Nothing glued to edges. */
+/* -- Setup screen (board-based skill selection) -- */
 #screenSetup{justify-content:center;align-items:center;gap:22px;padding:24px;height:100vh}
 .setup-header{text-align:center}
 .setup-header h2{font-size:1.2em}
@@ -75,7 +90,6 @@ h2{color:#fff;font-weight:300;letter-spacing:.15em;font-size:1.4em}
 .status-msg{color:#555;font-size:.7rem;text-align:center;letter-spacing:.08em}
 
 /* -- Game screen -- */
-/* Centered cluster: bounded board on top, HUD below (timer, badges, ready). */
 #screenGame{justify-content:center;align-items:center;gap:20px;padding:24px;height:100vh}
 #boardWrap{width:min(86vw,680px);aspect-ratio:1/1;flex:none}
 #board{width:100%;height:100%;display:block;touch-action:none}
@@ -109,44 +123,55 @@ h2{color:#fff;font-weight:300;letter-spacing:.15em;font-size:1.4em}
 #screenGameover h2{font-size:2em;color:#fff;letter-spacing:.2em}
 #finalScore{font-size:1em;color:#555;letter-spacing:.1em}
 
-/* -- Settings cog -- */
-#settingsCog{position:absolute;top:16px;right:16px;z-index:5;cursor:pointer;user-select:none;display:none;font-size:28px;line-height:1}
-#settingsCog .cog-shadow{position:absolute;top:3px;left:0;color:#fff}
-#settingsCog .cog-front{position:relative;color:#888}
+/* -- Hamburger menu button (top-right, squared) -- */
+#hamburgerBtn{
+  position:absolute;top:16px;right:16px;z-index:5;
+  cursor:pointer;user-select:none;display:none;
+  width:44px;height:44px;
+  background:#000;border:1px solid #fff;border-radius:3px;
+  color:#fff;font-size:22px;line-height:44px;text-align:center;
+}
 </style>
 </head>
 <body>
 
-<!-- APP TITLE (shared, positioned absolutely at top center) -->
+<!-- ===================== HTML ===================== -->
+
+<!-- App title (shared, absolutely positioned at top center) -->
 <div id="appTitle">
   <h1>RHEX</h1>
   <p class="version">PROTOTYPE V1.0</p>
 </div>
 
-<!-- LOBBY -->
+<!-- LOBBY SCREEN -->
 <div id="lobby" class="screen active">
   <div class="lobby-row">
     <button class="pushable" id="btnCreate"><span class="shadow"></span><span class="edge"></span><span class="front">CREATE GAME</span></button>
   </div>
   <button class="pushable subtle" id="btnInstructions"><span class="shadow"></span><span class="edge"></span><span class="front">HOW TO PLAY</span></button>
+
+  <!-- Share area (shown after creating game) -->
   <div id="shareArea" style="display:none">
-    <div class="share-top-row">
-      <button class="pushable subtle compact" id="btnBackToMenuShare"><span class="shadow"></span><span class="edge"></span><span class="front">BACK TO MENU</span></button>
-      <button class="pushable compact" id="btnTimer"><span class="shadow"></span><span class="edge"></span><span class="front">60</span></button>
-    </div>
-    <p style="color:#555;font-size:.8em;letter-spacing:.08em">SHARE THIS LINK WITH A FRIEND:</p>
+    <p class="share-label">SHARE THIS LINK WITH A FRIEND:</p>
     <div class="link-box">
       <input id="shareLink" readonly>
       <button class="pushable compact" id="btnCopy"><span class="shadow"></span><span class="edge"></span><span class="front">&#128203;</span></button>
     </div>
+    <!-- Timer + Back buttons UNDER the URL bar, full width -->
+    <div class="share-bottom-row">
+      <button class="pushable compact" id="btnTimer"><span class="shadow"></span><span class="edge"></span><span class="front">60</span></button>
+      <button class="pushable subtle compact" id="btnBackToMenuShare"><span class="shadow"></span><span class="edge"></span><span class="front">BACK TO MENU</span></button>
+    </div>
     <p class="waiting">WAITING FOR OPPONENT</p>
   </div>
+
+  <!-- Join area (shown when joining via URL) -->
   <div id="joinArea" style="display:none">
     <p class="waiting">CONNECTING TO GAME</p>
   </div>
 </div>
 
-<!-- SETUP (board-based skill selection) -->
+<!-- SETUP SCREEN (board-based skill selection) -->
 <div id="screenSetup" class="screen">
   <div class="setup-header"><h2>ASSIGN SKILLS</h2></div>
   <div id="setupCanvasWrap"><canvas id="setupCanvas"></canvas></div>
@@ -157,7 +182,7 @@ h2{color:#fff;font-weight:300;letter-spacing:.15em;font-size:1.4em}
   </div>
 </div>
 
-<!-- GAME -->
+<!-- GAME SCREEN -->
 <div id="screenGame" class="screen">
   <div id="boardWrap"><canvas id="board"></canvas></div>
   <div class="game-hud">
@@ -178,11 +203,14 @@ h2{color:#fff;font-weight:300;letter-spacing:.15em;font-size:1.4em}
         <div class="ribbon">P2</div>
       </div>
     </div>
-    <button class="pushable" id="btnGameReady"><span class="shadow"></span><span class="edge"></span><span class="front">READY</span></button>
+    <div class="action-btns">
+      <button class="pushable compact subtle" id="btnReset"><span class="shadow"></span><span class="edge"></span><span class="front">RESET</span></button>
+      <button class="pushable" id="btnGameReady"><span class="shadow"></span><span class="edge"></span><span class="front">READY</span></button>
+    </div>
   </div>
 </div>
 
-<!-- GAME OVER -->
+<!-- GAME OVER SCREEN -->
 <div id="screenGameover" class="screen">
   <h2 id="winText"></h2>
   <div id="finalScore"></div>
@@ -190,7 +218,7 @@ h2{color:#fff;font-weight:300;letter-spacing:.15em;font-size:1.4em}
   <button class="pushable subtle" id="btnBackToMenuEnd"><span class="shadow"></span><span class="edge"></span><span class="front">BACK TO MENU</span></button>
 </div>
 
-<!-- INSTRUCTIONS -->
+<!-- INSTRUCTIONS MODAL -->
 <div id="instructions" class="modal">
   <div class="modal-content">
     <h3>Goal</h3>
@@ -198,21 +226,21 @@ h2{color:#fff;font-weight:300;letter-spacing:.15em;font-size:1.4em}
     <h3>Board</h3>
     <p>19 hexes in a big hexagon (3-4-5-4-3 rows). Your spawn row = 0 pts. Moving forward: 1, 2, 3 pts. Enemy spawn row = 6 pts.</p>
     <h3>Controls</h3>
-    <p><b>Tap</b> a unit to set its priority order (I, II, III). Tap again to move it to top priority.</p>
+    <p><b>Tap</b> a unit to lock its priority order (I, II, III).</p>
     <p><b>Drag</b> a unit to an adjacent hex to assign a move.</p>
     <p><b>Press &amp; hold</b> a unit to activate its skill. Hold again to cancel.</p>
     <p>A unit can move <b>or</b> use its skill, not both.</p>
     <h3>Turns</h3>
     <p><b>Setup:</b> Pick 1 skill per unit (duplicates allowed). Press Ready.</p>
-    <p><b>Planning:</b> Assign actions and set priority order. Tap units to set order, drag to move.</p>
-    <p><b>Resolution:</b> Both players resolve simultaneously. Moves beat skills. Equal priority = cancel.</p>
+    <p><b>Planning:</b> Tap units to lock priority order, drag to move, hold for skill. Press Ready.</p>
+    <p><b>Resolution:</b> Both players resolve simultaneously by priority step. Moves beat skills. Equal priority = cancel.</p>
     <h3>Combat</h3>
     <p>Move onto an enemy = kill (unless shielded). Dead units respawn on your spawn row next turn.</p>
     <h3>Skills</h3>
     <ul class="skill-list">
-      <li><b>Shield</b> -- block one attack this turn</li>
-      <li><b>Bow</b> -- fire an arrow in a straight line (2 hex range). Hold, then drag direction.</li>
-      <li><b>Cloak</b> -- become invisible, but score 0 points while hidden</li>
+      <li><b>Shield</b> -- block one attack this turn. Shows an expanding shield effect when activated.</li>
+      <li><b>Bow</b> -- fire an arrow at a target hex. Arrow travels 1 hex per priority step. Hidden from opponent. Shield blocks arrow.</li>
+      <li><b>Cloak</b> -- become invisible, but score 0 points while hidden.</li>
     </ul>
     <br><button class="pushable compact" id="btnCloseInstructions"><span class="shadow"></span><span class="edge"></span><span class="front">GOT IT</span></button>
   </div>
@@ -240,761 +268,1754 @@ h2{color:#fff;font-weight:300;letter-spacing:.15em;font-size:1.4em}
 </div>
 <div id="skillHint" class="skill-target-hint"></div>
 
-<!-- Settings cog (visible during game) -->
-<div id="settingsCog" style="display:none">
-  <span class="cog-shadow">&#9881;</span>
-  <span class="cog-front">&#9881;</span>
-</div>
+<!-- Hamburger menu button (visible during setup & game) -->
+<div id="hamburgerBtn" style="display:none">&#9776;</div>
 
+
+<!-- ===================== JAVASCRIPT ===================== -->
 <script>
 (function(){
 'use strict';
 
-let HEX = 40;
-const RAD = 2;
-const WIN_DIFF = 6;
+/* ========================================================
+   CONSTANTS
+   ======================================================== */
+
+let HEX = 40;                       // hex size, recalculated on resize
+const RAD = 2;                       // board radius (2 = 19 hexes)
+const WIN_DIFF = 6;                  // score difference to win
 const P1_COLOR = '#4ecdc4';
 const P2_COLOR = '#e85d75';
-const ROW_VALS = [0,1,2,3,6];
-const LONG_PRESS_MS = 400;
-const TIMER_OPTIONS = [30,60,90,120,0];
+const ROW_VALS = [0, 1, 2, 3, 6];   // point values by row distance
+const LONG_PRESS_MS = 400;           // ms to trigger hold/skill
+const TIMER_OPTIONS = [30, 60, 90, 120, 0];
+const ANIM_MS = 500;                 // movement animation duration
+const S3 = Math.sqrt(3);
+const HEX_THICK = 5;                // 3D extrusion thickness
+const HEX_ASPECT = 1.2;             // horizontal stretch factor
+const DIRS = [                       // hex neighbor directions
+  {q:1,r:0},{q:-1,r:0},{q:0,r:1},{q:0,r:-1},{q:1,r:-1},{q:-1,r:1}
+];
+
+// Skill definitions: shield, bow, cloak
+const SKILL_DEF = {
+  shield: {name:'Shield', icon:'\u{1F6E1}', targeted:false},
+  bow:    {name:'Bow',    icon:'\u{1F3F9}', targeted:'hex'},
+  cloak:  {name:'Cloak',  icon:'\u{1F47B}', targeted:false}
+};
+
+// Chess pawn SVG path (from 785x1280 viewBox, full original)
+const PAWN_PATH_STR = 'M3755 11344 c-419 -64 -772 -243 -988 -501 -174 -210 -302 -462 -352 -698 -58 -273 -4 -638 135 -915 63 -125 136 -218 281 -361 77 -75 139 -142 139 -148 0 -6 -30 -31 -67 -54 -78 -50 -134 -109 -164 -170 -18 -37 -29 -46 -82 -66 -160 -61 -256 -129 -303 -213 -27 -50 -29 -60 -29 -163 0 -119 11 -153 72 -225 75 -90 272 -182 522 -244 80 -20 146 -37 147 -39 5 -6 -36 -1008 -46 -1127 -26 -306 -114 -612 -247 -860 -64 -119 -100 -167 -243 -316 -131 -138 -190 -223 -217 -314 -22 -76 -20 -190 6 -264 12 -33 21 -65 21 -72 0 -7 -43 -43 -96 -79 -159 -111 -325 -238 -403 -309 -162 -146 -288 -316 -340 -461 -34 -94 -56 -228 -47 -284 5 -35 1 -43 -54 -112 -73 -91 -151 -239 -182 -345 -33 -114 -33 -333 0 -449 50 -175 152 -345 327 -546 248 -284 379 -390 644 -524 966 -485 2506 -485 3472 0 265 134 396 240 644 524 175 201 277 371 327 546 33 116 33 335 0 449 -31 106 -109 254 -182 345 -55 69 -59 77 -54 112 9 56 -13 190 -47 284 -16 45 -56 122 -88 171 -125 193 -294 347 -655 599 -53 36 -96 72 -96 79 0 7 9 39 21 72 26 74 28 188 6 264 -27 92 -86 176 -222 319 -146 153 -195 221 -265 366 -127 262 -195 513 -220 805 -10 121 -51 1122 -46 1127 1 2 67 19 147 39 250 62 447 154 522 244 61 72 72 106 72 225 0 104 -2 113 -30 164 -46 84 -141 150 -302 212 -53 20 -64 29 -82 66 -30 61 -86 120 -163 170 -38 23 -68 48 -68 54 0 6 65 75 143 152 186 184 270 309 341 507 115 318 125 624 30 915 -77 239 -269 535 -443 682 -188 160 -452 286 -723 344 -91 20 -396 34 -473 23z';
+
 let timerIdx = 1;
 
-const SKILL_DEF = {
-  shield:{name:'Shield',icon:'\u{1F6E1}',targeted:false,once:false},
-  bow:{name:'Bow',icon:'\u{1F3F9}',targeted:'direction',once:false},
-  cloak:{name:'Cloak',icon:'\u{1F47B}',targeted:false,once:false}
+
+/* ========================================================
+   GAME STATE
+   ======================================================== */
+
+let G = {
+  phase: 'lobby',    // lobby | setup | planning | resolution | gameover
+  myPlayer: 0,       // 1 or 2
+  units: [],         // all units on board
+  scores: [0, 0, 0], // index 0 unused, [1]=p1, [2]=p2
+  myActions: {},     // unitId -> action
+  unitOrder: [],     // locked ordering [uid, uid, uid] or [null, null, null]
+  opActions: null,   // opponent's ordered actions array
+  myReady: false,
+  opReady: false,
+  timerVal: 0,
+  timerH: null,
+  timerConfig: 60,
+  winner: 0,
+  turnNum: 0,
+  arrows: []         // in-flight arrows: [{fromQ, fromR, targetQ, targetR, stepsRemaining, player}]
 };
-const DIRS=[{q:1,r:0},{q:-1,r:0},{q:0,r:1},{q:0,r:-1},{q:1,r:-1},{q:-1,r:1}];
-let orderCounter=0; // cycles 0,1,2,0,1,2... for sequential I/II/III assignment
 
-const S3=Math.sqrt(3);
-const HEX_THICK=5;
-const HEX_ASPECT=1.2;
+// PeerJS connection state
+let peer = null, conn = null;
 
-function hexToPixelRaw(q,r){return{x:HEX*HEX_ASPECT*(S3*q+S3/2*r),y:HEX*(1.5*r)}}
-function pixelToHexRaw(x,y){const xn=x/HEX_ASPECT;return hexRound((S3/3*xn-y/3)/HEX,(2/3*y)/HEX)}
-function hexRound(q,r){let s=-q-r,rq=Math.round(q),rr=Math.round(r),rs=Math.round(s);const dq=Math.abs(rq-q),dr=Math.abs(rr-r),ds=Math.abs(rs-s);if(dq>dr&&dq>ds)rq=-rr-rs;else if(dr>ds)rr=-rq-rs;return{q:rq,r:rr}}
-function onBoard(q,r){return Math.abs(q)<=RAD&&Math.abs(r)<=RAD&&Math.abs(q+r)<=RAD}
-function neighbors(q,r){return DIRS.map(d=>({q:q+d.q,r:r+d.r})).filter(h=>onBoard(h.q,h.r))}
-function rowDist(r,player){return player===1?r+2:2-r}
-function pointVal(r,player){return ROW_VALS[rowDist(r,player)]}
+// Main game canvas references
+let canvas, ctx, cw, ch, dpr, centerX, centerY;
 
-const boardHexes=[];
-for(let r=-RAD;r<=RAD;r++)for(let q=-RAD;q<=RAD;q++)if(onBoard(q,r))boardHexes.push({q,r});
-function spawnRow(p){return p===1?-2:2}
-function spawnHexes(p){return boardHexes.filter(h=>h.r===spawnRow(p))}
+// Setup canvas references
+let setupCanvas, setupCtx, setupCW, setupCH, setupDpr, setupCenterX, setupCenterY, setupHEX = 40;
+let setupSelectedUnit = null;
 
-let G={phase:'lobby',myPlayer:0,units:[],scores:[0,0,0],myActions:{},unitOrder:[],opActions:null,myReady:false,opReady:false,selectedUnit:null,actionMode:null,timerVal:0,timerH:null,timerConfig:60,winner:0,turnNum:0};
-let peer=null,conn=null;
-let canvas,ctx,cw,ch,dpr,centerX,centerY;
-let drag={unit:null,startHex:null,startPos:null,currentPos:null,targetHex:null,moved:false,holdTimer:null,isHold:false,tapHex:null};
+// Drag state for unit interaction
+let drag = {
+  unit: null, startHex: null, startPos: null, currentPos: null,
+  targetHex: null, moved: false, holdTimer: null, isHold: false
+};
 
-// Bow drag-aim state
-let bowAim={active:false,unitId:null,startPos:null,currentPos:null,bestDir:null};
+// Bow target selection state
+let bowAim = {active: false, unitId: null, currentPos: null, targetHex: null};
 
-// Setup screen state
-let setupCanvas,setupCtx,setupCW,setupCH,setupDpr,setupCenterX,setupCenterY,setupHEX=40;
-let setupSelectedUnit=null;
+// Pre-rendered pawn canvases (created at init)
+let pawnWhiteCanvas = null;  // player's pawns
+let pawnBlackCanvas = null;  // opponent's pawns
+let pawnSize = 0;            // pixel size of pre-rendered pawn
 
-// -- App title visibility --
-function updateTitleVisibility(){
-  const title=document.getElementById('appTitle');
-  if(!title)return;
-  const isGameOrSetup=G.phase==='planning'||G.phase==='resolution'||G.phase==='setup'||G.phase==='gameover';
-  title.style.display=isGameOrSetup?'none':'';
+// Shield animation state: {unitId -> {startTime, blocking}}
+let shieldAnims = {};
+
+
+/* ========================================================
+   HEX MATH
+   ======================================================== */
+
+function hexToPixelRaw(q, r) {
+  return {x: HEX * HEX_ASPECT * (S3 * q + S3 / 2 * r), y: HEX * (1.5 * r)};
 }
 
-function initUnits(){
-  G.units=[];
-  spawnHexes(1).forEach((h,i)=>G.units.push({id:'p1-'+i,player:1,q:h.q,r:h.r,skill:null,dead:false,cloaked:false,shielded:false}));
-  spawnHexes(2).forEach((h,i)=>G.units.push({id:'p2-'+i,player:2,q:h.q,r:h.r,skill:null,dead:false,cloaked:false,shielded:false}));
-  G.scores=[0,0,0];G.turnNum=0;G.winner=0;
+function pixelToHexRaw(x, y) {
+  const xn = x / HEX_ASPECT;
+  return hexRound((S3 / 3 * xn - y / 3) / HEX, (2 / 3 * y) / HEX);
 }
-function myUnits(){return G.units.filter(u=>u.player===G.myPlayer)}
-function opUnits(){return G.units.filter(u=>u.player!==G.myPlayer)}
-function unitAt(q,r){return G.units.find(u=>!u.dead&&u.q===q&&u.r===r)}
-function unitById(id){return G.units.find(u=>u.id===id)}
 
-function showScreen(id){
-  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+function hexRound(q, r) {
+  let s = -q - r;
+  let rq = Math.round(q), rr = Math.round(r), rs = Math.round(s);
+  const dq = Math.abs(rq - q), dr = Math.abs(rr - r), ds = Math.abs(rs - s);
+  if (dq > dr && dq > ds) rq = -rr - rs;
+  else if (dr > ds) rr = -rq - rs;
+  return {q: rq, r: rr};
+}
+
+function onBoard(q, r) {
+  return Math.abs(q) <= RAD && Math.abs(r) <= RAD && Math.abs(q + r) <= RAD;
+}
+
+function neighbors(q, r) {
+  return DIRS.map(d => ({q: q + d.q, r: r + d.r})).filter(h => onBoard(h.q, h.r));
+}
+
+function hexDist(q1, r1, q2, r2) {
+  return (Math.abs(q1 - q2) + Math.abs(r1 - r2) + Math.abs((q1 + r1) - (q2 + r2))) / 2;
+}
+
+function rowDist(r, player) { return player === 1 ? r + 2 : 2 - r; }
+
+function pointVal(r, player) { return ROW_VALS[rowDist(r, player)]; }
+
+// All board hexes
+const boardHexes = [];
+for (let r = -RAD; r <= RAD; r++)
+  for (let q = -RAD; q <= RAD; q++)
+    if (onBoard(q, r)) boardHexes.push({q, r});
+
+function spawnRow(p) { return p === 1 ? -2 : 2; }
+
+function spawnHexes(p) { return boardHexes.filter(h => h.r === spawnRow(p)); }
+
+// Check if two hexes are in a straight line (one of the 6 hex directions)
+function hexesInLine(q1, r1, q2, r2) {
+  const dq = q2 - q1, dr = r2 - r1;
+  if (dq === 0 && dr === 0) return null;
+  // Must be along one of the 6 directions
+  for (const d of DIRS) {
+    if (d.q === 0 && d.r === 0) continue;
+    // Check if (dq, dr) is a positive multiple of (d.q, d.r)
+    let steps = 0;
+    if (d.q !== 0) steps = dq / d.q;
+    else if (d.r !== 0) steps = dr / d.r;
+    else continue;
+    if (steps > 0 && Number.isInteger(steps) && d.q * steps === dq && d.r * steps === dr) {
+      return {dir: d, steps: steps};
+    }
+  }
+  return null;
+}
+
+
+/* ========================================================
+   UNIT HELPERS
+   ======================================================== */
+
+function initUnits() {
+  G.units = [];
+  spawnHexes(1).forEach((h, i) => G.units.push({
+    id: 'p1-' + i, player: 1, q: h.q, r: h.r,
+    skill: null, dead: false, cloaked: false, shielded: false
+  }));
+  spawnHexes(2).forEach((h, i) => G.units.push({
+    id: 'p2-' + i, player: 2, q: h.q, r: h.r,
+    skill: null, dead: false, cloaked: false, shielded: false
+  }));
+  G.scores = [0, 0, 0];
+  G.turnNum = 0;
+  G.winner = 0;
+  G.arrows = [];
+}
+
+function myUnits() { return G.units.filter(u => u.player === G.myPlayer); }
+function opUnits() { return G.units.filter(u => u.player !== G.myPlayer); }
+function unitAt(q, r) { return G.units.find(u => !u.dead && u.q === q && u.r === r); }
+function unitById(id) { return G.units.find(u => u.id === id); }
+
+
+/* ========================================================
+   PAWN RENDERING (pre-rendered offscreen canvases)
+   ======================================================== */
+
+// Parse the XPM-style path string into SVG 'd' attribute format
+function parsePawnPathToSVG(pathStr) {
+  // The path format is: x y (relative moves separated by spaces)
+  // Starting with M then pairs of numbers for line segments
+  const tokens = pathStr.trim().split(/\s+/);
+  let svgPath = '';
+  let i = 0;
+  while (i < tokens.length) {
+    const t = tokens[i];
+    if (t === 'M' || t === 'm' || t === 'c' || t === 'z') {
+      svgPath += t;
+      i++;
+    } else {
+      svgPath += ' ' + t;
+      i++;
+    }
+  }
+  return svgPath;
+}
+
+function prerenderPawn(fillColor, strokeColor, size) {
+  const oc = document.createElement('canvas');
+  oc.width = size;
+  oc.height = size;
+  const c = oc.getContext('2d');
+
+  // The path is defined in a coordinate space roughly 7500x12000 (centered around ~3700, ~6000)
+  // We need to scale it down to fit our target size
+  const pathBoundsW = 7500;
+  const pathBoundsH = 12000;
+  const pathCenterX = 3750;
+  const pathCenterY = 6000;
+
+  const scale = size / Math.max(pathBoundsW, pathBoundsH) * 0.85;
+  const offsetX = size / 2 - pathCenterX * scale;
+  const offsetY = size / 2 - pathCenterY * scale;
+
+  c.save();
+  c.translate(offsetX, offsetY);
+  c.scale(scale, scale);
+
+  // Build the SVG path string for Path2D
+  const svgD = 'M' + parsePawnPathToSVG(PAWN_PATH_STR);
+  try {
+    const path = new Path2D(svgD);
+    c.fillStyle = fillColor;
+    c.fill(path);
+    if (strokeColor) {
+      c.strokeStyle = strokeColor;
+      c.lineWidth = 2 / scale;
+      c.stroke(path);
+    }
+  } catch(e) {
+    // Fallback: draw a simple pawn shape if Path2D fails
+    drawFallbackPawn(c, size / 2 / scale - offsetX / scale, size / 2 / scale - offsetY / scale, size * 0.4 / scale, fillColor, strokeColor);
+  }
+
+  c.restore();
+  return oc;
+}
+
+// Fallback pawn shape if Path2D parsing fails
+function drawFallbackPawn(c, cx, cy, r, fill, stroke) {
+  // Simple pawn silhouette: circle head + trapezoid body + wide base
+  c.beginPath();
+  // Head
+  c.arc(cx, cy - r * 1.2, r * 0.45, 0, Math.PI * 2);
+  // Neck
+  c.moveTo(cx - r * 0.2, cy - r * 0.75);
+  c.lineTo(cx + r * 0.2, cy - r * 0.75);
+  // Body (trapezoid)
+  c.lineTo(cx + r * 0.5, cy + r * 0.4);
+  c.lineTo(cx - r * 0.5, cy + r * 0.4);
+  c.closePath();
+  // Base
+  c.moveTo(cx - r * 0.7, cy + r * 0.4);
+  c.lineTo(cx + r * 0.7, cy + r * 0.4);
+  c.lineTo(cx + r * 0.8, cy + r * 0.7);
+  c.lineTo(cx - r * 0.8, cy + r * 0.7);
+  c.closePath();
+  c.fillStyle = fill;
+  c.fill();
+  if (stroke) {
+    c.strokeStyle = stroke;
+    c.lineWidth = 2;
+    c.stroke();
+  }
+}
+
+// Build a simple programmatic pawn (reliable across all browsers)
+function prerenderPawnSimple(fillColor, strokeColor, size) {
+  const oc = document.createElement('canvas');
+  oc.width = size;
+  oc.height = size;
+  const c = oc.getContext('2d');
+  const cx = size / 2, cy = size / 2;
+  const s = size * 0.42; // scale factor
+
+  c.fillStyle = fillColor;
+  if (strokeColor) { c.strokeStyle = strokeColor; c.lineWidth = 2; }
+
+  // Base platform (wide ellipse at bottom)
+  c.beginPath();
+  c.ellipse(cx, cy + s * 0.72, s * 0.7, s * 0.18, 0, 0, Math.PI * 2);
+  c.fill();
+  if (strokeColor) c.stroke();
+
+  // Body (trapezoid narrowing upward)
+  c.beginPath();
+  c.moveTo(cx - s * 0.52, cy + s * 0.55);
+  c.lineTo(cx - s * 0.22, cy - s * 0.15);
+  c.lineTo(cx + s * 0.22, cy - s * 0.15);
+  c.lineTo(cx + s * 0.52, cy + s * 0.55);
+  c.closePath();
+  c.fill();
+  if (strokeColor) c.stroke();
+
+  // Collar (small ellipse)
+  c.beginPath();
+  c.ellipse(cx, cy - s * 0.15, s * 0.28, s * 0.1, 0, 0, Math.PI * 2);
+  c.fill();
+  if (strokeColor) c.stroke();
+
+  // Head (circle)
+  c.beginPath();
+  c.arc(cx, cy - s * 0.48, s * 0.28, 0, Math.PI * 2);
+  c.fill();
+  if (strokeColor) c.stroke();
+
+  // Top knob
+  c.beginPath();
+  c.arc(cx, cy - s * 0.78, s * 0.1, 0, Math.PI * 2);
+  c.fill();
+  if (strokeColor) c.stroke();
+
+  return oc;
+}
+
+function buildPawnCanvases() {
+  pawnSize = Math.round(HEX * 1.0);
+  if (pawnSize < 10) pawnSize = 10;
+  pawnWhiteCanvas = prerenderPawnSimple('#fff', null, pawnSize);
+  pawnBlackCanvas = prerenderPawnSimple('#000', '#fff', pawnSize);
+}
+
+
+/* ========================================================
+   SCREEN MANAGEMENT
+   ======================================================== */
+
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   document.getElementById(id).classList.add('active');
-  document.getElementById('settingsCog').style.display=(id==='screenSetup'||id==='screenGame')?'':'none';
+  // Show hamburger during setup and game
+  document.getElementById('hamburgerBtn').style.display =
+    (id === 'screenSetup' || id === 'screenGame') ? '' : 'none';
   updateTitleVisibility();
 }
-function backToMenu(){
+
+function updateTitleVisibility() {
+  const title = document.getElementById('appTitle');
+  if (!title) return;
+  const hide = G.phase === 'planning' || G.phase === 'resolution' || G.phase === 'setup' || G.phase === 'gameover';
+  title.style.display = hide ? 'none' : '';
+}
+
+function backToMenu() {
   stopTimer();
-  if(conn){conn.close();conn=null;}if(peer){peer.destroy();peer=null;}
-  G.phase='lobby';G.myPlayer=0;G.myReady=false;G.opReady=false;
+  if (conn) { conn.close(); conn = null; }
+  if (peer) { peer.destroy(); peer = null; }
+  G.phase = 'lobby';
+  G.myPlayer = 0;
+  G.myReady = false;
+  G.opReady = false;
   hideOverlay();
   document.getElementById('settingsModal').classList.remove('visible');
-  document.getElementById('shareArea').style.display='none';
-  document.getElementById('joinArea').style.display='none';
-  document.getElementById('btnCreate').style.display='';
-  document.getElementById('btnInstructions').style.display='';
+  document.getElementById('shareArea').style.display = 'none';
+  document.getElementById('joinArea').style.display = 'none';
+  document.getElementById('btnCreate').style.display = '';
+  document.getElementById('btnInstructions').style.display = '';
   showScreen('lobby');
 }
 
-function hexToScreen(q,r){const raw=hexToPixelRaw(q,r);const flip=G.myPlayer===1?-1:1;return{x:centerX+raw.x*flip,y:centerY+raw.y*flip}}
-function screenToHex(sx,sy){const flip=G.myPlayer===1?-1:1;return pixelToHexRaw((sx-centerX)*flip,(sy-centerY)*flip)}
 
-function drawHexShape(c,cx,cy,size){
-  const w=size*HEX_ASPECT,h=size;
+/* ========================================================
+   COORDINATE TRANSFORMS (game board)
+   ======================================================== */
+
+function hexToScreen(q, r) {
+  const raw = hexToPixelRaw(q, r);
+  const flip = G.myPlayer === 1 ? -1 : 1;
+  return {x: centerX + raw.x * flip, y: centerY + raw.y * flip};
+}
+
+function screenToHex(sx, sy) {
+  const flip = G.myPlayer === 1 ? -1 : 1;
+  return pixelToHexRaw((sx - centerX) * flip, (sy - centerY) * flip);
+}
+
+
+/* ========================================================
+   DRAWING HELPERS
+   ======================================================== */
+
+function drawHexShape(c, cx, cy, size) {
+  const w = size * HEX_ASPECT, h = size;
   c.beginPath();
-  for(let i=0;i<6;i++){const a=Math.PI/3*i-Math.PI/6;c.lineTo(cx+w*Math.cos(a),cy+h*Math.sin(a));}
+  for (let i = 0; i < 6; i++) {
+    const a = Math.PI / 3 * i - Math.PI / 6;
+    c.lineTo(cx + w * Math.cos(a), cy + h * Math.sin(a));
+  }
   c.closePath();
 }
 
-const ANIM_MS=500;
-function easeInOutCubic(t){return t<0.5?4*t*t*t:1-Math.pow(-2*t+2,3)/2}
-function startUnitAnim(unit,fromQ,fromR){unit.animStart=performance.now();unit.animFromQ=fromQ;unit.animFromR=fromR}
-function getUnitScreenPos(unit){
-  if(unit.animStart){const t=Math.min(1,(performance.now()-unit.animStart)/ANIM_MS);const e=easeInOutCubic(t);const q=unit.animFromQ+(unit.q-unit.animFromQ)*e;const r=unit.animFromR+(unit.r-unit.animFromR)*e;if(t>=1)unit.animStart=null;return hexToScreen(q,r);}
-  return hexToScreen(unit.q,unit.r);
+
+/* ========================================================
+   ANIMATION HELPERS
+   ======================================================== */
+
+function easeInOutCubic(t) { return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2; }
+
+function startUnitAnim(unit, fromQ, fromR) {
+  unit.animStart = performance.now();
+  unit.animFromQ = fromQ;
+  unit.animFromR = fromR;
 }
 
-function buildOrderedActions(){
-  const result=[];
-  for(const uid of G.unitOrder){
-    const action=G.myActions[uid];
-    if(action)result.push(action);
+function getUnitScreenPos(unit) {
+  if (unit.animStart) {
+    const t = Math.min(1, (performance.now() - unit.animStart) / ANIM_MS);
+    const e = easeInOutCubic(t);
+    const q = unit.animFromQ + (unit.q - unit.animFromQ) * e;
+    const r = unit.animFromR + (unit.r - unit.animFromR) * e;
+    if (t >= 1) unit.animStart = null;
+    return hexToScreen(q, r);
+  }
+  return hexToScreen(unit.q, unit.r);
+}
+
+
+/* ========================================================
+   ORDERED ACTIONS BUILDER
+   ======================================================== */
+
+function buildOrderedActions() {
+  const result = [];
+  for (const uid of G.unitOrder) {
+    if (!uid) continue;
+    const action = G.myActions[uid];
+    if (action) result.push(action);
   }
   return result;
 }
 
-// Board is centered on screen. HUD drawn in the gaps above/below.
-function getBoardCenterY(){ return ch / 2; }
 
-function drawSmallHex(c, cx, cy, size){
-  const w = size * HEX_ASPECT, h = size;
-  c.beginPath();
-  for(let i=0;i<6;i++){const a=Math.PI/3*i-Math.PI/6;c.lineTo(cx+w*Math.cos(a),cy+h*Math.sin(a));}
-  c.closePath();
-}
+/* ========================================================
+   MAIN GAME CANVAS - SETUP & RESIZE
+   ======================================================== */
 
-// -- Find closest hex direction from a unit to a screen point --
-function closestHexDir(unit, sx, sy){
-  const us=hexToScreen(unit.q,unit.r);
-  const dx=sx-us.x,dy=sy-us.y;
-  if(Math.sqrt(dx*dx+dy*dy)<5)return null; // too close, no direction
-  let bestDir=null,bestDot=-Infinity;
-  for(const d of DIRS){
-    // Get pixel offset for this direction
-    const target=hexToScreen(unit.q+d.q,unit.r+d.r);
-    const tdx=target.x-us.x,tdy=target.y-us.y;
-    const len=Math.sqrt(tdx*tdx+tdy*tdy);
-    if(len<0.01)continue;
-    const dot=(dx*tdx+dy*tdy)/len;
-    if(dot>bestDot){bestDot=dot;bestDir=d}
+let canvasReady = false;
+
+function setupMainCanvas() {
+  canvas = document.getElementById('board');
+  ctx = canvas.getContext('2d');
+  resizeCanvas();
+  if (!canvasReady) {
+    window.addEventListener('resize', resizeCanvas);
+    canvas.addEventListener('pointerdown', onPointerDown);
+    canvas.addEventListener('pointermove', onPointerMove);
+    canvas.addEventListener('pointerup', onPointerUp);
+    canvas.addEventListener('pointercancel', onPointerUp);
+    canvasReady = true;
   }
-  return bestDir;
+  requestAnimationFrame(render);
 }
 
-function render(){
-  ctx.clearRect(0,0,cw,ch);
+function resizeCanvas() {
+  dpr = window.devicePixelRatio || 1;
+  const rect = canvas.getBoundingClientRect();
+  cw = rect.width;
+  ch = rect.height;
+  canvas.width = cw * dpr;
+  canvas.height = ch * dpr;
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  centerX = cw / 2;
+  // Calculate HEX size to fit board
+  const maxH = ch / 8 * 0.98;
+  const maxW = cw / (5 * S3 * HEX_ASPECT) * 0.98;
+  HEX = Math.min(maxH, maxW, 80);
+  HEX = Math.max(HEX, 18);
+  centerY = ch / 2;
+  // Rebuild pawn canvases at new size
+  buildPawnCanvases();
+}
 
-  // -- Board --
-  // Bottom face (thickness): white fill, white stroke, same size as top
-  for(const h of boardHexes){const s=hexToScreen(h.q,h.r);drawHexShape(ctx,s.x,s.y+HEX_THICK,HEX-2);ctx.fillStyle='#fff';ctx.fill();ctx.strokeStyle='#fff';ctx.lineWidth=1;ctx.stroke()}
-  // Top face: black fill, white stroke
-  for(const h of boardHexes){const s=hexToScreen(h.q,h.r);drawHexShape(ctx,s.x,s.y,HEX-2);ctx.fillStyle='#000';ctx.fill();ctx.strokeStyle='#fff';ctx.lineWidth=1;ctx.stroke()}
 
-  // Highlights -- during active drag (include current hex as valid stay)
-  if(drag.unit&&drag.moved&&G.phase==='planning'){
+/* ========================================================
+   MAIN RENDER LOOP
+   ======================================================== */
+
+function render() {
+  ctx.clearRect(0, 0, cw, ch);
+
+  // -- Draw board hexes --
+  // Bottom layer (3D thickness): white fill + stroke
+  for (const h of boardHexes) {
+    const s = hexToScreen(h.q, h.r);
+    drawHexShape(ctx, s.x, s.y + HEX_THICK, HEX - 2);
+    ctx.fillStyle = '#fff'; ctx.fill();
+    ctx.strokeStyle = '#fff'; ctx.lineWidth = 1; ctx.stroke();
+  }
+  // Top layer: black fill + white stroke
+  for (const h of boardHexes) {
+    const s = hexToScreen(h.q, h.r);
+    drawHexShape(ctx, s.x, s.y, HEX - 2);
+    ctx.fillStyle = '#000'; ctx.fill();
+    ctx.strokeStyle = '#fff'; ctx.lineWidth = 1; ctx.stroke();
+  }
+
+  // -- Drag highlights (valid move targets) --
+  if (drag.unit && drag.moved && G.phase === 'planning') {
     // Current hex (stay option)
-    const stayS=hexToScreen(drag.unit.q,drag.unit.r);
-    const isStayTarget=drag.targetHex&&drag.targetHex.q===drag.unit.q&&drag.targetHex.r===drag.unit.r;
-    drawHexShape(ctx,stayS.x,stayS.y,HEX-4);
-    ctx.fillStyle=isStayTarget?'rgba(255,255,255,0.12)':'rgba(255,255,255,0.08)';
+    const stayS = hexToScreen(drag.unit.q, drag.unit.r);
+    const isStayTarget = drag.targetHex && drag.targetHex.q === drag.unit.q && drag.targetHex.r === drag.unit.r;
+    drawHexShape(ctx, stayS.x, stayS.y, HEX - 4);
+    ctx.fillStyle = isStayTarget ? 'rgba(255,255,255,0.12)' : 'rgba(255,255,255,0.08)';
     ctx.fill();
     // Neighbor hexes
-    for(const n of neighbors(drag.unit.q,drag.unit.r)){
-      const s=hexToScreen(n.q,n.r);
-      drawHexShape(ctx,s.x,s.y,HEX-4);
-      const isT=drag.targetHex&&drag.targetHex.q===n.q&&drag.targetHex.r===n.r;
-      ctx.fillStyle=isT?'rgba(255,255,255,0.12)':'rgba(255,255,255,0.08)';
+    for (const n of neighbors(drag.unit.q, drag.unit.r)) {
+      const s = hexToScreen(n.q, n.r);
+      drawHexShape(ctx, s.x, s.y, HEX - 4);
+      const isT = drag.targetHex && drag.targetHex.q === n.q && drag.targetHex.r === n.r;
+      ctx.fillStyle = isT ? 'rgba(255,255,255,0.12)' : 'rgba(255,255,255,0.08)';
       ctx.fill();
     }
   }
-  // Skill targeting highlights (bow aim via drag)
-  if(bowAim.active&&bowAim.bestDir){
-    const u=unitById(bowAim.unitId);
-    if(u){
-      for(let s=1;s<=2;s++){
-        const t={q:u.q+bowAim.bestDir.q*s,r:u.r+bowAim.bestDir.r*s};
-        if(onBoard(t.q,t.r)){const sc=hexToScreen(t.q,t.r);drawHexShape(ctx,sc.x,sc.y,HEX-4);ctx.fillStyle='rgba(255,255,255,0.15)';ctx.fill()}
-      }
-    }
-  }
-  // Legacy skill-direction highlights (fallback, kept for safety)
-  if(G.actionMode==='skill-direction'){const u=unitById(G.selectedUnit);if(u)for(const d of DIRS)for(let s=1;s<=2;s++){const t={q:u.q+d.q*s,r:u.r+d.r*s};if(onBoard(t.q,t.r)){const sc=hexToScreen(t.q,t.r);drawHexShape(ctx,sc.x,sc.y,HEX-4);ctx.fillStyle='rgba(255,255,255,0.08)';ctx.fill()}}}
-  if(G.phase==='planning'&&G.actionMode==='respawn'){for(const h of spawnHexes(G.myPlayer))if(!unitAt(h.q,h.r)){const s=hexToScreen(h.q,h.r);drawHexShape(ctx,s.x,s.y,HEX-4);ctx.fillStyle='rgba(255,255,255,0.08)';ctx.fill()}}
 
-  // Action lines
-  if(G.phase==='planning'){
-    const orderedActions=buildOrderedActions();
-    for(const a of orderedActions){const u=unitById(a.unitId);if(!u)continue;if(u.dead&&a.type!=='respawn')continue;const from=hexToScreen(u.q,u.r);let to=null;
-    if(a.type==='move')to=hexToScreen(a.target.q,a.target.r);
-    else if(a.type==='skill'&&a.direction){const end=onBoard(u.q+a.direction.q*2,u.r+a.direction.r*2)?2:1;to=hexToScreen(u.q+a.direction.q*end,u.r+a.direction.r*end)}
-    else if(a.type==='respawn'&&a.target)to=hexToScreen(a.target.q,a.target.r);
-    if(to){ctx.beginPath();ctx.moveTo(from.x,from.y);ctx.lineTo(to.x,to.y);ctx.strokeStyle='rgba(255,255,255,0.12)';ctx.lineWidth=1;ctx.setLineDash([4,4]);ctx.stroke();ctx.setLineDash([]);ctx.beginPath();ctx.arc(to.x,to.y,2,0,Math.PI*2);ctx.fillStyle='rgba(255,255,255,0.25)';ctx.fill()}
-    // Balloon on respawn target hex (unit not there yet)
-    if(a.type==='respawn'&&a.target){
-      const ts=hexToScreen(a.target.q,a.target.r);
-      const orderIdx=G.unitOrder.indexOf(a.unitId);
-      if(orderIdx>=0){
-        const br=HEX*0.2;
-        ctx.beginPath();ctx.arc(ts.x,ts.y,br,0,Math.PI*2);
-        ctx.fillStyle='rgba(255,255,255,0.7)';ctx.fill();
-        ctx.fillStyle='#000';ctx.font=`600 ${br*1.3}px Inter,sans-serif`;
-        ctx.textAlign='center';ctx.textBaseline='middle';
-        ctx.fillText(String(orderIdx+1),ts.x,ts.y);
-      }
-    }}
-  }
-
-  // Drag line
-  if(drag.unit&&drag.moved&&drag.currentPos&&G.phase==='planning'){const from=hexToScreen(drag.unit.q,drag.unit.r);ctx.beginPath();ctx.moveTo(from.x,from.y);ctx.lineTo(drag.currentPos.x,drag.currentPos.y);ctx.strokeStyle='rgba(255,255,255,0.08)';ctx.lineWidth=1;ctx.stroke()}
-
-  // Bow aim drag line
-  if(bowAim.active&&bowAim.currentPos){
-    const u=unitById(bowAim.unitId);
-    if(u){
-      const from=hexToScreen(u.q,u.r);
-      ctx.beginPath();ctx.moveTo(from.x,from.y);ctx.lineTo(bowAim.currentPos.x,bowAim.currentPos.y);
-      ctx.strokeStyle='rgba(255,255,255,0.15)';ctx.lineWidth=1;ctx.setLineDash([4,4]);ctx.stroke();ctx.setLineDash([]);
-    }
-  }
-
-  // Units
-  for(const u of G.units){
-    if(u.dead)continue;if(u.cloaked&&u.player!==G.myPlayer)continue;
-    const isDragging=drag.unit&&drag.unit.id===u.id&&drag.moved;
-    const s=isDragging?drag.currentPos:getUnitScreenPos(u);
-    const col=u.player===1?P1_COLOR:P2_COLOR;const r=HEX*0.28;
-    ctx.beginPath();ctx.arc(s.x,s.y,r,0,Math.PI*2);
-    ctx.fillStyle=u.cloaked?col+'44':(isDragging?col+'aa':col);ctx.fill();
-    ctx.strokeStyle="#fff";ctx.lineWidth=1;ctx.stroke();
-    // Shield visual: large semi-transparent shield emoji
-    if(u.shielded){
-      ctx.globalAlpha=0.5;
-      ctx.font=`${HEX*0.5}px sans-serif`;
-      ctx.textAlign='center';ctx.textBaseline='middle';
-      ctx.fillText('\u{1F6E1}',s.x,s.y);
-      ctx.globalAlpha=1.0;
-    }
-    if(u.skill){ctx.font=`${HEX*0.22}px sans-serif`;ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(SKILL_DEF[u.skill].icon,s.x,s.y)}
-    // Priority balloon -- translucent circle top-right with number
-    if(u.player===G.myPlayer&&!isDragging){
-      const orderIdx=G.unitOrder.indexOf(u.id);
-      if(orderIdx>=0){
-        const bx=s.x+r*0.9,by=s.y-r*0.9,br=HEX*0.2;
-        ctx.beginPath();ctx.arc(bx,by,br,0,Math.PI*2);
-        ctx.fillStyle='rgba(255,255,255,0.7)';ctx.fill();
-        ctx.fillStyle='#000';ctx.font=`600 ${br*1.3}px Inter,sans-serif`;
-        ctx.textAlign='center';ctx.textBaseline='middle';
-        ctx.fillText(String(orderIdx+1),bx,by);
+  // -- Bow target X marker on target hex --
+  if (G.phase === 'planning') {
+    for (const uid of G.unitOrder) {
+      if (!uid) continue;
+      const a = G.myActions[uid];
+      if (a && a.type === 'skill' && a.skill === 'bow' && a.targetHex) {
+        const ts = hexToScreen(a.targetHex.q, a.targetHex.r);
+        // Draw X marker
+        ctx.strokeStyle = 'rgba(255,255,255,0.5)';
+        ctx.lineWidth = 2;
+        const xr = HEX * 0.2;
+        ctx.beginPath(); ctx.moveTo(ts.x - xr, ts.y - xr); ctx.lineTo(ts.x + xr, ts.y + xr); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(ts.x + xr, ts.y - xr); ctx.lineTo(ts.x - xr, ts.y + xr); ctx.stroke();
       }
     }
   }
 
-  if(drag.unit&&!drag.moved&&drag.isHold&&drag.startPos){ctx.beginPath();ctx.arc(drag.startPos.x,drag.startPos.y,HEX*0.4,0,Math.PI*2);ctx.strokeStyle='rgba(255,255,255,0.2)';ctx.lineWidth=1;ctx.stroke()}
+  // -- Bow aim drag: highlight target hex --
+  if (bowAim.active && bowAim.targetHex) {
+    const ts = hexToScreen(bowAim.targetHex.q, bowAim.targetHex.r);
+    drawHexShape(ctx, ts.x, ts.y, HEX - 4);
+    ctx.fillStyle = 'rgba(255,255,255,0.15)';
+    ctx.fill();
+    // X marker preview
+    ctx.strokeStyle = 'rgba(255,255,255,0.3)';
+    ctx.lineWidth = 2;
+    const xr = HEX * 0.2;
+    ctx.beginPath(); ctx.moveTo(ts.x - xr, ts.y - xr); ctx.lineTo(ts.x + xr, ts.y + xr); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(ts.x + xr, ts.y - xr); ctx.lineTo(ts.x - xr, ts.y + xr); ctx.stroke();
+  }
+
+  // -- Respawn highlights --
+  if (G.phase === 'planning' && bowAim.active === false) {
+    // Check if we have dead units that need respawn
+    const assigned = new Set(Object.keys(G.myActions));
+    const deadNeedRespawn = myUnits().find(u => u.dead && !assigned.has(u.id));
+    if (deadNeedRespawn) {
+      for (const h of spawnHexes(G.myPlayer)) {
+        if (!unitAt(h.q, h.r)) {
+          const s = hexToScreen(h.q, h.r);
+          drawHexShape(ctx, s.x, s.y, HEX - 4);
+          ctx.fillStyle = 'rgba(255,255,255,0.08)';
+          ctx.fill();
+        }
+      }
+    }
+  }
+
+  // -- Action lines (planned moves/skills) --
+  if (G.phase === 'planning') {
+    for (const uid of G.unitOrder) {
+      if (!uid) continue;
+      const a = G.myActions[uid];
+      if (!a) continue;
+      const u = unitById(a.unitId);
+      if (!u) continue;
+      if (u.dead && a.type !== 'respawn') continue;
+      const from = hexToScreen(u.q, u.r);
+      let to = null;
+
+      if (a.type === 'move') {
+        to = hexToScreen(a.target.q, a.target.r);
+      } else if (a.type === 'skill' && a.skill === 'bow' && a.targetHex) {
+        to = hexToScreen(a.targetHex.q, a.targetHex.r);
+      } else if (a.type === 'respawn' && a.target) {
+        to = hexToScreen(a.target.q, a.target.r);
+      }
+
+      if (to) {
+        ctx.beginPath();
+        ctx.moveTo(from.x, from.y);
+        ctx.lineTo(to.x, to.y);
+        ctx.strokeStyle = 'rgba(255,255,255,0.12)';
+        ctx.lineWidth = 1;
+        ctx.setLineDash([4, 4]);
+        ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.beginPath();
+        ctx.arc(to.x, to.y, 2, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(255,255,255,0.25)';
+        ctx.fill();
+      }
+
+      // Balloon on respawn target hex
+      if (a.type === 'respawn' && a.target) {
+        const ts = hexToScreen(a.target.q, a.target.r);
+        const orderIdx = G.unitOrder.indexOf(a.unitId);
+        if (orderIdx >= 0) {
+          const br = HEX * 0.2;
+          ctx.beginPath(); ctx.arc(ts.x, ts.y, br, 0, Math.PI * 2);
+          ctx.fillStyle = 'rgba(255,255,255,0.7)'; ctx.fill();
+          ctx.fillStyle = '#000';
+          ctx.font = '600 ' + (br * 1.3) + 'px Inter,sans-serif';
+          ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+          const roman = ['I', 'II', 'III'][orderIdx] || String(orderIdx + 1);
+          ctx.fillText(roman, ts.x, ts.y);
+        }
+      }
+    }
+  }
+
+  // -- Drag line --
+  if (drag.unit && drag.moved && drag.currentPos && G.phase === 'planning') {
+    const from = hexToScreen(drag.unit.q, drag.unit.r);
+    ctx.beginPath();
+    ctx.moveTo(from.x, from.y);
+    ctx.lineTo(drag.currentPos.x, drag.currentPos.y);
+    ctx.strokeStyle = 'rgba(255,255,255,0.08)';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+  }
+
+  // -- Bow aim drag line --
+  if (bowAim.active && bowAim.currentPos) {
+    const u = unitById(bowAim.unitId);
+    if (u) {
+      const from = hexToScreen(u.q, u.r);
+      ctx.beginPath();
+      ctx.moveTo(from.x, from.y);
+      ctx.lineTo(bowAim.currentPos.x, bowAim.currentPos.y);
+      ctx.strokeStyle = 'rgba(255,255,255,0.15)';
+      ctx.lineWidth = 1;
+      ctx.setLineDash([4, 4]);
+      ctx.stroke();
+      ctx.setLineDash([]);
+    }
+  }
+
+  // -- Draw units as chess pawns --
+  for (const u of G.units) {
+    if (u.dead) continue;
+    if (u.cloaked && u.player !== G.myPlayer) continue;
+    const isDragging = drag.unit && drag.unit.id === u.id && drag.moved;
+    const s = isDragging ? drag.currentPos : getUnitScreenPos(u);
+    const isMine = u.player === G.myPlayer;
+    const pawnCanvas = isMine ? pawnWhiteCanvas : pawnBlackCanvas;
+    const drawSize = HEX * 0.5;
+
+    // Draw pawn silhouette
+    if (pawnCanvas) {
+      ctx.save();
+      if (u.cloaked) ctx.globalAlpha = 0.3;
+      else if (isDragging) ctx.globalAlpha = 0.7;
+      ctx.drawImage(pawnCanvas, s.x - drawSize / 2, s.y - drawSize / 2, drawSize, drawSize);
+      ctx.restore();
+    }
+
+    // Shield animation effect
+    if (u.shielded || shieldAnims[u.id]) {
+      drawShieldEffect(ctx, s.x, s.y, u);
+    }
+
+    // Skill icon (emoji) centered on pawn body
+    if (u.skill) {
+      ctx.font = (HEX * 0.22) + 'px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(SKILL_DEF[u.skill].icon, s.x, s.y);
+    }
+
+    // Priority balloon (I, II, III) -- only for player's units when not dragging
+    if (isMine && !isDragging) {
+      const orderIdx = G.unitOrder.indexOf(u.id);
+      if (orderIdx >= 0) {
+        const pr = drawSize / 2;
+        const bx = s.x + pr * 0.8, by = s.y - pr * 0.8;
+        const br = HEX * 0.2;
+        ctx.beginPath(); ctx.arc(bx, by, br, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(255,255,255,0.7)'; ctx.fill();
+        ctx.fillStyle = '#000';
+        ctx.font = '600 ' + (br * 1.2) + 'px Inter,sans-serif';
+        ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        const roman = ['I', 'II', 'III'][orderIdx] || String(orderIdx + 1);
+        ctx.fillText(roman, bx, by);
+      }
+    }
+  }
+
+  // -- In-flight arrow visuals --
+  drawArrows(ctx);
+
+  // -- Hold indicator ring --
+  if (drag.unit && !drag.moved && drag.isHold && drag.startPos) {
+    ctx.beginPath();
+    ctx.arc(drag.startPos.x, drag.startPos.y, HEX * 0.4, 0, Math.PI * 2);
+    ctx.strokeStyle = 'rgba(255,255,255,0.2)';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+  }
 
   requestAnimationFrame(render);
 }
 
-let canvasReady=false;
-function setupMainCanvas(){
-  canvas=document.getElementById('board');ctx=canvas.getContext('2d');resizeCanvas();
-  if(!canvasReady){window.addEventListener('resize',resizeCanvas);canvas.addEventListener('pointerdown',onPointerDown);canvas.addEventListener('pointermove',onPointerMove);canvas.addEventListener('pointerup',onPointerUp);canvas.addEventListener('pointercancel',onPointerUp);canvasReady=true}
-  requestAnimationFrame(render);
-}
-function resizeCanvas(){
-  dpr=window.devicePixelRatio||1;const rect=canvas.getBoundingClientRect();cw=rect.width;ch=rect.height;canvas.width=cw*dpr;canvas.height=ch*dpr;ctx.setTransform(dpr,0,0,dpr,0,0);centerX=cw/2;
-  const maxH=ch/8*0.98;const maxW=cw/(5*S3*HEX_ASPECT)*0.98;HEX=Math.min(maxH,maxW,80);HEX=Math.max(HEX,18);
-  centerY=getBoardCenterY();
+
+/* ========================================================
+   SHIELD EFFECT
+   ======================================================== */
+
+function triggerShieldAnim(unitId, blocking) {
+  shieldAnims[unitId] = {startTime: performance.now(), blocking: !!blocking};
 }
 
-// -- INPUT --
-// Sequential ordering: each tap assigns the next slot (I->II->III->I->...)
-// All 3 slots always filled -- tapping swaps positions, never removes.
-function addToOrder(unitId){
-  const slot = orderCounter % 3;
-  const currentIdx = G.unitOrder.indexOf(unitId);
-  if(currentIdx>=0 && currentIdx!==slot){
-    // Swap with whatever is in the target slot
-    const other = G.unitOrder[slot];
-    G.unitOrder[slot] = unitId;
-    if(other) G.unitOrder[currentIdx] = other;
-  } else if(currentIdx<0){
-    // Not in order -- put in slot, push displaced one somewhere
-    const displaced = G.unitOrder[slot];
-    G.unitOrder[slot] = unitId;
-    // Find an empty slot for displaced, or append
-    const emptyIdx = G.unitOrder.indexOf(null);
-    if(emptyIdx>=0 && displaced) G.unitOrder[emptyIdx]=displaced;
+function drawShieldEffect(c, x, y, unit) {
+  const anim = shieldAnims[unit.id];
+  const now = performance.now();
+
+  if (anim) {
+    const elapsed = now - anim.startTime;
+    const duration = anim.blocking ? 300 : 600;
+
+    if (elapsed > duration) {
+      delete shieldAnims[unit.id];
+      if (!unit.shielded) return;
+    }
+
+    const t = Math.min(1, elapsed / duration);
+
+    if (anim.blocking) {
+      // Blocking flash: bright pulse that fades
+      const alpha = 0.7 * (1 - t);
+      const scale = 0.4 + t * 0.3;
+      c.globalAlpha = alpha;
+      c.font = (HEX * scale) + 'px sans-serif';
+      c.textAlign = 'center'; c.textBaseline = 'middle';
+      c.fillText('\u{1F6E1}', x, y);
+      c.globalAlpha = 1.0;
+      return;
+    } else {
+      // Expanding shield: grows from center
+      const scale = 0.2 + t * 0.4;
+      c.globalAlpha = 0.5;
+      c.font = (HEX * scale) + 'px sans-serif';
+      c.textAlign = 'center'; c.textBaseline = 'middle';
+      c.fillText('\u{1F6E1}', x, y);
+      c.globalAlpha = 1.0;
+      return;
+    }
   }
-  orderCounter++;
+
+  // Steady-state shield (no animation, just active)
+  if (unit.shielded) {
+    c.globalAlpha = 0.5;
+    c.font = (HEX * 0.6) + 'px sans-serif';
+    c.textAlign = 'center'; c.textBaseline = 'middle';
+    c.fillText('\u{1F6E1}', x, y);
+    c.globalAlpha = 1.0;
+  }
 }
 
-function onPointerDown(e){
-  if(G.phase!=='planning'||G.myReady)return;e.preventDefault();
-  const rect=canvas.getBoundingClientRect();const sx=e.clientX-rect.left,sy=e.clientY-rect.top;const hex=screenToHex(sx,sy);
-  drag.tapHex=onBoard(hex.q,hex.r)?hex:null;
-  if(!onBoard(hex.q,hex.r)){G.selectedUnit=null;G.actionMode=null;hideHint();return}
-  // If bow aim is active, handle drag continuation
-  if(bowAim.active){
-    // Tapping elsewhere while bow aim is active -- use this as the aim direction
-    const u=unitById(bowAim.unitId);
-    if(u){
-      const dir=closestHexDir(u,sx,sy);
-      if(dir){
-        addToOrder(u.id);
-        assignAction({unitId:u.id,type:'skill',skill:'bow',direction:dir});
+
+/* ========================================================
+   ARROW VISUALS
+   ======================================================== */
+
+function drawArrows(c) {
+  // Draw in-flight arrows that belong to this player (hidden from opponent)
+  for (const arrow of G.arrows) {
+    if (arrow.player !== G.myPlayer) continue;
+
+    // Calculate current visual position based on remaining steps
+    const totalDist = hexDist(arrow.fromQ, arrow.fromR, arrow.targetQ, arrow.targetR);
+    if (totalDist === 0) continue;
+
+    // Arrow icon at an interpolated screen position
+    // stepsRemaining decreases each step; show arrow moving toward target
+    const progress = 1 - (arrow.stepsRemaining / totalDist);
+    const fromS = hexToScreen(arrow.fromQ, arrow.fromR);
+    const toS = hexToScreen(arrow.targetQ, arrow.targetR);
+    const ax = fromS.x + (toS.x - fromS.x) * progress;
+    const ay = fromS.y + (toS.y - fromS.y) * progress - HEX * 0.5 * (1 - Math.abs(progress * 2 - 1)); // arc upward
+
+    c.font = (HEX * 0.3) + 'px sans-serif';
+    c.textAlign = 'center'; c.textBaseline = 'middle';
+    c.fillText('\u{1F3F9}', ax, ay);
+  }
+}
+
+
+/* ========================================================
+   INPUT HANDLING - LOCK-IN ORDERING SYSTEM
+   ======================================================== */
+
+// Lock a unit into the next available order slot
+function lockUnit(unitId) {
+  const idx = G.unitOrder.indexOf(unitId);
+  if (idx >= 0) return; // already locked
+
+  // Find the first null slot
+  const emptyIdx = G.unitOrder.indexOf(null);
+  if (emptyIdx >= 0) {
+    G.unitOrder[emptyIdx] = unitId;
+  }
+  // If all slots filled, do nothing (must reset first)
+}
+
+function allLocked() {
+  return G.unitOrder.every(uid => uid !== null);
+}
+
+function resetAllAssignments() {
+  G.myActions = {};
+  G.unitOrder = [null, null, null];
+  bowAim.active = false;
+  bowAim.unitId = null;
+  bowAim.targetHex = null;
+  bowAim.currentPos = null;
+  hideHint();
+
+  // Auto-assign respawn for dead units
+  myUnits().forEach(u => {
+    if (u.dead) {
+      const spawn = spawnHexes(G.myPlayer).find(h => !unitAt(h.q, h.r));
+      if (spawn) {
+        const nextSlot = G.unitOrder.indexOf(null);
+        if (nextSlot >= 0) {
+          G.unitOrder[nextSlot] = u.id;
+          G.myActions[u.id] = {unitId: u.id, type: 'respawn', target: {q: spawn.q, r: spawn.r}};
+        }
       }
     }
-    bowAim.active=false;bowAim.unitId=null;bowAim.bestDir=null;bowAim.currentPos=null;
-    G.actionMode=null;G.selectedUnit=null;hideHint();
-    return;
-  }
-  if(G.actionMode&&G.actionMode.startsWith('skill-')&&G.selectedUnit){handleTargetTap(hex);return}
-  if(G.actionMode==='respawn'&&G.selectedUnit){
-    const deadUnit=unitById(G.selectedUnit);
-    if(deadUnit&&deadUnit.dead&&hex.r===spawnRow(G.myPlayer)&&!unitAt(hex.q,hex.r)){
-      addToOrder(deadUnit.id);
-      assignAction({unitId:deadUnit.id,type:'respawn',target:{q:hex.q,r:hex.r}});
-      G.actionMode=null;G.selectedUnit=null;hideHint();
-    }
-    return;
-  }
-  const unit=unitAt(hex.q,hex.r);
-  if(unit&&unit.player===G.myPlayer&&!unit.dead){canvas.setPointerCapture(e.pointerId);drag.unit=unit;drag.startHex={q:hex.q,r:hex.r};drag.startPos={x:sx,y:sy};drag.currentPos={x:sx,y:sy};drag.targetHex=null;drag.moved=false;drag.isHold=false;drag.holdTimer=setTimeout(()=>{if(!drag.moved){drag.isHold=true;if(navigator.vibrate)navigator.vibrate(30)}},LONG_PRESS_MS);return}
+  });
 }
-function onPointerMove(e){
-  // Bow aim drag tracking
-  if(bowAim.active){
+
+function onPointerDown(e) {
+  if (G.phase !== 'planning' || G.myReady) return;
+  e.preventDefault();
+  const rect = canvas.getBoundingClientRect();
+  const sx = e.clientX - rect.left, sy = e.clientY - rect.top;
+  const hex = screenToHex(sx, sy);
+
+  if (!onBoard(hex.q, hex.r)) {
+    hideHint();
+    return;
+  }
+
+  // If bow aim is active, tapping a hex finalizes the target
+  if (bowAim.active) {
+    if (onBoard(hex.q, hex.r)) {
+      const u = unitById(bowAim.unitId);
+      if (u) {
+        const dist = hexDist(u.q, u.r, hex.q, hex.r);
+        if (dist > 0) {
+          lockUnit(u.id);
+          assignAction({unitId: u.id, type: 'skill', skill: 'bow', targetHex: {q: hex.q, r: hex.r}, distance: dist});
+        }
+      }
+    }
+    bowAim.active = false;
+    bowAim.unitId = null;
+    bowAim.targetHex = null;
+    bowAim.currentPos = null;
+    hideHint();
+    return;
+  }
+
+  // Check if tapping a dead unit's respawn target
+  const deadUnassigned = myUnits().find(u => u.dead && !G.myActions[u.id]);
+  if (deadUnassigned && hex.r === spawnRow(G.myPlayer) && !unitAt(hex.q, hex.r)) {
+    lockUnit(deadUnassigned.id);
+    assignAction({unitId: deadUnassigned.id, type: 'respawn', target: {q: hex.q, r: hex.r}});
+    hideHint();
+    return;
+  }
+
+  // Check if tapping a player unit
+  const unit = unitAt(hex.q, hex.r);
+  if (unit && unit.player === G.myPlayer && !unit.dead) {
+    canvas.setPointerCapture(e.pointerId);
+    drag.unit = unit;
+    drag.startHex = {q: hex.q, r: hex.r};
+    drag.startPos = {x: sx, y: sy};
+    drag.currentPos = {x: sx, y: sy};
+    drag.targetHex = null;
+    drag.moved = false;
+    drag.isHold = false;
+    drag.holdTimer = setTimeout(() => {
+      if (!drag.moved) {
+        drag.isHold = true;
+        if (navigator.vibrate) navigator.vibrate(30);
+      }
+    }, LONG_PRESS_MS);
+    return;
+  }
+}
+
+function onPointerMove(e) {
+  // Bow aim tracking
+  if (bowAim.active) {
     e.preventDefault();
-    const rect=canvas.getBoundingClientRect();const sx=e.clientX-rect.left,sy=e.clientY-rect.top;
-    bowAim.currentPos={x:sx,y:sy};
-    const u=unitById(bowAim.unitId);
-    if(u) bowAim.bestDir=closestHexDir(u,sx,sy);
+    const rect = canvas.getBoundingClientRect();
+    const sx = e.clientX - rect.left, sy = e.clientY - rect.top;
+    bowAim.currentPos = {x: sx, y: sy};
+    const hex = screenToHex(sx, sy);
+    if (onBoard(hex.q, hex.r)) {
+      bowAim.targetHex = hex;
+    }
     return;
   }
-  if(!drag.unit)return;e.preventDefault();const rect=canvas.getBoundingClientRect();const sx=e.clientX-rect.left,sy=e.clientY-rect.top;drag.currentPos={x:sx,y:sy};
-  const dx=sx-drag.startPos.x,dy=sy-drag.startPos.y;if(Math.sqrt(dx*dx+dy*dy)>12&&!drag.moved){drag.moved=true;clearTimeout(drag.holdTimer);drag.isHold=false}
-  if(drag.moved){const hex=screenToHex(sx,sy);const nb=neighbors(drag.unit.q,drag.unit.r);const isCurrent=hex.q===drag.unit.q&&hex.r===drag.unit.r;const valid=nb.find(n=>n.q===hex.q&&n.r===hex.r);if(valid||isCurrent){drag.targetHex=hex}else{drag.targetHex=null}}
-}
-function onPointerUp(e){
-  e.preventDefault();clearTimeout(drag.holdTimer);
-  // Bow aim release -- finalize direction
-  if(bowAim.active&&bowAim.bestDir){
-    const u=unitById(bowAim.unitId);
-    if(u){
-      addToOrder(u.id);
-      assignAction({unitId:u.id,type:'skill',skill:'bow',direction:bowAim.bestDir});
-    }
-    bowAim.active=false;bowAim.unitId=null;bowAim.bestDir=null;bowAim.currentPos=null;
-    G.actionMode=null;G.selectedUnit=null;hideHint();
-    drag.unit=null;drag.targetHex=null;drag.currentPos=null;drag.moved=false;drag.isHold=false;drag.tapHex=null;
-    return;
+
+  if (!drag.unit) return;
+  e.preventDefault();
+  const rect = canvas.getBoundingClientRect();
+  const sx = e.clientX - rect.left, sy = e.clientY - rect.top;
+  drag.currentPos = {x: sx, y: sy};
+
+  const dx = sx - drag.startPos.x, dy = sy - drag.startPos.y;
+  if (Math.sqrt(dx * dx + dy * dy) > 12 && !drag.moved) {
+    drag.moved = true;
+    clearTimeout(drag.holdTimer);
+    drag.isHold = false;
   }
-  if(drag.unit){
-    if(drag.isHold&&!drag.moved)toggleSkill(drag.unit);
-    else if(drag.moved&&drag.targetHex){
-      // If target is the current hex, treat as "stay" (remove any move action)
-      if(drag.targetHex.q===drag.unit.q&&drag.targetHex.r===drag.unit.r){
-        delete G.myActions[drag.unit.id];
-        addToOrder(drag.unit.id);
-      } else {
-        addToOrder(drag.unit.id);
-        assignAction({unitId:drag.unit.id,type:'move',target:{q:drag.targetHex.q,r:drag.targetHex.r}});
-      }
-      G.selectedUnit=null;G.actionMode=null;
-    }
-    else if(!drag.moved&&!drag.isHold){
-      addToOrder(drag.unit.id);
-      G.selectedUnit=null;G.actionMode=null;
-    }
-  }else{G.selectedUnit=null;G.actionMode=null;hideHint()}
-  drag.unit=null;drag.targetHex=null;drag.currentPos=null;drag.moved=false;drag.isHold=false;drag.tapHex=null;
-}
-function toggleSkill(unit){
-  const existing=G.myActions[unit.id];
-  if(existing&&existing.type==='skill'){delete G.myActions[unit.id];G.selectedUnit=null;G.actionMode=null;hideHint();return}
-  if(existing)delete G.myActions[unit.id];
-  if(!unit.skill)return;const sd=SKILL_DEF[unit.skill];
-  if(sd.targeted){
-    // Bow: activate drag-to-aim mode
-    G.selectedUnit=unit.id;G.actionMode='skill-direction';
-    bowAim.active=true;bowAim.unitId=unit.id;bowAim.startPos=drag.startPos?{...drag.startPos}:null;bowAim.currentPos=drag.currentPos?{...drag.currentPos}:null;bowAim.bestDir=null;
-    showHint('DRAG TO AIM ARROW DIRECTION');
+
+  if (drag.moved) {
+    const hex = screenToHex(sx, sy);
+    const nb = neighbors(drag.unit.q, drag.unit.r);
+    const isCurrent = hex.q === drag.unit.q && hex.r === drag.unit.r;
+    const valid = nb.find(n => n.q === hex.q && n.r === hex.r);
+    drag.targetHex = (valid || isCurrent) ? hex : null;
   }
-  else{addToOrder(unit.id);assignAction({unitId:unit.id,type:'skill',skill:unit.skill})}
-}
-function handleTargetTap(hex){
-  const u=unitById(G.selectedUnit);if(!u)return;
-  if(G.actionMode==='skill-direction'){const dir=DIRS.find(d=>{for(let s=1;s<=2;s++)if(u.q+d.q*s===hex.q&&u.r+d.r*s===hex.r)return true;return false});if(dir){addToOrder(u.id);assignAction({unitId:u.id,type:'skill',skill:'bow',direction:dir});G.actionMode=null;G.selectedUnit=null;hideHint()}}
 }
 
-function assignAction(action){
-  G.myActions[action.unitId]=action;
-  const actionUids=Object.keys(G.myActions);
-  if(actionUids.length>3){
-    let toRemove=null;
-    for(const uid of actionUids){
-      const idx=G.unitOrder.indexOf(uid);
-      if(idx<0){toRemove=uid;break}
-      if(!toRemove||idx>G.unitOrder.indexOf(toRemove))toRemove=uid;
+function onPointerUp(e) {
+  e.preventDefault();
+  clearTimeout(drag.holdTimer);
+
+  // Bow aim release: finalize target
+  if (bowAim.active && bowAim.targetHex) {
+    const u = unitById(bowAim.unitId);
+    if (u) {
+      const dist = hexDist(u.q, u.r, bowAim.targetHex.q, bowAim.targetHex.r);
+      if (dist > 0) {
+        lockUnit(u.id);
+        assignAction({unitId: u.id, type: 'skill', skill: 'bow', targetHex: {q: bowAim.targetHex.q, r: bowAim.targetHex.r}, distance: dist});
+      }
     }
-    if(toRemove)delete G.myActions[toRemove];
+    bowAim.active = false;
+    bowAim.unitId = null;
+    bowAim.targetHex = null;
+    bowAim.currentPos = null;
+    hideHint();
+    drag.unit = null;
+    drag.targetHex = null;
+    drag.currentPos = null;
+    drag.moved = false;
+    drag.isHold = false;
+    return;
   }
+
+  if (drag.unit) {
+    if (drag.isHold && !drag.moved) {
+      // Long press: toggle skill
+      toggleSkill(drag.unit);
+    } else if (drag.moved && drag.targetHex) {
+      // Drag to adjacent hex: assign move
+      if (drag.targetHex.q === drag.unit.q && drag.targetHex.r === drag.unit.r) {
+        // Dragged back to self: clear move action
+        delete G.myActions[drag.unit.id];
+        lockUnit(drag.unit.id);
+      } else {
+        lockUnit(drag.unit.id);
+        assignAction({unitId: drag.unit.id, type: 'move', target: {q: drag.targetHex.q, r: drag.targetHex.r}});
+      }
+    } else if (!drag.moved && !drag.isHold) {
+      // Simple tap: lock this unit into order
+      lockUnit(drag.unit.id);
+    }
+  } else {
+    hideHint();
+  }
+
+  drag.unit = null;
+  drag.targetHex = null;
+  drag.currentPos = null;
+  drag.moved = false;
+  drag.isHold = false;
+}
+
+function toggleSkill(unit) {
+  const existing = G.myActions[unit.id];
+  // If already has skill action, cancel it
+  if (existing && existing.type === 'skill') {
+    delete G.myActions[unit.id];
+    hideHint();
+    return;
+  }
+  // Remove any existing action for this unit
+  if (existing) delete G.myActions[unit.id];
+
+  if (!unit.skill) return;
+
+  const sd = SKILL_DEF[unit.skill];
+  if (sd.targeted) {
+    // Bow: enter drag-to-target mode
+    bowAim.active = true;
+    bowAim.unitId = unit.id;
+    bowAim.currentPos = drag.startPos ? {...drag.startPos} : null;
+    bowAim.targetHex = null;
+    showHint('DRAG TO TARGET HEX FOR ARROW');
+  } else {
+    // Non-targeted skill (shield, cloak): assign immediately
+    lockUnit(unit.id);
+    assignAction({unitId: unit.id, type: 'skill', skill: unit.skill});
+  }
+}
+
+function assignAction(action) {
+  G.myActions[action.unitId] = action;
   checkAutoSelectDead();
 }
-function checkAutoSelectDead(){
-  // If there are dead units without actions, prompt but don't force
-  const assigned=new Set(Object.keys(G.myActions));
-  const d=myUnits().find(u=>u.dead&&!assigned.has(u.id));
-  if(d){G.selectedUnit=d.id;G.actionMode='respawn';showHint('TAP A SPAWN TILE TO RESPAWN');}
+
+function checkAutoSelectDead() {
+  const assigned = new Set(Object.keys(G.myActions));
+  const d = myUnits().find(u => u.dead && !assigned.has(u.id));
+  if (d) {
+    showHint('TAP A SPAWN TILE TO RESPAWN');
+  }
 }
-function showHint(msg){document.getElementById('skillHint').textContent=msg;document.getElementById('skillHint').classList.add('visible')}
-function hideHint(){document.getElementById('skillHint').classList.remove('visible')}
 
-function startTimer(sec,onTick,onDone){clearInterval(G.timerH);G.timerVal=sec;onTick(G.timerVal);G.timerH=setInterval(()=>{G.timerVal--;onTick(G.timerVal);if(G.timerVal<=0){clearInterval(G.timerH);onDone()}},1000)}
-function stopTimer(){clearInterval(G.timerH)}
-
-// == SETUP SCREEN (board-based skill selection) ==
-
-function hexToScreenSetup(q,r){
-  const raw=hexToPixelRaw(q,r);
-  const flip=G.myPlayer===1?-1:1;
-  return{x:setupCenterX+raw.x*flip,y:setupCenterY+raw.y*flip};
+function showHint(msg) {
+  document.getElementById('skillHint').textContent = msg;
+  document.getElementById('skillHint').classList.add('visible');
 }
-function screenToHexSetup(sx,sy){
-  const flip=G.myPlayer===1?-1:1;
-  const oldHEX=HEX;HEX=setupHEX;
-  const result=pixelToHexRaw((sx-setupCenterX)*flip,(sy-setupCenterY)*flip);
-  HEX=oldHEX;
+
+function hideHint() {
+  document.getElementById('skillHint').classList.remove('visible');
+}
+
+
+/* ========================================================
+   TIMER
+   ======================================================== */
+
+function startTimer(sec, onTick, onDone) {
+  clearInterval(G.timerH);
+  G.timerVal = sec;
+  onTick(G.timerVal);
+  G.timerH = setInterval(() => {
+    G.timerVal--;
+    onTick(G.timerVal);
+    if (G.timerVal <= 0) { clearInterval(G.timerH); onDone(); }
+  }, 1000);
+}
+
+function stopTimer() { clearInterval(G.timerH); }
+
+
+/* ========================================================
+   SETUP SCREEN (board-based skill selection)
+   ======================================================== */
+
+function hexToScreenSetup(q, r) {
+  const raw = hexToPixelRaw(q, r);
+  const flip = G.myPlayer === 1 ? -1 : 1;
+  return {x: setupCenterX + raw.x * flip, y: setupCenterY + raw.y * flip};
+}
+
+function screenToHexSetup(sx, sy) {
+  const flip = G.myPlayer === 1 ? -1 : 1;
+  const oldHEX = HEX;
+  HEX = setupHEX;
+  const result = pixelToHexRaw((sx - setupCenterX) * flip, (sy - setupCenterY) * flip);
+  HEX = oldHEX;
   return result;
 }
 
-function renderSetup(){
-  if(!setupCtx)return;
-  const c=setupCtx;
-  c.clearRect(0,0,setupCW,setupCH);
+function renderSetup() {
+  if (!setupCtx) return;
+  const c = setupCtx;
+  c.clearRect(0, 0, setupCW, setupCH);
 
-  const savedHEX=HEX;
-  HEX=setupHEX;
+  const savedHEX = HEX;
+  HEX = setupHEX;
 
-  // Draw board hexes (thickness layer): white fill, white stroke, same size as top
-  for(const h of boardHexes){
-    const s=hexToScreenSetup(h.q,h.r);
-    drawHexShape(c,s.x,s.y+HEX_THICK,HEX-2);
-    c.fillStyle='#fff';c.fill();
-    c.strokeStyle='#fff';c.lineWidth=1;c.stroke();
+  // Board hexes: thickness layer (white fill, white stroke)
+  for (const h of boardHexes) {
+    const s = hexToScreenSetup(h.q, h.r);
+    drawHexShape(c, s.x, s.y + HEX_THICK, HEX - 2);
+    c.fillStyle = '#fff'; c.fill();
+    c.strokeStyle = '#fff'; c.lineWidth = 1; c.stroke();
   }
-  // Draw board hexes (top face): black fill, white stroke
-  for(const h of boardHexes){
-    const s=hexToScreenSetup(h.q,h.r);
-    drawHexShape(c,s.x,s.y,HEX-2);
-    c.fillStyle='#000';c.fill();
-    c.strokeStyle='#fff';c.lineWidth=1;c.stroke();
+  // Board hexes: top face (black fill, white stroke)
+  for (const h of boardHexes) {
+    const s = hexToScreenSetup(h.q, h.r);
+    drawHexShape(c, s.x, s.y, HEX - 2);
+    c.fillStyle = '#000'; c.fill();
+    c.strokeStyle = '#fff'; c.lineWidth = 1; c.stroke();
   }
 
-  // Draw only my units
-  for(const u of myUnits()){
-    if(u.dead)continue;
-    const s=hexToScreenSetup(u.q,u.r);
-    const col=u.player===1?P1_COLOR:P2_COLOR;
-    const r=HEX*0.28;
-    c.beginPath();c.arc(s.x,s.y,r,0,Math.PI*2);
-    c.fillStyle=col;c.fill();
-    c.strokeStyle='#fff';c.lineWidth=1;c.stroke();
+  // Draw only player's units as pawns
+  const setupPawnSize = Math.round(HEX * 1.0);
+  const setupPawnWhite = prerenderPawnSimple('#fff', null, setupPawnSize);
+  const drawSz = HEX * 0.5;
+
+  for (const u of myUnits()) {
+    if (u.dead) continue;
+    const s = hexToScreenSetup(u.q, u.r);
+    const r = HEX * 0.28;
+
+    // Draw pawn
+    c.drawImage(setupPawnWhite, s.x - drawSz / 2, s.y - drawSz / 2, drawSz, drawSz);
 
     // Selection ring
-    if(setupSelectedUnit===u.id){
-      c.beginPath();c.arc(s.x,s.y,r+5,0,Math.PI*2);
-      c.strokeStyle='#fff';c.lineWidth=1;c.stroke();
+    if (setupSelectedUnit === u.id) {
+      c.beginPath();
+      c.arc(s.x, s.y, r + 5, 0, Math.PI * 2);
+      c.strokeStyle = '#fff'; c.lineWidth = 1; c.stroke();
     }
 
     // Skill icon
-    if(u.skill){
-      c.font=`${HEX*0.22}px sans-serif`;
-      c.textAlign='center';c.textBaseline='middle';
-      c.fillText(SKILL_DEF[u.skill].icon,s.x,s.y);
+    if (u.skill) {
+      c.font = (HEX * 0.22) + 'px sans-serif';
+      c.textAlign = 'center'; c.textBaseline = 'middle';
+      c.fillText(SKILL_DEF[u.skill].icon, s.x, s.y);
     }
   }
 
-  HEX=savedHEX;
+  HEX = savedHEX;
   requestAnimationFrame(renderSetup);
 }
 
-let setupCanvasReady=false;
-function initSetupCanvas(){
-  setupCanvas=document.getElementById('setupCanvas');
-  setupCtx=setupCanvas.getContext('2d');
+let setupCanvasReady = false;
+
+function initSetupCanvas() {
+  setupCanvas = document.getElementById('setupCanvas');
+  setupCtx = setupCanvas.getContext('2d');
   resizeSetupCanvas();
-  if(!setupCanvasReady){
-    window.addEventListener('resize',resizeSetupCanvas);
-    setupCanvas.addEventListener('pointerdown',onSetupPointerDown);
-    setupCanvasReady=true;
+  if (!setupCanvasReady) {
+    window.addEventListener('resize', resizeSetupCanvas);
+    setupCanvas.addEventListener('pointerdown', onSetupPointerDown);
+    setupCanvasReady = true;
   }
   requestAnimationFrame(renderSetup);
 }
-function resizeSetupCanvas(){
-  if(!setupCanvas)return;
-  setupDpr=window.devicePixelRatio||1;
-  const rect=setupCanvas.getBoundingClientRect();
-  setupCW=rect.width;setupCH=rect.height;
-  setupCanvas.width=setupCW*setupDpr;setupCanvas.height=setupCH*setupDpr;
-  setupCtx.setTransform(setupDpr,0,0,setupDpr,0,0);
-  setupCenterX=setupCW/2;setupCenterY=setupCH/2;
-  const maxH=setupCH/8*0.98;const maxW=setupCW/(5*S3*HEX_ASPECT)*0.98;
-  setupHEX=Math.min(maxH,maxW,80);setupHEX=Math.max(setupHEX,18);
+
+function resizeSetupCanvas() {
+  if (!setupCanvas) return;
+  setupDpr = window.devicePixelRatio || 1;
+  const rect = setupCanvas.getBoundingClientRect();
+  setupCW = rect.width; setupCH = rect.height;
+  setupCanvas.width = setupCW * setupDpr;
+  setupCanvas.height = setupCH * setupDpr;
+  setupCtx.setTransform(setupDpr, 0, 0, setupDpr, 0, 0);
+  setupCenterX = setupCW / 2;
+  setupCenterY = setupCH / 2;
+  const maxH = setupCH / 8 * 0.98;
+  const maxW = setupCW / (5 * S3 * HEX_ASPECT) * 0.98;
+  setupHEX = Math.min(maxH, maxW, 80);
+  setupHEX = Math.max(setupHEX, 18);
 }
-function onSetupPointerDown(e){
-  if(G.myReady)return; // locked after pressing ready
+
+function onSetupPointerDown(e) {
+  if (G.myReady) return; // locked after pressing ready
   e.preventDefault();
-  const rect=setupCanvas.getBoundingClientRect();
-  const sx=e.clientX-rect.left,sy=e.clientY-rect.top;
-  const savedHEX=HEX;HEX=setupHEX;
-  const hex=screenToHexSetup(sx,sy);
-  HEX=savedHEX;
-  if(!onBoard(hex.q,hex.r))return;
-  const unit=myUnits().find(u=>!u.dead&&u.q===hex.q&&u.r===hex.r);
-  if(unit){
-    setupSelectedUnit=unit.id;
+  const rect = setupCanvas.getBoundingClientRect();
+  const sx = e.clientX - rect.left, sy = e.clientY - rect.top;
+  const savedHEX = HEX; HEX = setupHEX;
+  const hex = screenToHexSetup(sx, sy);
+  HEX = savedHEX;
+  if (!onBoard(hex.q, hex.r)) return;
+  const unit = myUnits().find(u => !u.dead && u.q === hex.q && u.r === hex.r);
+  if (unit) {
+    setupSelectedUnit = unit.id;
     updateSetupSkillButtons();
-    document.getElementById('setupStatus').textContent='TAP A SKILL BELOW TO ASSIGN IT';
+    document.getElementById('setupStatus').textContent = 'TAP A SKILL BELOW TO ASSIGN IT';
   }
 }
 
-function buildSetupUI(){
-  // Set default skill to shield and select the first unit
-  myUnits().forEach(u=>{u.skill='shield'});
-  const mine=myUnits();
-  setupSelectedUnit=mine.length>0?mine[0].id:null;
+function buildSetupUI() {
+  // Default all units to shield
+  myUnits().forEach(u => { u.skill = 'shield'; });
+  const mine = myUnits();
+  setupSelectedUnit = mine.length > 0 ? mine[0].id : null;
 
   // Build skill buttons
-  const row=document.getElementById('setupSkillRow');
-  row.innerHTML='';
-  for(const[key,sd]of Object.entries(SKILL_DEF)){
-    const btn=document.createElement('button');
-    btn.className='pushable compact';
-    btn.dataset.skill=key;
-    btn.innerHTML=`<span class="shadow"></span><span class="edge"></span><span class="front">${sd.icon} ${sd.name.toUpperCase()}</span>`;
-    btn.addEventListener('click',()=>{
-      if(G.myReady||!setupSelectedUnit)return;
-      const u=unitById(setupSelectedUnit);
-      if(!u)return;
-      u.skill=key;
+  const row = document.getElementById('setupSkillRow');
+  row.innerHTML = '';
+  for (const [key, sd] of Object.entries(SKILL_DEF)) {
+    const btn = document.createElement('button');
+    btn.className = 'pushable compact';
+    btn.dataset.skill = key;
+    btn.innerHTML = '<span class="shadow"></span><span class="edge"></span><span class="front">' + sd.icon + ' ' + sd.name.toUpperCase() + '</span>';
+    btn.addEventListener('click', () => {
+      if (G.myReady || !setupSelectedUnit) return;
+      const u = unitById(setupSelectedUnit);
+      if (!u) return;
+      u.skill = key;
       updateSetupSkillButtons();
     });
     row.appendChild(btn);
   }
   updateSetupSkillButtons();
 
-  const rb=document.getElementById('btnSetupReady');
-  rb.onclick=()=>finishSetup();rb.disabled=false;rb.classList.remove('is-ready');rb.querySelector('.front').textContent='READY';
-  document.getElementById('setupStatus').textContent='TAP A UNIT, THEN TAP A SKILL BELOW';
+  const rb = document.getElementById('btnSetupReady');
+  rb.onclick = () => finishSetup();
+  rb.disabled = false;
+  rb.classList.remove('is-ready');
+  rb.querySelector('.front').textContent = 'READY';
+  document.getElementById('setupStatus').textContent = 'TAP A UNIT, THEN TAP A SKILL BELOW';
 }
 
-function updateSetupSkillButtons(){
-  const row=document.getElementById('setupSkillRow');
-  const btns=row.querySelectorAll('.pushable');
-  const selUnit=setupSelectedUnit?unitById(setupSelectedUnit):null;
-  btns.forEach(btn=>{
-    const sk=btn.dataset.skill;
-    const isActive=selUnit&&selUnit.skill===sk;
-    if(isActive){
-      btn.classList.remove('subtle');
-    } else {
-      btn.classList.add('subtle');
-    }
+function updateSetupSkillButtons() {
+  const row = document.getElementById('setupSkillRow');
+  const btns = row.querySelectorAll('.pushable');
+  const selUnit = setupSelectedUnit ? unitById(setupSelectedUnit) : null;
+  btns.forEach(btn => {
+    const sk = btn.dataset.skill;
+    const isActive = selUnit && selUnit.skill === sk;
+    if (isActive) btn.classList.remove('subtle');
+    else btn.classList.add('subtle');
   });
 }
 
-function startSetup(){G.phase='setup';G.myReady=false;G.opReady=false;initUnits();showScreen('screenSetup');buildSetupUI();
-  setTimeout(()=>initSetupCanvas(),50);
-}
-function finishSetup(){
-  if(G.myReady)return;myUnits().forEach(u=>{if(!u.skill)u.skill='shield'});G.myReady=true;
-  document.getElementById('setupStatus').textContent='WAITING FOR OPPONENT...';
-  const rb=document.getElementById('btnSetupReady');rb.disabled=true;rb.classList.add('is-ready');rb.querySelector('.front').textContent='WAITING...';
-  send({type:'setup-done',units:myUnits().map(u=>({id:u.id,q:u.q,r:u.r,skill:u.skill}))});
-  if(G.opReady)startPlanning();
+
+/* ========================================================
+   GAME FLOW: SETUP -> PLANNING -> RESOLUTION
+   ======================================================== */
+
+function startSetup() {
+  G.phase = 'setup';
+  G.myReady = false;
+  G.opReady = false;
+  initUnits();
+  showScreen('screenSetup');
+  buildSetupUI();
+  setTimeout(() => initSetupCanvas(), 50);
 }
 
-function startPlanning(){
-  G.phase='planning';G.myReady=false;G.opReady=false;G.myActions={};G.opActions=null;G.selectedUnit=null;G.actionMode=null;
-  // Reset bow aim state
-  bowAim.active=false;bowAim.unitId=null;bowAim.bestDir=null;bowAim.currentPos=null;
-  // Auto-assign I/II/III to ALL units (alive + dead)
-  G.unitOrder=myUnits().map(u=>u.id).slice(0,3);
-  orderCounter=0;
-  // Auto-assign respawn for dead units to first available spawn hex
-  myUnits().forEach(u=>{
-    if(u.dead){
-      const spawn=spawnHexes(G.myPlayer).find(h=>!unitAt(h.q,h.r));
-      if(spawn) G.myActions[u.id]={unitId:u.id,type:'respawn',target:{q:spawn.q,r:spawn.r}};
+function finishSetup() {
+  if (G.myReady) return;
+  myUnits().forEach(u => { if (!u.skill) u.skill = 'shield'; });
+  G.myReady = true;
+  document.getElementById('setupStatus').textContent = 'WAITING FOR OPPONENT...';
+  const rb = document.getElementById('btnSetupReady');
+  rb.disabled = true;
+  rb.classList.add('is-ready');
+  rb.querySelector('.front').textContent = 'WAITING...';
+  send({type: 'setup-done', units: myUnits().map(u => ({id: u.id, q: u.q, r: u.r, skill: u.skill}))});
+  if (G.opReady) startPlanning();
+}
+
+function startPlanning() {
+  G.phase = 'planning';
+  G.myReady = false;
+  G.opReady = false;
+  G.myActions = {};
+  G.opActions = null;
+
+  // Reset aim state
+  bowAim.active = false;
+  bowAim.unitId = null;
+  bowAim.targetHex = null;
+  bowAim.currentPos = null;
+
+  // Start with NO units locked (all null)
+  G.unitOrder = [null, null, null];
+
+  // Clear shield status from last turn
+  G.units.forEach(u => { u.shielded = false; });
+
+  // Auto-assign respawn for dead units
+  myUnits().forEach(u => {
+    if (u.dead) {
+      const spawn = spawnHexes(G.myPlayer).find(h => !unitAt(h.q, h.r));
+      if (spawn) {
+        const nextSlot = G.unitOrder.indexOf(null);
+        if (nextSlot >= 0) {
+          G.unitOrder[nextSlot] = u.id;
+          G.myActions[u.id] = {unitId: u.id, type: 'respawn', target: {q: spawn.q, r: spawn.r}};
+        }
+      }
     }
   });
-  G.units.forEach(u=>{u.shielded=false});showScreen('screenGame');setupMainCanvas();
-  const rb=document.getElementById('btnGameReady');rb.disabled=false;rb.classList.remove('is-ready');rb.querySelector('.front').textContent='READY';
+
+  showScreen('screenGame');
+  setupMainCanvas();
+
+  // Setup ready and reset buttons
+  const rb = document.getElementById('btnGameReady');
+  rb.disabled = false;
+  rb.classList.remove('is-ready');
+  rb.querySelector('.front').textContent = 'READY';
+  rb.onclick = () => submitPlan();
+
+  const resetBtn = document.getElementById('btnReset');
+  resetBtn.onclick = () => resetAllAssignments();
+
   checkAutoSelectDead();
   updateGameHUD();
-  if(G.timerConfig>0){
-    startTimer(G.timerConfig,()=>{
+
+  // Start timer if configured
+  if (G.timerConfig > 0) {
+    startTimer(G.timerConfig, () => {
       updateGameHUD();
       // Host syncs timer to guest every 5 seconds
-      if(G.myPlayer===1 && G.timerVal%5===0) send({type:'timer-sync',val:G.timerVal});
-    },()=>submitPlan());
-  }else{
-    G.timerVal=0;
+      if (G.myPlayer === 1 && G.timerVal % 5 === 0) send({type: 'timer-sync', val: G.timerVal});
+    }, () => submitPlan());
+  } else {
+    G.timerVal = 0;
   }
-  rb.onclick=()=>submitPlan();
 }
 
-// Update the HTML HUD (timer, point bars, score-diff hex)
-function updateGameHUD(){
-  const t=document.getElementById('gameTimer');
-  if(t){
-    t.textContent = G.timerConfig>0 ? String(G.timerVal) : '∞';
-    t.classList.toggle('urgent', G.timerConfig>0 && G.timerVal<=3);
+
+/* ========================================================
+   HUD UPDATE
+   ======================================================== */
+
+function updateGameHUD() {
+  const t = document.getElementById('gameTimer');
+  if (t) {
+    t.textContent = G.timerConfig > 0 ? String(G.timerVal) : '∞';
+    t.classList.toggle('urgent', G.timerConfig > 0 && G.timerVal <= 3);
   }
-  buildPts('p1pts',G.scores[1]);
-  buildPts('p2pts',G.scores[2]);
-  const sd=document.getElementById('scoreDiff');
-  if(sd)sd.textContent=String(Math.abs(G.scores[1]-G.scores[2]));
+  buildPts('p1pts', G.scores[1]);
+  buildPts('p2pts', G.scores[2]);
+  const sd = document.getElementById('scoreDiff');
+  if (sd) sd.textContent = String(Math.abs(G.scores[1] - G.scores[2]));
 }
-function buildPts(id,score){
-  const el=document.getElementById(id);
-  if(!el)return;
-  el.innerHTML='';
-  for(let i=0;i<score;i++){const b=document.createElement('div');b.className='bar';el.appendChild(b);}
+
+function buildPts(id, score) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.innerHTML = '';
+  for (let i = 0; i < score; i++) {
+    const b = document.createElement('div');
+    b.className = 'bar';
+    el.appendChild(b);
+  }
 }
-function submitPlan(){
-  if(G.myReady)return;G.myReady=true;stopTimer();
-  const rb=document.getElementById('btnGameReady');rb.disabled=true;rb.classList.add('is-ready');rb.querySelector('.front').textContent='WAITING...';
-  G.selectedUnit=null;G.actionMode=null;hideHint();
+
+
+/* ========================================================
+   SUBMIT PLAN & RESOLUTION
+   ======================================================== */
+
+function submitPlan() {
+  if (G.myReady) return;
+  G.myReady = true;
+  stopTimer();
+
+  const rb = document.getElementById('btnGameReady');
+  rb.disabled = true;
+  rb.classList.add('is-ready');
+  rb.querySelector('.front').textContent = 'WAITING...';
+  hideHint();
+
   // Reset bow aim
-  bowAim.active=false;bowAim.unitId=null;bowAim.bestDir=null;bowAim.currentPos=null;
-  const orderedActions=buildOrderedActions();
-  // Filter out cloaked unit positions from actions sent to opponent
-  const sanitizedActions=orderedActions.map(a=>{
-    const u=unitById(a.unitId);
-    // Don't filter own actions -- the opponent needs to see move targets etc.
-    // But we filter position data of cloaked units from state sync
+  bowAim.active = false;
+  bowAim.unitId = null;
+  bowAim.targetHex = null;
+  bowAim.currentPos = null;
+
+  const orderedActions = buildOrderedActions();
+
+  // IMPORTANT: strip arrow data from network messages (arrows are hidden from opponent)
+  const sanitizedActions = orderedActions.map(a => {
+    if (a.type === 'skill' && a.skill === 'bow') {
+      // Send the bow action but with direction computed from distance for resolution,
+      // NOT the target hex (which would reveal the arrow's destination)
+      return {unitId: a.unitId, type: 'skill', skill: 'bow', targetHex: a.targetHex, distance: a.distance};
+    }
     return a;
   });
-  send({type:'plan-done',actions:sanitizedActions});if(G.opActions)runResolution();
+
+  send({type: 'plan-done', actions: sanitizedActions});
+  if (G.opActions) runResolution();
 }
 
-async function runResolution(){
-  G.phase='resolution';
+async function runResolution() {
+  G.phase = 'resolution';
   updateTitleVisibility();
-  const orderedActions=buildOrderedActions();
-  const p1Acts=G.myPlayer===1?orderedActions:G.opActions;
-  const p2Acts=G.myPlayer===2?orderedActions:G.opActions;
-  for(let step=0;step<3;step++){
-    const oldPos={};G.units.forEach(u=>{oldPos[u.id]={q:u.q,r:u.r}});
-    resolveStep(p1Acts[step]||null,p2Acts[step]||null);
-    G.units.forEach(u=>{const o=oldPos[u.id];if(o&&(o.q!==u.q||o.r!==u.r))startUnitAnim(u,o.q,o.r)});
-    await sleep(ANIM_MS+200);
+
+  const orderedActions = buildOrderedActions();
+  const p1Acts = G.myPlayer === 1 ? orderedActions : G.opActions;
+  const p2Acts = G.myPlayer === 2 ? orderedActions : G.opActions;
+
+  // Process arrows from previous turns that are still in flight
+  // (they advance one step per priority step)
+  for (let step = 0; step < 3; step++) {
+    const oldPos = {};
+    G.units.forEach(u => { oldPos[u.id] = {q: u.q, r: u.r}; });
+
+    // Resolve this priority step's actions
+    resolveStep(p1Acts[step] || null, p2Acts[step] || null, step);
+
+    // Advance in-flight arrows by 1 step
+    advanceArrows();
+
+    // Animate unit movement
+    G.units.forEach(u => {
+      const o = oldPos[u.id];
+      if (o && (o.q !== u.q || o.r !== u.r)) startUnitAnim(u, o.q, o.r);
+    });
+
+    await sleep(ANIM_MS + 200);
   }
-  G.turnNum++;calcScores();updateGameHUD();
-  if(checkWin()){G.phase='gameover';showScreen('screenGameover');document.getElementById('winText').textContent=G.winner===G.myPlayer?'YOU WIN':'YOU LOSE';document.getElementById('finalScore').textContent=`P1 ${G.scores[1]}  --  P2 ${G.scores[2]}`;document.getElementById('btnRematch').onclick=()=>{send({type:'rematch'});startSetup()}}
-  else startPlanning();
-}
-function resolveStep(a1,a2){
-  const actions=[];if(a1)actions.push({...a1,player:1});if(a2)actions.push({...a2,player:2});
-  for(const a of actions)if(a.type==='respawn'){const u=unitById(a.unitId);if(u&&u.dead&&!unitAt(a.target.q,a.target.r)){u.dead=false;u.q=a.target.q;u.r=a.target.r;u.cloaked=false;u.shielded=false}}
-  const movers=actions.filter(a=>a.type==='move');const skillers=actions.filter(a=>a.type==='skill');
-  for(const a of skillers)if(a.skill==='shield'){const u=unitById(a.unitId);if(u&&!u.dead)u.shielded=true}
-  if(movers.length===2){const t0=movers[0].target,t1=movers[1].target;const u0=unitById(movers[0].unitId),u1=unitById(movers[1].unitId);if(t0.q===t1.q&&t0.r===t1.r){}else if(u0&&u1&&t0.q===u1.q&&t0.r===u1.r&&t1.q===u0.q&&t1.r===u0.r){}else{for(const m of movers)processMove(m)}}else{for(const m of movers)processMove(m)}
-  for(const a of skillers){const u=unitById(a.unitId);if(!u||u.dead)continue;switch(a.skill){case'bow':resolveBow(u,a.direction);break;case'cloak':u.cloaked=!u.cloaked;break}}
-}
-function processMove(m){const u=unitById(m.unitId);if(!u||u.dead)return;const enemy=unitAt(m.target.q,m.target.r);if(enemy&&enemy.player!==u.player){if(enemy.shielded){enemy.shielded=false;return}enemy.dead=true;enemy.cloaked=false}else if(enemy&&enemy.player===u.player)return;u.q=m.target.q;u.r=m.target.r;u.cloaked=false}
-function resolveBow(u,dir){if(!dir)return;for(let s=1;s<=2;s++){const tq=u.q+dir.q*s,tr=u.r+dir.r*s;if(!onBoard(tq,tr))break;const target=unitAt(tq,tr);if(target&&target.player!==u.player){if(target.shielded)target.shielded=false;else{target.dead=true;target.cloaked=false}return}if(target&&target.player===u.player)return}}
 
-function calcScores(){G.scores[1]=0;G.scores[2]=0;for(const u of G.units){if(u.dead||u.cloaked)continue;G.scores[u.player]+=pointVal(u.r,u.player)}}
-function checkWin(){if(Math.abs(G.scores[1]-G.scores[2])>=WIN_DIFF){G.winner=G.scores[1]>G.scores[2]?1:2;return true}return false}
+  G.turnNum++;
+  calcScores();
+  updateGameHUD();
 
-// -- Stealth: filter cloaked unit positions from state sent to opponent --
-function filterCloakedState(units){
-  return units.map(u=>{
-    if(u.cloaked&&u.player===G.myPlayer){
-      // Send the unit info but strip position -- opponent shouldn't know where cloaked units are
-      return{id:u.id,player:u.player,skill:u.skill,dead:u.dead,cloaked:true,shielded:u.shielded,q:undefined,r:undefined};
+  if (checkWin()) {
+    G.phase = 'gameover';
+    showScreen('screenGameover');
+    document.getElementById('winText').textContent = G.winner === G.myPlayer ? 'YOU WIN' : 'YOU LOSE';
+    document.getElementById('finalScore').textContent = 'P1 ' + G.scores[1] + '  --  P2 ' + G.scores[2];
+    document.getElementById('btnRematch').onclick = () => { send({type: 'rematch'}); startSetup(); };
+  } else {
+    startPlanning();
+  }
+}
+
+function resolveStep(a1, a2, stepIdx) {
+  const actions = [];
+  if (a1) actions.push({...a1, player: 1});
+  if (a2) actions.push({...a2, player: 2});
+
+  // Process respawns first
+  for (const a of actions) {
+    if (a.type === 'respawn') {
+      const u = unitById(a.unitId);
+      if (u && u.dead && !unitAt(a.target.q, a.target.r)) {
+        u.dead = false;
+        u.q = a.target.q;
+        u.r = a.target.r;
+        u.cloaked = false;
+        u.shielded = false;
+      }
     }
-    return{id:u.id,player:u.player,q:u.q,r:u.r,skill:u.skill,dead:u.dead,cloaked:u.cloaked,shielded:u.shielded};
-  });
-}
+  }
 
-function createGame(){
-  const roomId=Math.random().toString(36).substr(2,6).toUpperCase();
-  G.timerConfig=TIMER_OPTIONS[timerIdx]||0;
-  peer=new Peer('rhex-'+roomId,{debug:0});
-  peer.on('open',()=>{const url=location.origin+location.pathname+'?room='+roomId;document.getElementById('shareLink').value=url;document.getElementById('shareArea').style.display='';document.getElementById('btnCreate').style.display='none';document.getElementById('btnInstructions').style.display='none'});
-  peer.on('connection',c=>{conn=c;G.myPlayer=1;wireConn()});
-  peer.on('error',e=>console.error('Peer error:',e));
-}
-function joinGame(roomId){
-  document.getElementById('btnCreate').style.display='none';document.getElementById('btnInstructions').style.display='none';document.getElementById('joinArea').style.display='';
-  peer=new Peer(undefined,{debug:0});
-  peer.on('open',()=>{conn=peer.connect('rhex-'+roomId,{reliable:true});conn.on('open',()=>{wireConn();send({type:'join'})})});
-  peer.on('error',e=>console.error('Peer error:',e));
-}
-function wireConn(){
-  conn.on('data',onMessage);
-  conn.on('close',()=>{
-    showOverlay('OPPONENT DISCONNECTED',true);
-    setTimeout(()=>backToMenu(),3000);
-  });
-}
-function send(data){if(conn&&conn.open)conn.send(data)}
-function onMessage(data){
-  switch(data.type){
-    case'join':send({type:'start',timer:G.timerConfig});startSetup();break;
-    case'start':G.myPlayer=2;G.timerConfig=data.timer||60;startSetup();break;
-    case'setup-done':for(const ud of data.units){const u=unitById(ud.id);if(u){u.skill=ud.skill;u.q=ud.q;u.r=ud.r}}G.opReady=true;if(G.myReady)startPlanning();break;
-    case'timer-sync':if(G.myPlayer===2&&G.phase==='planning'&&!G.myReady){G.timerVal=data.val;updateGameHUD();}break;
-    case'plan-done':G.opActions=data.actions;G.opReady=true;if(G.myReady)runResolution();break;
-    case'rematch':startSetup();break;
+  // Separate movers and skillers
+  const movers = actions.filter(a => a.type === 'move');
+  const skillers = actions.filter(a => a.type === 'skill');
+
+  // Activate shields first
+  for (const a of skillers) {
+    if (a.skill === 'shield') {
+      const u = unitById(a.unitId);
+      if (u && !u.dead) {
+        u.shielded = true;
+        triggerShieldAnim(u.id, false); // expanding shield effect
+      }
+    }
+  }
+
+  // Process moves (with collision handling)
+  if (movers.length === 2) {
+    const t0 = movers[0].target, t1 = movers[1].target;
+    const u0 = unitById(movers[0].unitId), u1 = unitById(movers[1].unitId);
+    // Both move to same hex: cancel both
+    if (t0.q === t1.q && t0.r === t1.r) {
+      // Do nothing
+    }
+    // Swap positions: cancel both
+    else if (u0 && u1 && t0.q === u1.q && t0.r === u1.r && t1.q === u0.q && t1.r === u0.r) {
+      // Do nothing
+    }
+    // Otherwise resolve independently
+    else {
+      for (const m of movers) processMove(m);
+    }
+  } else {
+    for (const m of movers) processMove(m);
+  }
+
+  // Process skills (after moves)
+  for (const a of skillers) {
+    const u = unitById(a.unitId);
+    if (!u || u.dead) continue;
+    switch (a.skill) {
+      case 'bow':
+        // Launch arrow toward target hex
+        if (a.targetHex) {
+          const dist = hexDist(u.q, u.r, a.targetHex.q, a.targetHex.r);
+          G.arrows.push({
+            fromQ: u.q, fromR: u.r,
+            targetQ: a.targetHex.q, targetR: a.targetHex.r,
+            stepsRemaining: dist,
+            player: a.player
+          });
+        }
+        break;
+      case 'cloak':
+        u.cloaked = !u.cloaked;
+        break;
+      // shield already handled above
+    }
   }
 }
 
-function sleep(ms){return new Promise(r=>setTimeout(r,ms))}
-function showOverlay(msg,showMenu){document.getElementById('overlayText').textContent=msg;const mb=document.getElementById('btnOverlayMenu');mb.style.display=showMenu?'':'none';mb.onclick=backToMenu;document.getElementById('overlay').classList.add('visible')}
-function hideOverlay(){document.getElementById('overlay').classList.remove('visible');document.getElementById('btnOverlayMenu').style.display='none'}
+function processMove(m) {
+  const u = unitById(m.unitId);
+  if (!u || u.dead) return;
+  const enemy = unitAt(m.target.q, m.target.r);
+  if (enemy && enemy.player !== u.player) {
+    if (enemy.shielded) {
+      enemy.shielded = false;
+      triggerShieldAnim(enemy.id, true); // blocking flash
+      return;
+    }
+    enemy.dead = true;
+    enemy.cloaked = false;
+  } else if (enemy && enemy.player === u.player) {
+    return; // can't move onto own unit
+  }
+  u.q = m.target.q;
+  u.r = m.target.r;
+  u.cloaked = false;
+}
 
-function init(){
-  const params=new URLSearchParams(location.search);const room=params.get('room');
-  if(room)joinGame(room);
-  else document.getElementById('btnCreate').onclick=createGame;
 
-  // Timer cycling button -- no "S" suffix
-  document.getElementById('btnTimer').onclick=()=>{
-    timerIdx=(timerIdx+1)%TIMER_OPTIONS.length;
-    const v=TIMER_OPTIONS[timerIdx];
-    document.getElementById('btnTimer').querySelector('.front').textContent=v===0?'∞':String(v);
+/* ========================================================
+   ARROW ADVANCEMENT (multi-turn projectile)
+   ======================================================== */
+
+function advanceArrows() {
+  const toRemove = [];
+
+  for (let i = 0; i < G.arrows.length; i++) {
+    const arrow = G.arrows[i];
+    arrow.stepsRemaining--;
+
+    if (arrow.stepsRemaining <= 0) {
+      // Arrow arrives at target hex
+      const target = unitAt(arrow.targetQ, arrow.targetR);
+      if (target && target.player !== arrow.player) {
+        if (target.shielded) {
+          target.shielded = false;
+          triggerShieldAnim(target.id, true); // blocking flash
+        } else {
+          target.dead = true;
+          target.cloaked = false;
+        }
+      }
+      toRemove.push(i);
+    }
+  }
+
+  // Remove landed arrows (reverse order to preserve indices)
+  for (let i = toRemove.length - 1; i >= 0; i--) {
+    G.arrows.splice(toRemove[i], 1);
+  }
+}
+
+
+/* ========================================================
+   SCORING & WIN CHECK
+   ======================================================== */
+
+function calcScores() {
+  G.scores[1] = 0;
+  G.scores[2] = 0;
+  for (const u of G.units) {
+    if (u.dead || u.cloaked) continue;
+    G.scores[u.player] += pointVal(u.r, u.player);
+  }
+}
+
+function checkWin() {
+  if (Math.abs(G.scores[1] - G.scores[2]) >= WIN_DIFF) {
+    G.winner = G.scores[1] > G.scores[2] ? 1 : 2;
+    return true;
+  }
+  return false;
+}
+
+
+/* ========================================================
+   NETWORKING (PeerJS)
+   ======================================================== */
+
+function createGame() {
+  const roomId = Math.random().toString(36).substr(2, 6).toUpperCase();
+  G.timerConfig = TIMER_OPTIONS[timerIdx] || 0;
+  peer = new Peer('rhex-' + roomId, {debug: 0});
+  peer.on('open', () => {
+    const url = location.origin + location.pathname + '?room=' + roomId;
+    document.getElementById('shareLink').value = url;
+    document.getElementById('shareArea').style.display = '';
+    document.getElementById('btnCreate').style.display = 'none';
+    document.getElementById('btnInstructions').style.display = 'none';
+  });
+  peer.on('connection', c => { conn = c; G.myPlayer = 1; wireConn(); });
+  peer.on('error', e => console.error('Peer error:', e));
+}
+
+function joinGame(roomId) {
+  document.getElementById('btnCreate').style.display = 'none';
+  document.getElementById('btnInstructions').style.display = 'none';
+  document.getElementById('joinArea').style.display = '';
+  peer = new Peer(undefined, {debug: 0});
+  peer.on('open', () => {
+    conn = peer.connect('rhex-' + roomId, {reliable: true});
+    conn.on('open', () => { wireConn(); send({type: 'join'}); });
+  });
+  peer.on('error', e => console.error('Peer error:', e));
+}
+
+function wireConn() {
+  conn.on('data', onMessage);
+  conn.on('close', () => {
+    showOverlay('OPPONENT DISCONNECTED', true);
+    setTimeout(() => backToMenu(), 3000);
+  });
+}
+
+function send(data) {
+  if (conn && conn.open) conn.send(data);
+}
+
+function onMessage(data) {
+  switch (data.type) {
+    case 'join':
+      send({type: 'start', timer: G.timerConfig});
+      startSetup();
+      break;
+    case 'start':
+      G.myPlayer = 2;
+      G.timerConfig = data.timer || 60;
+      startSetup();
+      break;
+    case 'setup-done':
+      for (const ud of data.units) {
+        const u = unitById(ud.id);
+        if (u) { u.skill = ud.skill; u.q = ud.q; u.r = ud.r; }
+      }
+      G.opReady = true;
+      if (G.myReady) startPlanning();
+      break;
+    case 'timer-sync':
+      if (G.myPlayer === 2 && G.phase === 'planning' && !G.myReady) {
+        G.timerVal = data.val;
+        updateGameHUD();
+      }
+      break;
+    case 'plan-done':
+      G.opActions = data.actions;
+      G.opReady = true;
+      if (G.myReady) runResolution();
+      break;
+    case 'rematch':
+      startSetup();
+      break;
+  }
+}
+
+
+/* ========================================================
+   UTILITY
+   ======================================================== */
+
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+function showOverlay(msg, showMenu) {
+  document.getElementById('overlayText').textContent = msg;
+  const mb = document.getElementById('btnOverlayMenu');
+  mb.style.display = showMenu ? '' : 'none';
+  mb.onclick = backToMenu;
+  document.getElementById('overlay').classList.add('visible');
+}
+
+function hideOverlay() {
+  document.getElementById('overlay').classList.remove('visible');
+  document.getElementById('btnOverlayMenu').style.display = 'none';
+}
+
+
+/* ========================================================
+   INITIALIZATION
+   ======================================================== */
+
+function init() {
+  const params = new URLSearchParams(location.search);
+  const room = params.get('room');
+  if (room) {
+    joinGame(room);
+  } else {
+    document.getElementById('btnCreate').onclick = createGame;
+  }
+
+  // Timer cycling button
+  document.getElementById('btnTimer').onclick = () => {
+    timerIdx = (timerIdx + 1) % TIMER_OPTIONS.length;
+    const v = TIMER_OPTIONS[timerIdx];
+    document.getElementById('btnTimer').querySelector('.front').textContent = v === 0 ? '∞' : String(v);
   };
 
-  document.getElementById('btnCopy').onclick=()=>{navigator.clipboard.writeText(document.getElementById('shareLink').value).catch(()=>{})};
-  document.getElementById('btnInstructions').onclick=()=>document.getElementById('instructions').classList.add('visible');
-  document.getElementById('btnCloseInstructions').onclick=()=>document.getElementById('instructions').classList.remove('visible');
-  document.getElementById('btnBackToMenuShare').onclick=backToMenu;
+  // Copy share link
+  document.getElementById('btnCopy').onclick = () => {
+    navigator.clipboard.writeText(document.getElementById('shareLink').value).catch(() => {});
+  };
 
-  // Settings cog
-  document.getElementById('settingsCog').onclick=()=>document.getElementById('settingsModal').classList.add('visible');
-  document.getElementById('btnSurrender').onclick=()=>{document.getElementById('settingsModal').classList.remove('visible');send({type:'rematch'});backToMenu()};
-  document.getElementById('btnCloseSettings').onclick=()=>document.getElementById('settingsModal').classList.remove('visible');
+  // Instructions modal
+  document.getElementById('btnInstructions').onclick = () => document.getElementById('instructions').classList.add('visible');
+  document.getElementById('btnCloseInstructions').onclick = () => document.getElementById('instructions').classList.remove('visible');
 
-  document.getElementById('btnBackToMenuEnd').onclick=backToMenu;
+  // Back to menu from share page
+  document.getElementById('btnBackToMenuShare').onclick = backToMenu;
+
+  // Hamburger menu -> settings modal
+  document.getElementById('hamburgerBtn').onclick = () => document.getElementById('settingsModal').classList.add('visible');
+
+  // Settings modal actions
+  document.getElementById('btnSurrender').onclick = () => {
+    document.getElementById('settingsModal').classList.remove('visible');
+    send({type: 'rematch'});
+    backToMenu();
+  };
+  document.getElementById('btnCloseSettings').onclick = () => document.getElementById('settingsModal').classList.remove('visible');
+
+  // Game over back to menu
+  document.getElementById('btnBackToMenuEnd').onclick = backToMenu;
 
   // Initial title visibility
   updateTitleVisibility();
+
+  // Pre-render pawn canvases
+  buildPawnCanvases();
 }
-document.addEventListener('DOMContentLoaded',init);
+
+document.addEventListener('DOMContentLoaded', init);
 })();
 </script>
 </body>
