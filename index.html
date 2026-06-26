@@ -253,12 +253,12 @@ const TIMER_OPTIONS = [30,60,90,120,0];
 let timerIdx = 1;
 
 const SKILL_DEF = {
-  shield:{name:'Shield',icon:'SH',targeted:false,once:false},
-  bow:{name:'Bow',icon:'BW',targeted:'direction',once:false},
-  cloak:{name:'Cloak',icon:'CL',targeted:false,once:false}
+  shield:{name:'Shield',icon:'🛡',targeted:false,once:false},
+  bow:{name:'Bow',icon:'🏹',targeted:'direction',once:false},
+  cloak:{name:'Cloak',icon:'👻',targeted:false,once:false}
 };
 const DIRS=[{q:1,r:0},{q:-1,r:0},{q:0,r:1},{q:0,r:-1},{q:1,r:-1},{q:-1,r:1}];
-const ROMAN=['I','II','III'];
+let orderCounter=0; // cycles 0,1,2,0,1,2... for sequential I/II/III assignment
 
 const S3=Math.sqrt(3);
 const HEX_THICK=5;
@@ -385,11 +385,24 @@ function render(){
   // Action lines
   if(G.phase==='planning'){
     const orderedActions=buildOrderedActions();
-    for(const a of orderedActions){const u=unitById(a.unitId);if(!u||u.dead)continue;const from=hexToScreen(u.q,u.r);let to=null;
+    for(const a of orderedActions){const u=unitById(a.unitId);if(!u)continue;if(u.dead&&a.type!=='respawn')continue;const from=hexToScreen(u.q,u.r);let to=null;
     if(a.type==='move')to=hexToScreen(a.target.q,a.target.r);
     else if(a.type==='skill'&&a.direction){const end=onBoard(u.q+a.direction.q*2,u.r+a.direction.r*2)?2:1;to=hexToScreen(u.q+a.direction.q*end,u.r+a.direction.r*end)}
     else if(a.type==='respawn'&&a.target)to=hexToScreen(a.target.q,a.target.r);
-    if(to){ctx.beginPath();ctx.moveTo(from.x,from.y);ctx.lineTo(to.x,to.y);ctx.strokeStyle='rgba(255,255,255,0.2)';ctx.lineWidth=.5;ctx.setLineDash([4,4]);ctx.stroke();ctx.setLineDash([]);ctx.beginPath();ctx.arc(to.x,to.y,2,0,Math.PI*2);ctx.fillStyle='rgba(255,255,255,0.4)';ctx.fill()}}
+    if(to){ctx.beginPath();ctx.moveTo(from.x,from.y);ctx.lineTo(to.x,to.y);ctx.strokeStyle='rgba(255,255,255,0.2)';ctx.lineWidth=.5;ctx.setLineDash([4,4]);ctx.stroke();ctx.setLineDash([]);ctx.beginPath();ctx.arc(to.x,to.y,2,0,Math.PI*2);ctx.fillStyle='rgba(255,255,255,0.4)';ctx.fill()}
+    // Balloon on respawn target hex (unit not there yet)
+    if(a.type==='respawn'&&a.target){
+      const ts=hexToScreen(a.target.q,a.target.r);
+      const orderIdx=G.unitOrder.indexOf(a.unitId);
+      if(orderIdx>=0){
+        const br=HEX*0.2;
+        ctx.beginPath();ctx.arc(ts.x,ts.y,br,0,Math.PI*2);
+        ctx.fillStyle='rgba(255,255,255,0.4)';ctx.fill();
+        ctx.fillStyle='#000';ctx.font=`600 ${br*1.3}px Inter,sans-serif`;
+        ctx.textAlign='center';ctx.textBaseline='middle';
+        ctx.fillText(String(orderIdx+1),ts.x,ts.y);
+      }
+    }}
   }
 
   // Drag line
@@ -405,16 +418,17 @@ function render(){
     ctx.fillStyle=u.cloaked?col+'44':(isDragging?col+'aa':col);ctx.fill();
     ctx.strokeStyle='#fff';ctx.lineWidth=.5;ctx.stroke();
     if(u.shielded){ctx.beginPath();ctx.arc(s.x,s.y,r+3,0,Math.PI*2);ctx.strokeStyle='#fff';ctx.lineWidth=.5;ctx.setLineDash([3,3]);ctx.stroke();ctx.setLineDash([])}
-    if(u.skill){ctx.fillStyle='#000';ctx.font=`600 ${HEX*0.18}px Inter,sans-serif`;ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(SKILL_DEF[u.skill].icon,s.x,s.y)}
-    // Priority order -- large roman numeral centered on unit
+    if(u.skill){ctx.font=`${HEX*0.22}px sans-serif`;ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(SKILL_DEF[u.skill].icon,s.x,s.y)}
+    // Priority balloon -- translucent circle top-right with number
     if(u.player===G.myPlayer&&!isDragging){
       const orderIdx=G.unitOrder.indexOf(u.id);
       if(orderIdx>=0){
-        ctx.fillStyle='rgba(255,255,255,0.3)';
-        ctx.font=`600 ${HEX*0.55}px Inter,sans-serif`;
-        ctx.textAlign='center';
-        ctx.textBaseline='middle';
-        ctx.fillText(ROMAN[orderIdx]||String(orderIdx+1),s.x,s.y);
+        const bx=s.x+r*0.9,by=s.y-r*0.9,br=HEX*0.2;
+        ctx.beginPath();ctx.arc(bx,by,br,0,Math.PI*2);
+        ctx.fillStyle='rgba(255,255,255,0.55)';ctx.fill();
+        ctx.fillStyle='#000';ctx.font=`600 ${br*1.3}px Inter,sans-serif`;
+        ctx.textAlign='center';ctx.textBaseline='middle';
+        ctx.fillText(String(orderIdx+1),bx,by);
       }
     }
   }
@@ -437,10 +451,18 @@ function resizeCanvas(){
 }
 
 // -- INPUT --
+// Sequential ordering: each tap assigns the next slot (I→II→III→I→...)
 function addToOrder(unitId){
-  G.unitOrder=G.unitOrder.filter(id=>id!==unitId);
-  G.unitOrder.unshift(unitId);
-  if(G.unitOrder.length>3)G.unitOrder=G.unitOrder.slice(0,3);
+  const slot = orderCounter % 3; // 0=I, 1=II, 2=III
+  // Remove unit from any existing slot
+  G.unitOrder = G.unitOrder.filter(id=>id!==unitId);
+  // Pad array to ensure slot exists
+  while(G.unitOrder.length<=slot) G.unitOrder.push(null);
+  // Remove whatever was in this slot (it gets replaced)
+  G.unitOrder[slot] = unitId;
+  // Clean nulls from end
+  while(G.unitOrder.length>0 && G.unitOrder[G.unitOrder.length-1]===null) G.unitOrder.pop();
+  orderCounter++;
 }
 
 function onPointerDown(e){
@@ -449,7 +471,15 @@ function onPointerDown(e){
   drag.tapHex=onBoard(hex.q,hex.r)?hex:null;
   if(!onBoard(hex.q,hex.r)){G.selectedUnit=null;G.actionMode=null;hideHint();return}
   if(G.actionMode&&G.actionMode.startsWith('skill-')&&G.selectedUnit){handleTargetTap(hex);return}
-  if(G.actionMode==='respawn'){const deadUnit=myUnits().find(u=>u.dead&&!G.myActions[u.id]);if(deadUnit&&hex.r===spawnRow(G.myPlayer)&&!unitAt(hex.q,hex.r)){assignAction({unitId:deadUnit.id,type:'respawn',target:{q:hex.q,r:hex.r}});G.actionMode=null;G.selectedUnit=null;hideHint();checkAutoSelectDead()}return}
+  if(G.actionMode==='respawn'&&G.selectedUnit){
+    const deadUnit=unitById(G.selectedUnit);
+    if(deadUnit&&deadUnit.dead&&hex.r===spawnRow(G.myPlayer)&&!unitAt(hex.q,hex.r)){
+      addToOrder(deadUnit.id);
+      assignAction({unitId:deadUnit.id,type:'respawn',target:{q:hex.q,r:hex.r}});
+      G.actionMode=null;G.selectedUnit=null;hideHint();
+    }
+    return;
+  }
   const unit=unitAt(hex.q,hex.r);
   if(unit&&unit.player===G.myPlayer&&!unit.dead){canvas.setPointerCapture(e.pointerId);drag.unit=unit;drag.startHex={q:hex.q,r:hex.r};drag.startPos={x:sx,y:sy};drag.currentPos={x:sx,y:sy};drag.targetHex=null;drag.moved=false;drag.isHold=false;drag.holdTimer=setTimeout(()=>{if(!drag.moved){drag.isHold=true;if(navigator.vibrate)navigator.vibrate(30)}},LONG_PRESS_MS);return}
 }
@@ -507,7 +537,12 @@ function assignAction(action){
   }
   checkAutoSelectDead();
 }
-function checkAutoSelectDead(){const assigned=new Set(Object.keys(G.myActions));const actionCount=assigned.size;const d=myUnits().find(u=>u.dead&&!assigned.has(u.id));if(d&&actionCount<3){G.selectedUnit=d.id;G.actionMode='respawn';showHint('TAP A SPAWN TILE TO RESPAWN')}}
+function checkAutoSelectDead(){
+  // If there are dead units without actions, prompt but don't force
+  const assigned=new Set(Object.keys(G.myActions));
+  const d=myUnits().find(u=>u.dead&&!assigned.has(u.id));
+  if(d){G.selectedUnit=d.id;G.actionMode='respawn';showHint('TAP A SPAWN TILE TO RESPAWN');}
+}
 function showHint(msg){document.getElementById('skillHint').textContent=msg;document.getElementById('skillHint').classList.add('visible')}
 function hideHint(){document.getElementById('skillHint').classList.remove('visible')}
 
@@ -569,8 +604,7 @@ function renderSetup(){
 
     // Skill icon
     if(u.skill){
-      c.fillStyle='#000';
-      c.font=`600 ${HEX*0.18}px Inter,sans-serif`;
+      c.font=`${HEX*0.22}px sans-serif`;
       c.textAlign='center';c.textBaseline='middle';
       c.fillText(SKILL_DEF[u.skill].icon,s.x,s.y);
     }
@@ -604,6 +638,7 @@ function resizeSetupCanvas(){
   setupHEX=Math.min(maxH,maxW,50);setupHEX=Math.max(setupHEX,20);
 }
 function onSetupPointerDown(e){
+  if(G.myReady)return; // locked after pressing ready
   e.preventDefault();
   const rect=setupCanvas.getBoundingClientRect();
   const sx=e.clientX-rect.left,sy=e.clientY-rect.top;
@@ -633,7 +668,7 @@ function buildSetupUI(){
     btn.dataset.skill=key;
     btn.innerHTML=`<span class="shadow"></span><span class="edge"></span><span class="front">${sd.icon} ${sd.name.toUpperCase()}</span>`;
     btn.addEventListener('click',()=>{
-      if(!setupSelectedUnit)return;
+      if(G.myReady||!setupSelectedUnit)return;
       const u=unitById(setupSelectedUnit);
       if(!u)return;
       u.skill=key;
@@ -675,7 +710,7 @@ function finishSetup(){
 }
 
 function startPlanning(){
-  G.phase='planning';G.myReady=false;G.opReady=false;G.myActions={};G.unitOrder=[];G.opActions=null;G.selectedUnit=null;G.actionMode=null;
+  G.phase='planning';G.myReady=false;G.opReady=false;G.myActions={};G.unitOrder=[];orderCounter=0;G.opActions=null;G.selectedUnit=null;G.actionMode=null;
   G.units.forEach(u=>{u.shielded=false});showScreen('screenGame');setupMainCanvas();
   const rb=document.getElementById('btnGameReady');rb.disabled=false;rb.classList.remove('is-ready');rb.querySelector('.front').textContent='READY';
   checkAutoSelectDead();
