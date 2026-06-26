@@ -15,6 +15,11 @@ h1{font-size:2.8em;color:#fff;letter-spacing:.25em;font-weight:300}
 h2{color:#fff;font-weight:300;letter-spacing:.15em;font-size:1.4em}
 .version{color:#555;font-size:.75em;letter-spacing:.2em;text-transform:uppercase;margin-bottom:32px}
 
+/* -- App Title (fixed at top, shared across screens) -- */
+#appTitle{position:absolute;top:60px;left:50%;transform:translateX(-50%);z-index:6;text-align:center;pointer-events:none}
+#appTitle h1{margin:0}
+#appTitle .version{margin-bottom:0}
+
 /* -- 3D Pushable buttons -- */
 .pushable{position:relative;border:none;background:transparent;padding:0;cursor:pointer;outline-offset:4px;transition:filter 150ms;font-family:inherit}
 .pushable .shadow{position:absolute;top:0;left:0;width:100%;height:100%;border-radius:3px;background:transparent;will-change:transform;transform:translateY(2px);transition:transform 400ms cubic-bezier(.3,.7,.4,1)}
@@ -45,6 +50,7 @@ h2{color:#fff;font-weight:300;letter-spacing:.15em;font-size:1.4em}
 @keyframes pulse{0%,100%{opacity:.4}50%{opacity:1}}
 #shareArea{max-width:420px;width:100%}
 #btnTimer .front{min-width:80px;text-align:center}
+.share-top-row{display:flex;gap:8px;align-items:stretch;margin-bottom:10px}
 
 /* -- Modals -- */
 .modal{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.92);z-index:20;display:none;align-items:center;justify-content:center;padding:20px}
@@ -111,17 +117,22 @@ h2{color:#fff;font-weight:300;letter-spacing:.15em;font-size:1.4em}
 </head>
 <body>
 
-<!-- LOBBY -->
-<div id="lobby" class="screen active">
+<!-- APP TITLE (shared, positioned absolutely at top center) -->
+<div id="appTitle">
   <h1>RHEX</h1>
   <p class="version">PROTOTYPE V1.0</p>
+</div>
+
+<!-- LOBBY -->
+<div id="lobby" class="screen active">
   <div class="lobby-row">
     <button class="pushable" id="btnCreate"><span class="shadow"></span><span class="edge"></span><span class="front">CREATE GAME</span></button>
   </div>
   <button class="pushable subtle" id="btnInstructions"><span class="shadow"></span><span class="edge"></span><span class="front">HOW TO PLAY</span></button>
   <div id="shareArea" style="display:none">
-    <div style="margin-bottom:10px">
-      <button class="pushable compact" id="btnTimer" style="width:100%"><span class="shadow"></span><span class="edge"></span><span class="front">60S</span></button>
+    <div class="share-top-row">
+      <button class="pushable subtle compact" id="btnBackToMenuShare"><span class="shadow"></span><span class="edge"></span><span class="front">BACK TO MENU</span></button>
+      <button class="pushable compact" id="btnTimer"><span class="shadow"></span><span class="edge"></span><span class="front">60</span></button>
     </div>
     <p style="color:#555;font-size:.8em;letter-spacing:.08em">SHARE THIS LINK WITH A FRIEND:</p>
     <div class="link-box">
@@ -129,9 +140,6 @@ h2{color:#fff;font-weight:300;letter-spacing:.15em;font-size:1.4em}
       <button class="pushable compact" id="btnCopy"><span class="shadow"></span><span class="edge"></span><span class="front">&#128203;</span></button>
     </div>
     <p class="waiting">WAITING FOR OPPONENT</p>
-    <div style="margin-top:14px;text-align:center">
-      <button class="pushable subtle compact" id="btnBackToMenuShare"><span class="shadow"></span><span class="edge"></span><span class="front">BACK TO MENU</span></button>
-    </div>
   </div>
   <div id="joinArea" style="display:none">
     <p class="waiting">CONNECTING TO GAME</p>
@@ -203,7 +211,7 @@ h2{color:#fff;font-weight:300;letter-spacing:.15em;font-size:1.4em}
     <h3>Skills</h3>
     <ul class="skill-list">
       <li><b>Shield</b> -- block one attack this turn</li>
-      <li><b>Bow</b> -- fire an arrow in a straight line (2 hex range). Hold, then tap direction.</li>
+      <li><b>Bow</b> -- fire an arrow in a straight line (2 hex range). Hold, then drag direction.</li>
       <li><b>Cloak</b> -- become invisible, but score 0 points while hidden</li>
     </ul>
     <br><button class="pushable compact" id="btnCloseInstructions"><span class="shadow"></span><span class="edge"></span><span class="front">GOT IT</span></button>
@@ -253,9 +261,9 @@ const TIMER_OPTIONS = [30,60,90,120,0];
 let timerIdx = 1;
 
 const SKILL_DEF = {
-  shield:{name:'Shield',icon:'🛡',targeted:false,once:false},
-  bow:{name:'Bow',icon:'🏹',targeted:'direction',once:false},
-  cloak:{name:'Cloak',icon:'👻',targeted:false,once:false}
+  shield:{name:'Shield',icon:'\u{1F6E1}',targeted:false,once:false},
+  bow:{name:'Bow',icon:'\u{1F3F9}',targeted:'direction',once:false},
+  cloak:{name:'Cloak',icon:'\u{1F47B}',targeted:false,once:false}
 };
 const DIRS=[{q:1,r:0},{q:-1,r:0},{q:0,r:1},{q:0,r:-1},{q:1,r:-1},{q:-1,r:1}];
 let orderCounter=0; // cycles 0,1,2,0,1,2... for sequential I/II/III assignment
@@ -282,9 +290,20 @@ let peer=null,conn=null;
 let canvas,ctx,cw,ch,dpr,centerX,centerY;
 let drag={unit:null,startHex:null,startPos:null,currentPos:null,targetHex:null,moved:false,holdTimer:null,isHold:false,tapHex:null};
 
+// Bow drag-aim state
+let bowAim={active:false,unitId:null,startPos:null,currentPos:null,bestDir:null};
+
 // Setup screen state
 let setupCanvas,setupCtx,setupCW,setupCH,setupDpr,setupCenterX,setupCenterY,setupHEX=40;
 let setupSelectedUnit=null;
+
+// -- App title visibility --
+function updateTitleVisibility(){
+  const title=document.getElementById('appTitle');
+  if(!title)return;
+  const isGameOrSetup=G.phase==='planning'||G.phase==='resolution'||G.phase==='setup'||G.phase==='gameover';
+  title.style.display=isGameOrSetup?'none':'';
+}
 
 function initUnits(){
   G.units=[];
@@ -301,6 +320,7 @@ function showScreen(id){
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   document.getElementById(id).classList.add('active');
   document.getElementById('settingsCog').style.display=(id==='screenSetup'||id==='screenGame')?'':'none';
+  updateTitleVisibility();
 }
 function backToMenu(){
   stopTimer();
@@ -352,11 +372,31 @@ function drawSmallHex(c, cx, cy, size){
   c.closePath();
 }
 
+// -- Find closest hex direction from a unit to a screen point --
+function closestHexDir(unit, sx, sy){
+  const us=hexToScreen(unit.q,unit.r);
+  const dx=sx-us.x,dy=sy-us.y;
+  if(Math.sqrt(dx*dx+dy*dy)<5)return null; // too close, no direction
+  let bestDir=null,bestDot=-Infinity;
+  for(const d of DIRS){
+    // Get pixel offset for this direction
+    const target=hexToScreen(unit.q+d.q,unit.r+d.r);
+    const tdx=target.x-us.x,tdy=target.y-us.y;
+    const len=Math.sqrt(tdx*tdx+tdy*tdy);
+    if(len<0.01)continue;
+    const dot=(dx*tdx+dy*tdy)/len;
+    if(dot>bestDot){bestDot=dot;bestDir=d}
+  }
+  return bestDir;
+}
+
 function render(){
   ctx.clearRect(0,0,cw,ch);
 
   // -- Board --
-  for(const h of boardHexes){const s=hexToScreen(h.q,h.r);drawHexShape(ctx,s.x,s.y+HEX_THICK,HEX-2);ctx.fillStyle='#fff';ctx.fill()}
+  // Bottom face (thickness): white fill, white stroke, same size as top
+  for(const h of boardHexes){const s=hexToScreen(h.q,h.r);drawHexShape(ctx,s.x,s.y+HEX_THICK,HEX-2);ctx.fillStyle='#fff';ctx.fill();ctx.strokeStyle='#fff';ctx.lineWidth=1;ctx.stroke()}
+  // Top face: black fill, white stroke
   for(const h of boardHexes){const s=hexToScreen(h.q,h.r);drawHexShape(ctx,s.x,s.y,HEX-2);ctx.fillStyle='#000';ctx.fill();ctx.strokeStyle='#fff';ctx.lineWidth=1;ctx.stroke()}
 
   // Highlights -- during active drag (include current hex as valid stay)
@@ -376,7 +416,17 @@ function render(){
       ctx.fill();
     }
   }
-  // Skill targeting highlights
+  // Skill targeting highlights (bow aim via drag)
+  if(bowAim.active&&bowAim.bestDir){
+    const u=unitById(bowAim.unitId);
+    if(u){
+      for(let s=1;s<=2;s++){
+        const t={q:u.q+bowAim.bestDir.q*s,r:u.r+bowAim.bestDir.r*s};
+        if(onBoard(t.q,t.r)){const sc=hexToScreen(t.q,t.r);drawHexShape(ctx,sc.x,sc.y,HEX-4);ctx.fillStyle='rgba(255,255,255,0.15)';ctx.fill()}
+      }
+    }
+  }
+  // Legacy skill-direction highlights (fallback, kept for safety)
   if(G.actionMode==='skill-direction'){const u=unitById(G.selectedUnit);if(u)for(const d of DIRS)for(let s=1;s<=2;s++){const t={q:u.q+d.q*s,r:u.r+d.r*s};if(onBoard(t.q,t.r)){const sc=hexToScreen(t.q,t.r);drawHexShape(ctx,sc.x,sc.y,HEX-4);ctx.fillStyle='rgba(255,255,255,0.08)';ctx.fill()}}}
   if(G.phase==='planning'&&G.actionMode==='respawn'){for(const h of spawnHexes(G.myPlayer))if(!unitAt(h.q,h.r)){const s=hexToScreen(h.q,h.r);drawHexShape(ctx,s.x,s.y,HEX-4);ctx.fillStyle='rgba(255,255,255,0.08)';ctx.fill()}}
 
@@ -406,6 +456,16 @@ function render(){
   // Drag line
   if(drag.unit&&drag.moved&&drag.currentPos&&G.phase==='planning'){const from=hexToScreen(drag.unit.q,drag.unit.r);ctx.beginPath();ctx.moveTo(from.x,from.y);ctx.lineTo(drag.currentPos.x,drag.currentPos.y);ctx.strokeStyle='rgba(255,255,255,0.08)';ctx.lineWidth=1;ctx.stroke()}
 
+  // Bow aim drag line
+  if(bowAim.active&&bowAim.currentPos){
+    const u=unitById(bowAim.unitId);
+    if(u){
+      const from=hexToScreen(u.q,u.r);
+      ctx.beginPath();ctx.moveTo(from.x,from.y);ctx.lineTo(bowAim.currentPos.x,bowAim.currentPos.y);
+      ctx.strokeStyle='rgba(255,255,255,0.15)';ctx.lineWidth=1;ctx.setLineDash([4,4]);ctx.stroke();ctx.setLineDash([]);
+    }
+  }
+
   // Units
   for(const u of G.units){
     if(u.dead)continue;if(u.cloaked&&u.player!==G.myPlayer)continue;
@@ -415,7 +475,14 @@ function render(){
     ctx.beginPath();ctx.arc(s.x,s.y,r,0,Math.PI*2);
     ctx.fillStyle=u.cloaked?col+'44':(isDragging?col+'aa':col);ctx.fill();
     ctx.strokeStyle="#fff";ctx.lineWidth=1;ctx.stroke();
-    if(u.shielded){ctx.beginPath();ctx.arc(s.x,s.y,r+3,0,Math.PI*2);ctx.strokeStyle="#fff";ctx.lineWidth=1;ctx.setLineDash([3,3]);ctx.stroke();ctx.setLineDash([])}
+    // Shield visual: large semi-transparent shield emoji
+    if(u.shielded){
+      ctx.globalAlpha=0.5;
+      ctx.font=`${HEX*0.5}px sans-serif`;
+      ctx.textAlign='center';ctx.textBaseline='middle';
+      ctx.fillText('\u{1F6E1}',s.x,s.y);
+      ctx.globalAlpha=1.0;
+    }
     if(u.skill){ctx.font=`${HEX*0.22}px sans-serif`;ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(SKILL_DEF[u.skill].icon,s.x,s.y)}
     // Priority balloon -- translucent circle top-right with number
     if(u.player===G.myPlayer&&!isDragging){
@@ -449,8 +516,8 @@ function resizeCanvas(){
 }
 
 // -- INPUT --
-// Sequential ordering: each tap assigns the next slot (I→II→III→I→...)
-// All 3 slots always filled — tapping swaps positions, never removes.
+// Sequential ordering: each tap assigns the next slot (I->II->III->I->...)
+// All 3 slots always filled -- tapping swaps positions, never removes.
 function addToOrder(unitId){
   const slot = orderCounter % 3;
   const currentIdx = G.unitOrder.indexOf(unitId);
@@ -460,7 +527,7 @@ function addToOrder(unitId){
     G.unitOrder[slot] = unitId;
     if(other) G.unitOrder[currentIdx] = other;
   } else if(currentIdx<0){
-    // Not in order — put in slot, push displaced one somewhere
+    // Not in order -- put in slot, push displaced one somewhere
     const displaced = G.unitOrder[slot];
     G.unitOrder[slot] = unitId;
     // Find an empty slot for displaced, or append
@@ -475,6 +542,21 @@ function onPointerDown(e){
   const rect=canvas.getBoundingClientRect();const sx=e.clientX-rect.left,sy=e.clientY-rect.top;const hex=screenToHex(sx,sy);
   drag.tapHex=onBoard(hex.q,hex.r)?hex:null;
   if(!onBoard(hex.q,hex.r)){G.selectedUnit=null;G.actionMode=null;hideHint();return}
+  // If bow aim is active, handle drag continuation
+  if(bowAim.active){
+    // Tapping elsewhere while bow aim is active -- use this as the aim direction
+    const u=unitById(bowAim.unitId);
+    if(u){
+      const dir=closestHexDir(u,sx,sy);
+      if(dir){
+        addToOrder(u.id);
+        assignAction({unitId:u.id,type:'skill',skill:'bow',direction:dir});
+      }
+    }
+    bowAim.active=false;bowAim.unitId=null;bowAim.bestDir=null;bowAim.currentPos=null;
+    G.actionMode=null;G.selectedUnit=null;hideHint();
+    return;
+  }
   if(G.actionMode&&G.actionMode.startsWith('skill-')&&G.selectedUnit){handleTargetTap(hex);return}
   if(G.actionMode==='respawn'&&G.selectedUnit){
     const deadUnit=unitById(G.selectedUnit);
@@ -489,12 +571,33 @@ function onPointerDown(e){
   if(unit&&unit.player===G.myPlayer&&!unit.dead){canvas.setPointerCapture(e.pointerId);drag.unit=unit;drag.startHex={q:hex.q,r:hex.r};drag.startPos={x:sx,y:sy};drag.currentPos={x:sx,y:sy};drag.targetHex=null;drag.moved=false;drag.isHold=false;drag.holdTimer=setTimeout(()=>{if(!drag.moved){drag.isHold=true;if(navigator.vibrate)navigator.vibrate(30)}},LONG_PRESS_MS);return}
 }
 function onPointerMove(e){
+  // Bow aim drag tracking
+  if(bowAim.active){
+    e.preventDefault();
+    const rect=canvas.getBoundingClientRect();const sx=e.clientX-rect.left,sy=e.clientY-rect.top;
+    bowAim.currentPos={x:sx,y:sy};
+    const u=unitById(bowAim.unitId);
+    if(u) bowAim.bestDir=closestHexDir(u,sx,sy);
+    return;
+  }
   if(!drag.unit)return;e.preventDefault();const rect=canvas.getBoundingClientRect();const sx=e.clientX-rect.left,sy=e.clientY-rect.top;drag.currentPos={x:sx,y:sy};
   const dx=sx-drag.startPos.x,dy=sy-drag.startPos.y;if(Math.sqrt(dx*dx+dy*dy)>12&&!drag.moved){drag.moved=true;clearTimeout(drag.holdTimer);drag.isHold=false}
   if(drag.moved){const hex=screenToHex(sx,sy);const nb=neighbors(drag.unit.q,drag.unit.r);const isCurrent=hex.q===drag.unit.q&&hex.r===drag.unit.r;const valid=nb.find(n=>n.q===hex.q&&n.r===hex.r);if(valid||isCurrent){drag.targetHex=hex}else{drag.targetHex=null}}
 }
 function onPointerUp(e){
   e.preventDefault();clearTimeout(drag.holdTimer);
+  // Bow aim release -- finalize direction
+  if(bowAim.active&&bowAim.bestDir){
+    const u=unitById(bowAim.unitId);
+    if(u){
+      addToOrder(u.id);
+      assignAction({unitId:u.id,type:'skill',skill:'bow',direction:bowAim.bestDir});
+    }
+    bowAim.active=false;bowAim.unitId=null;bowAim.bestDir=null;bowAim.currentPos=null;
+    G.actionMode=null;G.selectedUnit=null;hideHint();
+    drag.unit=null;drag.targetHex=null;drag.currentPos=null;drag.moved=false;drag.isHold=false;drag.tapHex=null;
+    return;
+  }
   if(drag.unit){
     if(drag.isHold&&!drag.moved)toggleSkill(drag.unit);
     else if(drag.moved&&drag.targetHex){
@@ -520,7 +623,12 @@ function toggleSkill(unit){
   if(existing&&existing.type==='skill'){delete G.myActions[unit.id];G.selectedUnit=null;G.actionMode=null;hideHint();return}
   if(existing)delete G.myActions[unit.id];
   if(!unit.skill)return;const sd=SKILL_DEF[unit.skill];
-  if(sd.targeted){G.selectedUnit=unit.id;G.actionMode='skill-direction';showHint('TAP A HEX IN THE ARROW DIRECTION')}
+  if(sd.targeted){
+    // Bow: activate drag-to-aim mode
+    G.selectedUnit=unit.id;G.actionMode='skill-direction';
+    bowAim.active=true;bowAim.unitId=unit.id;bowAim.startPos=drag.startPos?{...drag.startPos}:null;bowAim.currentPos=drag.currentPos?{...drag.currentPos}:null;bowAim.bestDir=null;
+    showHint('DRAG TO AIM ARROW DIRECTION');
+  }
   else{addToOrder(unit.id);assignAction({unitId:unit.id,type:'skill',skill:unit.skill})}
 }
 function handleTargetTap(hex){
@@ -577,13 +685,14 @@ function renderSetup(){
   const savedHEX=HEX;
   HEX=setupHEX;
 
-  // Draw board hexes (thickness layer)
+  // Draw board hexes (thickness layer): white fill, white stroke, same size as top
   for(const h of boardHexes){
     const s=hexToScreenSetup(h.q,h.r);
     drawHexShape(c,s.x,s.y+HEX_THICK,HEX-2);
     c.fillStyle='#fff';c.fill();
+    c.strokeStyle='#fff';c.lineWidth=1;c.stroke();
   }
-  // Draw board hexes (top face)
+  // Draw board hexes (top face): black fill, white stroke
   for(const h of boardHexes){
     const s=hexToScreenSetup(h.q,h.r);
     drawHexShape(c,s.x,s.y,HEX-2);
@@ -717,6 +826,8 @@ function finishSetup(){
 
 function startPlanning(){
   G.phase='planning';G.myReady=false;G.opReady=false;G.myActions={};G.opActions=null;G.selectedUnit=null;G.actionMode=null;
+  // Reset bow aim state
+  bowAim.active=false;bowAim.unitId=null;bowAim.bestDir=null;bowAim.currentPos=null;
   // Auto-assign I/II/III to ALL units (alive + dead)
   G.unitOrder=myUnits().map(u=>u.id).slice(0,3);
   orderCounter=0;
@@ -765,12 +876,22 @@ function submitPlan(){
   if(G.myReady)return;G.myReady=true;stopTimer();
   const rb=document.getElementById('btnGameReady');rb.disabled=true;rb.classList.add('is-ready');rb.querySelector('.front').textContent='WAITING...';
   G.selectedUnit=null;G.actionMode=null;hideHint();
+  // Reset bow aim
+  bowAim.active=false;bowAim.unitId=null;bowAim.bestDir=null;bowAim.currentPos=null;
   const orderedActions=buildOrderedActions();
-  send({type:'plan-done',actions:orderedActions});if(G.opActions)runResolution();
+  // Filter out cloaked unit positions from actions sent to opponent
+  const sanitizedActions=orderedActions.map(a=>{
+    const u=unitById(a.unitId);
+    // Don't filter own actions -- the opponent needs to see move targets etc.
+    // But we filter position data of cloaked units from state sync
+    return a;
+  });
+  send({type:'plan-done',actions:sanitizedActions});if(G.opActions)runResolution();
 }
 
 async function runResolution(){
   G.phase='resolution';
+  updateTitleVisibility();
   const orderedActions=buildOrderedActions();
   const p1Acts=G.myPlayer===1?orderedActions:G.opActions;
   const p2Acts=G.myPlayer===2?orderedActions:G.opActions;
@@ -798,6 +919,17 @@ function resolveBow(u,dir){if(!dir)return;for(let s=1;s<=2;s++){const tq=u.q+dir
 function calcScores(){G.scores[1]=0;G.scores[2]=0;for(const u of G.units){if(u.dead||u.cloaked)continue;G.scores[u.player]+=pointVal(u.r,u.player)}}
 function checkWin(){if(Math.abs(G.scores[1]-G.scores[2])>=WIN_DIFF){G.winner=G.scores[1]>G.scores[2]?1:2;return true}return false}
 
+// -- Stealth: filter cloaked unit positions from state sent to opponent --
+function filterCloakedState(units){
+  return units.map(u=>{
+    if(u.cloaked&&u.player===G.myPlayer){
+      // Send the unit info but strip position -- opponent shouldn't know where cloaked units are
+      return{id:u.id,player:u.player,skill:u.skill,dead:u.dead,cloaked:true,shielded:u.shielded,q:undefined,r:undefined};
+    }
+    return{id:u.id,player:u.player,q:u.q,r:u.r,skill:u.skill,dead:u.dead,cloaked:u.cloaked,shielded:u.shielded};
+  });
+}
+
 function createGame(){
   const roomId=Math.random().toString(36).substr(2,6).toUpperCase();
   G.timerConfig=TIMER_OPTIONS[timerIdx]||0;
@@ -812,7 +944,13 @@ function joinGame(roomId){
   peer.on('open',()=>{conn=peer.connect('rhex-'+roomId,{reliable:true});conn.on('open',()=>{wireConn();send({type:'join'})})});
   peer.on('error',e=>console.error('Peer error:',e));
 }
-function wireConn(){conn.on('data',onMessage);conn.on('close',()=>{showOverlay('OPPONENT DISCONNECTED',true);setTimeout(()=>backToMenu(),5000)})}
+function wireConn(){
+  conn.on('data',onMessage);
+  conn.on('close',()=>{
+    showOverlay('OPPONENT DISCONNECTED',true);
+    setTimeout(()=>backToMenu(),3000);
+  });
+}
 function send(data){if(conn&&conn.open)conn.send(data)}
 function onMessage(data){
   switch(data.type){
@@ -834,11 +972,11 @@ function init(){
   if(room)joinGame(room);
   else document.getElementById('btnCreate').onclick=createGame;
 
-  // Timer cycling button
+  // Timer cycling button -- no "S" suffix
   document.getElementById('btnTimer').onclick=()=>{
     timerIdx=(timerIdx+1)%TIMER_OPTIONS.length;
     const v=TIMER_OPTIONS[timerIdx];
-    document.getElementById('btnTimer').querySelector('.front').textContent=v===0?'∞':v+'S';
+    document.getElementById('btnTimer').querySelector('.front').textContent=v===0?'∞':String(v);
   };
 
   document.getElementById('btnCopy').onclick=()=>{navigator.clipboard.writeText(document.getElementById('shareLink').value).catch(()=>{})};
@@ -852,6 +990,9 @@ function init(){
   document.getElementById('btnCloseSettings').onclick=()=>document.getElementById('settingsModal').classList.remove('visible');
 
   document.getElementById('btnBackToMenuEnd').onclick=backToMenu;
+
+  // Initial title visibility
+  updateTitleVisibility();
 }
 document.addEventListener('DOMContentLoaded',init);
 })();
