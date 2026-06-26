@@ -13,18 +13,18 @@ body{background:#000;color:#e8e8e8;font-family:'Inter',system-ui,sans-serif;font
 .screen.active{display:flex}
 h1{font-size:2.8em;color:#fff;letter-spacing:.25em;font-weight:300}
 h2{color:#fff;font-weight:300;letter-spacing:.15em;font-size:1.4em}
-.version{color:#555;font-size:.75em;letter-spacing:.2em;text-transform:uppercase}
+.version{color:#555;font-size:.75em;letter-spacing:.2em;text-transform:uppercase;margin-bottom:32px}
 
 /* ── 3D Pushable buttons ── */
-.pushable{position:relative;border:none;background:transparent;padding:0;cursor:pointer;outline-offset:4px;transition:filter 250ms;font-family:inherit}
-.pushable .shadow{position:absolute;top:0;left:0;width:100%;height:100%;border-radius:3px;background:transparent;will-change:transform;transform:translateY(2px);transition:transform 600ms cubic-bezier(.3,.7,.4,1)}
-.pushable .edge{position:absolute;top:1px;left:1px;width:calc(100% - 2px);height:100%;border-radius:3px;background:#fff}
-.pushable .front{display:block;position:relative;padding:14px 40px;border-radius:3px;font-size:.85rem;font-weight:400;letter-spacing:.12em;text-transform:uppercase;color:#fff;background:#000;border:.5px solid #fff;will-change:transform;transform:translateY(-4px);transition:transform 250ms cubic-bezier(.3,.7,.4,1)}
+.pushable{position:relative;border:none;background:transparent;padding:0;cursor:pointer;outline-offset:4px;transition:filter 150ms;font-family:inherit}
+.pushable .shadow{position:absolute;top:0;left:0;width:100%;height:100%;border-radius:3px;background:transparent;will-change:transform;transform:translateY(2px);transition:transform 400ms cubic-bezier(.3,.7,.4,1)}
+.pushable .edge{position:absolute;top:1px;left:0;width:100%;height:100%;border-radius:3px;background:#fff}
+.pushable .front{display:block;position:relative;padding:14px 40px;border-radius:3px;font-size:.85rem;font-weight:400;letter-spacing:.12em;text-transform:uppercase;color:#fff;background:#000;border:.5px solid #fff;will-change:transform;transform:translateY(-4px);transition:transform 150ms cubic-bezier(.3,.7,.4,1)}
 .pushable:hover{filter:brightness(130%)}
-.pushable:hover .front{transform:translateY(-6px);transition:transform 250ms cubic-bezier(.3,.7,.4,1.5)}
-.pushable:active .front{transform:translateY(-2px);transition:transform 250ms}
-.pushable:hover .shadow{transform:translateY(4px);transition:transform 250ms cubic-bezier(.3,.7,.4,1.5)}
-.pushable:active .shadow{transform:translateY(1px);transition:transform 250ms}
+.pushable:hover .front{transform:translateY(-6px);transition:transform 150ms cubic-bezier(.3,.7,.4,1.5)}
+.pushable:active .front{transform:translateY(-2px);transition:transform 150ms}
+.pushable:hover .shadow{transform:translateY(4px);transition:transform 150ms cubic-bezier(.3,.7,.4,1.5)}
+.pushable:active .shadow{transform:translateY(1px);transition:transform 150ms}
 .pushable:focus:not(:focus-visible){outline:none}
 .pushable:disabled{opacity:.25;cursor:default}
 .pushable:disabled .front,.pushable:disabled:hover .front,.pushable:disabled:active .front{transform:translateY(-2px)}
@@ -73,13 +73,10 @@ h2{color:#fff;font-weight:300;letter-spacing:.15em;font-size:1.4em}
 .score.p1{color:#4ecdc4;text-align:left}
 .score.p2{color:#e85d75;text-align:right}
 .phase-info{text-align:center}
-.game-timer{font-size:1.8em;color:#444;font-weight:300;font-variant-numeric:tabular-nums;letter-spacing:.1em;padding-top:2px}
+.game-timer{font-size:8em;color:#444;font-weight:300;font-variant-numeric:tabular-nums;letter-spacing:.1em;padding-top:2px;line-height:1}
 .game-timer.urgent{color:#fff}
 canvas{flex:1;width:100%;min-height:0;display:block;touch-action:none}
 .action-panel{background:#000;padding:6px 16px 10px;width:100%;flex-shrink:0}
-.action-queue{display:flex;gap:6px;margin-bottom:6px;min-height:28px;flex-wrap:wrap}
-.action-tag{background:#111;padding:5px 10px;border-radius:3px;font-size:.7em;display:flex;align-items:center;gap:5px;color:#666;letter-spacing:.06em;text-transform:uppercase}
-.action-tag .num{color:#fff;font-weight:400}
 .action-btns{display:flex;gap:8px;justify-content:center}
 
 /* ── Overlays ── */
@@ -94,8 +91,10 @@ canvas{flex:1;width:100%;min-height:0;display:block;touch-action:none}
 #screenGameover h2{font-size:2em;color:#fff;letter-spacing:.2em}
 #finalScore{font-size:1em;color:#555;letter-spacing:.1em}
 
-/* ── Settings button ── */
-#btnSettings{position:absolute;top:12px;right:12px;z-index:5}
+/* ── Settings cog ── */
+#settingsCog{position:absolute;top:16px;right:16px;z-index:5;cursor:pointer;user-select:none;display:none;font-size:28px;line-height:1}
+#settingsCog .cog-shadow{position:absolute;top:3px;left:0;color:#fff}
+#settingsCog .cog-front{position:relative;color:#888}
 </style>
 </head>
 <body>
@@ -106,10 +105,12 @@ canvas{flex:1;width:100%;min-height:0;display:block;touch-action:none}
   <p class="version">PROTOTYPE V1.0</p>
   <div class="lobby-row">
     <button class="pushable" id="btnCreate"><span class="shadow"></span><span class="edge"></span><span class="front">CREATE GAME</span></button>
-    <button class="pushable compact" id="btnTimer"><span class="shadow"></span><span class="edge"></span><span class="front">60S</span></button>
   </div>
   <button class="pushable subtle" id="btnInstructions"><span class="shadow"></span><span class="edge"></span><span class="front">HOW TO PLAY</span></button>
   <div id="shareArea" style="display:none">
+    <div style="margin-bottom:10px">
+      <button class="pushable compact" id="btnTimer"><span class="shadow"></span><span class="edge"></span><span class="front">60S</span></button>
+    </div>
     <p style="color:#555;font-size:.8em;letter-spacing:.08em">Share this link with a friend:</p>
     <div class="link-box">
       <input id="shareLink" readonly>
@@ -141,7 +142,6 @@ canvas{flex:1;width:100%;min-height:0;display:block;touch-action:none}
   </div>
   <canvas id="board"></canvas>
   <div class="action-panel">
-    <div class="action-queue" id="actionQueue"></div>
     <div class="action-btns">
       <button class="pushable" id="btnGameReady"><span class="shadow"></span><span class="edge"></span><span class="front">READY</span></button>
     </div>
@@ -164,12 +164,13 @@ canvas{flex:1;width:100%;min-height:0;display:block;touch-action:none}
     <h3>Board</h3>
     <p>19 hexes in a big hexagon (3-4-5-4-3 rows). Your spawn row = 0 pts. Moving forward: 1, 2, 3 pts. Enemy spawn row = 6 pts.</p>
     <h3>Controls</h3>
-    <p><b>Drag</b> a unit to an adjacent hex to move it. Or tap it, then tap a target hex.</p>
+    <p><b>Tap</b> a unit to set its priority order (I, II, III). Tap again to move it to top priority.</p>
+    <p><b>Drag</b> a unit to an adjacent hex to assign a move.</p>
     <p><b>Press &amp; hold</b> a unit to activate its skill. Hold again to cancel.</p>
     <p>A unit can move <b>or</b> use its skill, not both.</p>
     <h3>Turns</h3>
     <p><b>Setup:</b> Pick 1 skill per unit (duplicates allowed). Press Ready.</p>
-    <p><b>Planning:</b> Assign actions to your units. The last unit you assign gets priority 1.</p>
+    <p><b>Planning:</b> Assign actions and set priority order. Tap units to set order, drag to move.</p>
     <p><b>Resolution:</b> Both players resolve simultaneously. Moves beat skills. Equal priority = cancel.</p>
     <h3>Combat</h3>
     <p>Move onto an enemy = kill (unless shielded). Dead units respawn on your spawn row next turn.</p>
@@ -209,7 +210,10 @@ canvas{flex:1;width:100%;min-height:0;display:block;touch-action:none}
 <div id="skillHint" class="skill-target-hint"></div>
 
 <!-- Settings cog (visible during game) -->
-<button class="pushable icon-only subtle" id="btnSettings" style="display:none"><span class="shadow"></span><span class="edge"></span><span class="front">&#9881;</span></button>
+<div id="settingsCog" style="display:none">
+  <span class="cog-shadow">&#9881;</span>
+  <span class="cog-front">&#9881;</span>
+</div>
 
 <script>
 (function(){
@@ -234,6 +238,7 @@ const SKILL_DEF = {
   decoy:{name:'Decoy',icon:'DC',targeted:'ally',once:true}
 };
 const DIRS=[{q:1,r:0},{q:-1,r:0},{q:0,r:1},{q:0,r:-1},{q:1,r:-1},{q:-1,r:1}];
+const ROMAN=['I','II','III'];
 
 const S3=Math.sqrt(3);
 const HEX_THICK=5;
@@ -252,7 +257,7 @@ for(let r=-RAD;r<=RAD;r++)for(let q=-RAD;q<=RAD;q++)if(onBoard(q,r))boardHexes.p
 function spawnRow(p){return p===1?-2:2}
 function spawnHexes(p){return boardHexes.filter(h=>h.r===spawnRow(p))}
 
-let G={phase:'lobby',myPlayer:0,units:[],traps:[],scores:[0,0,0],myActions:[],opActions:null,myReady:false,opReady:false,selectedUnit:null,actionMode:null,timerVal:0,timerH:null,timerConfig:60,winner:0,turnNum:0};
+let G={phase:'lobby',myPlayer:0,units:[],traps:[],scores:[0,0,0],myActions:{},unitOrder:[],opActions:null,myReady:false,opReady:false,selectedUnit:null,actionMode:null,timerVal:0,timerH:null,timerConfig:60,winner:0,turnNum:0};
 let peer=null,conn=null;
 let canvas,ctx,cw,ch,dpr,centerX,centerY;
 let drag={unit:null,startHex:null,startPos:null,currentPos:null,targetHex:null,moved:false,holdTimer:null,isHold:false,tapHex:null};
@@ -271,7 +276,7 @@ function unitById(id){return G.units.find(u=>u.id===id)}
 function showScreen(id){
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   document.getElementById(id).classList.add('active');
-  document.getElementById('btnSettings').style.display=(id==='screenSetup'||id==='screenGame')?'':'none';
+  document.getElementById('settingsCog').style.display=(id==='screenSetup'||id==='screenGame')?'':'none';
 }
 function backToMenu(){
   stopTimer();
@@ -283,7 +288,6 @@ function backToMenu(){
   document.getElementById('joinArea').style.display='none';
   document.getElementById('btnCreate').style.display='';
   document.getElementById('btnInstructions').style.display='';
-  document.getElementById('btnTimer').style.display='';
   showScreen('lobby');
 }
 
@@ -297,7 +301,7 @@ function drawHexShape(cx,cy,size){
   ctx.closePath();
 }
 
-const ANIM_MS=800;
+const ANIM_MS=500;
 function easeInOutCubic(t){return t<0.5?4*t*t*t:1-Math.pow(-2*t+2,3)/2}
 function startUnitAnim(unit,fromQ,fromR){unit.animStart=performance.now();unit.animFromQ=fromQ;unit.animFromR=fromR}
 function getUnitScreenPos(unit){
@@ -305,20 +309,28 @@ function getUnitScreenPos(unit){
   return hexToScreen(unit.q,unit.r);
 }
 
+// Build ordered actions array from unitOrder + myActions map
+function buildOrderedActions(){
+  const result=[];
+  for(const uid of G.unitOrder){
+    const action=G.myActions[uid];
+    if(action)result.push(action);
+  }
+  return result;
+}
+
 function render(){
   ctx.clearRect(0,0,cw,ch);
-  // Hex thickness (white bottom layer)
+  // Hex thickness (white bottom layer) — same size as top hex, shifted down
   for(const h of boardHexes){const s=hexToScreen(h.q,h.r);drawHexShape(s.x,s.y+HEX_THICK,HEX-2);ctx.fillStyle='#fff';ctx.fill()}
   // Hex top face (black with thin white contour)
   for(const h of boardHexes){const s=hexToScreen(h.q,h.r);drawHexShape(s.x,s.y,HEX-2);ctx.fillStyle='#000';ctx.fill();ctx.strokeStyle='#fff';ctx.lineWidth=.5;ctx.stroke()}
 
-  // Highlights
+  // Highlights — only during active drag
   if(drag.unit&&drag.moved&&G.phase==='planning'){
-    for(const n of neighbors(drag.unit.q,drag.unit.r)){const occ=unitAt(n.q,n.r);if(occ&&occ.player===G.myPlayer)continue;const s=hexToScreen(n.q,n.r);drawHexShape(s.x,s.y,HEX-4);const isT=drag.targetHex&&drag.targetHex.q===n.q&&drag.targetHex.r===n.r;ctx.fillStyle=isT?'rgba(255,255,255,0.12)':'rgba(255,255,255,0.04)';ctx.fill()}
+    for(const n of neighbors(drag.unit.q,drag.unit.r)){const s=hexToScreen(n.q,n.r);drawHexShape(s.x,s.y,HEX-4);const isT=drag.targetHex&&drag.targetHex.q===n.q&&drag.targetHex.r===n.r;ctx.fillStyle=isT?'rgba(255,255,255,0.12)':'rgba(255,255,255,0.04)';ctx.fill()}
   }
-  if(G.phase==='planning'&&G.actionMode==='move'&&G.selectedUnit){
-    const u=unitById(G.selectedUnit);if(u)for(const n of neighbors(u.q,u.r)){const occ=unitAt(n.q,n.r);if(occ&&occ.player===G.myPlayer)continue;const s=hexToScreen(n.q,n.r);drawHexShape(s.x,s.y,HEX-4);ctx.fillStyle='rgba(255,255,255,0.06)';ctx.fill()}
-  }
+  // Skill targeting highlights
   if(G.actionMode==='skill-direction'){const u=unitById(G.selectedUnit);if(u)for(const d of DIRS)for(let s=1;s<=2;s++){const t={q:u.q+d.q*s,r:u.r+d.r*s};if(onBoard(t.q,t.r)){const sc=hexToScreen(t.q,t.r);drawHexShape(sc.x,sc.y,HEX-4);ctx.fillStyle='rgba(255,255,255,0.08)';ctx.fill()}}}
   if(G.actionMode==='skill-adjacent'){const u=unitById(G.selectedUnit);if(u)for(const n of neighbors(u.q,u.r))if(!unitAt(n.q,n.r)){const s=hexToScreen(n.q,n.r);drawHexShape(s.x,s.y,HEX-4);ctx.fillStyle='rgba(255,255,255,0.08)';ctx.fill()}}
   if(G.actionMode==='skill-ally'){for(const a of myUnits())if(!a.dead&&a.id!==G.selectedUnit){const s=hexToScreen(a.q,a.r);drawHexShape(s.x,s.y,HEX-4);ctx.fillStyle='rgba(255,255,255,0.08)';ctx.fill()}}
@@ -328,13 +340,16 @@ function render(){
   for(const t of G.traps)if(t.player===G.myPlayer){const s=hexToScreen(t.q,t.r);ctx.fillStyle='rgba(255,255,255,0.15)';ctx.font=`${HEX*0.25}px Inter,sans-serif`;ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('x',s.x,s.y)}
 
   // Action lines
-  if(G.phase==='planning'){for(const a of G.myActions){const u=unitById(a.unitId);if(!u||u.dead)continue;const from=hexToScreen(u.q,u.r);let to=null;
+  if(G.phase==='planning'){
+    const orderedActions=buildOrderedActions();
+    for(const a of orderedActions){const u=unitById(a.unitId);if(!u||u.dead)continue;const from=hexToScreen(u.q,u.r);let to=null;
     if(a.type==='move')to=hexToScreen(a.target.q,a.target.r);
     else if(a.type==='skill'&&a.target)to=hexToScreen(a.target.q,a.target.r);
     else if(a.type==='skill'&&a.direction){const end=onBoard(u.q+a.direction.q*2,u.r+a.direction.r*2)?2:1;to=hexToScreen(u.q+a.direction.q*end,u.r+a.direction.r*end)}
     else if(a.type==='skill'&&a.targetId){const ally=unitById(a.targetId);if(ally)to=hexToScreen(ally.q,ally.r)}
     else if(a.type==='respawn'&&a.target)to=hexToScreen(a.target.q,a.target.r);
-    if(to){ctx.beginPath();ctx.moveTo(from.x,from.y);ctx.lineTo(to.x,to.y);ctx.strokeStyle='rgba(255,255,255,0.2)';ctx.lineWidth=.5;ctx.setLineDash([4,4]);ctx.stroke();ctx.setLineDash([]);ctx.beginPath();ctx.arc(to.x,to.y,2,0,Math.PI*2);ctx.fillStyle='rgba(255,255,255,0.4)';ctx.fill()}}}
+    if(to){ctx.beginPath();ctx.moveTo(from.x,from.y);ctx.lineTo(to.x,to.y);ctx.strokeStyle='rgba(255,255,255,0.2)';ctx.lineWidth=.5;ctx.setLineDash([4,4]);ctx.stroke();ctx.setLineDash([]);ctx.beginPath();ctx.arc(to.x,to.y,2,0,Math.PI*2);ctx.fillStyle='rgba(255,255,255,0.4)';ctx.fill()}}
+  }
 
   // Drag line
   if(drag.unit&&drag.moved&&drag.currentPos&&G.phase==='planning'){const from=hexToScreen(drag.unit.q,drag.unit.r);ctx.beginPath();ctx.moveTo(from.x,from.y);ctx.lineTo(drag.currentPos.x,drag.currentPos.y);ctx.strokeStyle='rgba(255,255,255,0.15)';ctx.lineWidth=.5;ctx.stroke()}
@@ -351,8 +366,17 @@ function render(){
     if(u.shielded){ctx.beginPath();ctx.arc(s.x,s.y,r+3,0,Math.PI*2);ctx.strokeStyle='#fff';ctx.lineWidth=.5;ctx.setLineDash([3,3]);ctx.stroke();ctx.setLineDash([])}
     if(u.skill){ctx.fillStyle='#000';ctx.font=`600 ${HEX*0.18}px Inter,sans-serif`;ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(SKILL_DEF[u.skill].icon,s.x,s.y)}
     if(u.hoeBonus>0){ctx.fillStyle='#fff';ctx.font=`${HEX*0.15}px Inter,sans-serif`;ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('+'+u.hoeBonus,s.x,s.y-r-4)}
-    const aIdx=G.myActions.findIndex(a=>a.unitId===u.id);
-    if(aIdx>=0&&u.player===G.myPlayer&&!isDragging){ctx.fillStyle='#fff';ctx.font=`400 ${HEX*0.17}px Inter,sans-serif`;ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(aIdx+1,s.x,s.y-r-4)}
+    // Priority order — large roman numeral centered on unit
+    if(u.player===G.myPlayer&&!isDragging){
+      const orderIdx=G.unitOrder.indexOf(u.id);
+      if(orderIdx>=0){
+        ctx.fillStyle='rgba(255,255,255,0.3)';
+        ctx.font=`600 ${HEX*0.55}px Inter,sans-serif`;
+        ctx.textAlign='center';
+        ctx.textBaseline='middle';
+        ctx.fillText(ROMAN[orderIdx]||String(orderIdx+1),s.x,s.y);
+      }
+    }
   }
 
   if(drag.unit&&!drag.moved&&drag.isHold&&drag.startPos){ctx.beginPath();ctx.arc(drag.startPos.x,drag.startPos.y,HEX*0.4,0,Math.PI*2);ctx.strokeStyle='rgba(255,255,255,0.3)';ctx.lineWidth=.5;ctx.stroke()}
@@ -372,54 +396,78 @@ function resizeCanvas(){
 }
 
 // ── INPUT ──
+function addToOrder(unitId){
+  G.unitOrder=G.unitOrder.filter(id=>id!==unitId);
+  G.unitOrder.unshift(unitId);
+  if(G.unitOrder.length>3)G.unitOrder=G.unitOrder.slice(0,3);
+}
+
 function onPointerDown(e){
   if(G.phase!=='planning'||G.myReady)return;e.preventDefault();
   const rect=canvas.getBoundingClientRect();const sx=e.clientX-rect.left,sy=e.clientY-rect.top;const hex=screenToHex(sx,sy);
   drag.tapHex=onBoard(hex.q,hex.r)?hex:null;
   if(!onBoard(hex.q,hex.r)){G.selectedUnit=null;G.actionMode=null;hideHint();return}
   if(G.actionMode&&G.actionMode.startsWith('skill-')&&G.selectedUnit){handleTargetTap(hex);return}
-  if(G.actionMode==='respawn'){const deadUnit=myUnits().find(u=>u.dead&&!G.myActions.find(a=>a.unitId===u.id));if(deadUnit&&hex.r===spawnRow(G.myPlayer)&&!unitAt(hex.q,hex.r)){assignAction({unitId:deadUnit.id,type:'respawn',target:{q:hex.q,r:hex.r}});G.actionMode=null;G.selectedUnit=null;hideHint();checkAutoSelectDead()}return}
+  if(G.actionMode==='respawn'){const deadUnit=myUnits().find(u=>u.dead&&!G.myActions[u.id]);if(deadUnit&&hex.r===spawnRow(G.myPlayer)&&!unitAt(hex.q,hex.r)){assignAction({unitId:deadUnit.id,type:'respawn',target:{q:hex.q,r:hex.r}});G.actionMode=null;G.selectedUnit=null;hideHint();checkAutoSelectDead()}return}
   const unit=unitAt(hex.q,hex.r);
   if(unit&&unit.player===G.myPlayer&&!unit.dead){canvas.setPointerCapture(e.pointerId);drag.unit=unit;drag.startHex={q:hex.q,r:hex.r};drag.startPos={x:sx,y:sy};drag.currentPos={x:sx,y:sy};drag.targetHex=null;drag.moved=false;drag.isHold=false;drag.holdTimer=setTimeout(()=>{if(!drag.moved){drag.isHold=true;if(navigator.vibrate)navigator.vibrate(30)}},LONG_PRESS_MS);return}
 }
 function onPointerMove(e){
   if(!drag.unit)return;e.preventDefault();const rect=canvas.getBoundingClientRect();const sx=e.clientX-rect.left,sy=e.clientY-rect.top;drag.currentPos={x:sx,y:sy};
   const dx=sx-drag.startPos.x,dy=sy-drag.startPos.y;if(Math.sqrt(dx*dx+dy*dy)>12&&!drag.moved){drag.moved=true;clearTimeout(drag.holdTimer);drag.isHold=false}
-  if(drag.moved){const hex=screenToHex(sx,sy);const nb=neighbors(drag.unit.q,drag.unit.r);const valid=nb.find(n=>n.q===hex.q&&n.r===hex.r);if(valid){const occ=unitAt(hex.q,hex.r);drag.targetHex=(!occ||occ.player!==G.myPlayer)?hex:null}else{drag.targetHex=null}}
+  if(drag.moved){const hex=screenToHex(sx,sy);const nb=neighbors(drag.unit.q,drag.unit.r);const valid=nb.find(n=>n.q===hex.q&&n.r===hex.r);if(valid){drag.targetHex=hex}else{drag.targetHex=null}}
 }
 function onPointerUp(e){
   e.preventDefault();clearTimeout(drag.holdTimer);
   if(drag.unit){
     if(drag.isHold&&!drag.moved)toggleSkill(drag.unit);
-    else if(drag.moved&&drag.targetHex){assignAction({unitId:drag.unit.id,type:'move',target:{q:drag.targetHex.q,r:drag.targetHex.r}});G.selectedUnit=null;G.actionMode=null}
-    else if(!drag.moved&&!drag.isHold){G.selectedUnit=drag.unit.id;G.actionMode='move'}
-  }else if(drag.tapHex&&G.actionMode==='move'&&G.selectedUnit){
-    const u=unitById(G.selectedUnit);const hex=drag.tapHex;
-    if(u&&neighbors(u.q,u.r).some(n=>n.q===hex.q&&n.r===hex.r)){const occ=unitAt(hex.q,hex.r);if(!occ||occ.player!==G.myPlayer)assignAction({unitId:u.id,type:'move',target:{q:hex.q,r:hex.r}});G.selectedUnit=null;G.actionMode=null}
-    else{G.selectedUnit=null;G.actionMode=null}
+    else if(drag.moved&&drag.targetHex){
+      // Drag to assign move — also auto-add to order
+      addToOrder(drag.unit.id);
+      assignAction({unitId:drag.unit.id,type:'move',target:{q:drag.targetHex.q,r:drag.targetHex.r}});
+      G.selectedUnit=null;G.actionMode=null;
+    }
+    else if(!drag.moved&&!drag.isHold){
+      // Tap: cycle priority order (no move mode, no highlights)
+      addToOrder(drag.unit.id);
+      G.selectedUnit=null;G.actionMode=null;
+    }
   }else{G.selectedUnit=null;G.actionMode=null;hideHint()}
   drag.unit=null;drag.targetHex=null;drag.currentPos=null;drag.moved=false;drag.isHold=false;drag.tapHex=null;
 }
 function toggleSkill(unit){
-  const existing=G.myActions.find(a=>a.unitId===unit.id);
-  if(existing&&existing.type==='skill'){G.myActions=G.myActions.filter(a=>a.unitId!==unit.id);updateActionQueue();G.selectedUnit=null;G.actionMode=null;hideHint();return}
-  if(existing)G.myActions=G.myActions.filter(a=>a.unitId!==unit.id);
+  const existing=G.myActions[unit.id];
+  if(existing&&existing.type==='skill'){delete G.myActions[unit.id];G.selectedUnit=null;G.actionMode=null;hideHint();return}
+  if(existing)delete G.myActions[unit.id];
   if(!unit.skill)return;const sd=SKILL_DEF[unit.skill];
   if(sd.once&&((unit.skill==='trap'&&unit.trapUsed)||(unit.skill==='decoy'&&unit.decoyUsed)))return;
   if(sd.targeted){G.selectedUnit=unit.id;G.actionMode=sd.targeted==='direction'?'skill-direction':sd.targeted==='adjacent'?'skill-adjacent':'skill-ally';showHint({'skill-direction':'TAP A HEX IN THE ARROW DIRECTION','skill-adjacent':'TAP AN ADJACENT HEX FOR TRAP','skill-ally':'TAP AN ALLY TO SWAP WITH'}[G.actionMode])}
-  else assignAction({unitId:unit.id,type:'skill',skill:unit.skill});
-  updateActionQueue();
+  else{addToOrder(unit.id);assignAction({unitId:unit.id,type:'skill',skill:unit.skill})}
 }
 function handleTargetTap(hex){
   const u=unitById(G.selectedUnit);if(!u)return;
-  if(G.actionMode==='skill-direction'){const dir=DIRS.find(d=>{for(let s=1;s<=2;s++)if(u.q+d.q*s===hex.q&&u.r+d.r*s===hex.r)return true;return false});if(dir){assignAction({unitId:u.id,type:'skill',skill:'bow',direction:dir});G.actionMode=null;G.selectedUnit=null;hideHint()}}
-  else if(G.actionMode==='skill-adjacent'){if(neighbors(u.q,u.r).some(n=>n.q===hex.q&&n.r===hex.r)&&!unitAt(hex.q,hex.r)){assignAction({unitId:u.id,type:'skill',skill:'trap',target:{q:hex.q,r:hex.r}});G.actionMode=null;G.selectedUnit=null;hideHint()}}
-  else if(G.actionMode==='skill-ally'){const clicked=unitAt(hex.q,hex.r);if(clicked&&clicked.player===G.myPlayer&&!clicked.dead&&clicked.id!==G.selectedUnit){assignAction({unitId:G.selectedUnit,type:'skill',skill:'decoy',targetId:clicked.id});G.actionMode=null;G.selectedUnit=null;hideHint()}}
+  if(G.actionMode==='skill-direction'){const dir=DIRS.find(d=>{for(let s=1;s<=2;s++)if(u.q+d.q*s===hex.q&&u.r+d.r*s===hex.r)return true;return false});if(dir){addToOrder(u.id);assignAction({unitId:u.id,type:'skill',skill:'bow',direction:dir});G.actionMode=null;G.selectedUnit=null;hideHint()}}
+  else if(G.actionMode==='skill-adjacent'){if(neighbors(u.q,u.r).some(n=>n.q===hex.q&&n.r===hex.r)&&!unitAt(hex.q,hex.r)){addToOrder(u.id);assignAction({unitId:u.id,type:'skill',skill:'trap',target:{q:hex.q,r:hex.r}});G.actionMode=null;G.selectedUnit=null;hideHint()}}
+  else if(G.actionMode==='skill-ally'){const clicked=unitAt(hex.q,hex.r);if(clicked&&clicked.player===G.myPlayer&&!clicked.dead&&clicked.id!==G.selectedUnit){addToOrder(u.id);assignAction({unitId:G.selectedUnit,type:'skill',skill:'decoy',targetId:clicked.id});G.actionMode=null;G.selectedUnit=null;hideHint()}}
 }
 
-function assignAction(action){G.myActions=G.myActions.filter(a=>a.unitId!==action.unitId);G.myActions.unshift(action);if(G.myActions.length>3)G.myActions.pop();updateActionQueue();checkAutoSelectDead()}
-function checkAutoSelectDead(){const assigned=new Set(G.myActions.map(a=>a.unitId));const d=myUnits().find(u=>u.dead&&!assigned.has(u.id));if(d&&G.myActions.length<3){G.selectedUnit=d.id;G.actionMode='respawn';showHint('TAP A SPAWN TILE TO RESPAWN')}}
-function updateActionQueue(){const aq=document.getElementById('actionQueue');aq.innerHTML='';G.myActions.forEach((a,i)=>{const tag=document.createElement('div');tag.className='action-tag';const u=unitById(a.unitId);let desc=a.type==='move'?'MOVE':a.type==='respawn'?'RESPAWN':SKILL_DEF[a.skill].name.toUpperCase();tag.innerHTML=`<span class="num">${i+1}</span> ${u&&u.skill?SKILL_DEF[u.skill].icon:'U'}: ${desc}`;aq.appendChild(tag)})}
+function assignAction(action){
+  G.myActions[action.unitId]=action;
+  // Cap total actions at 3
+  const actionUids=Object.keys(G.myActions);
+  if(actionUids.length>3){
+    // Remove the action for the unit with lowest priority (highest index or not in order)
+    let toRemove=null;
+    for(const uid of actionUids){
+      const idx=G.unitOrder.indexOf(uid);
+      if(idx<0){toRemove=uid;break}
+      if(!toRemove||idx>G.unitOrder.indexOf(toRemove))toRemove=uid;
+    }
+    if(toRemove)delete G.myActions[toRemove];
+  }
+  checkAutoSelectDead();
+}
+function checkAutoSelectDead(){const assigned=new Set(Object.keys(G.myActions));const actionCount=assigned.size;const d=myUnits().find(u=>u.dead&&!assigned.has(u.id));if(d&&actionCount<3){G.selectedUnit=d.id;G.actionMode='respawn';showHint('TAP A SPAWN TILE TO RESPAWN')}}
 function showHint(msg){document.getElementById('skillHint').textContent=msg;document.getElementById('skillHint').classList.add('visible')}
 function hideHint(){document.getElementById('skillHint').classList.remove('visible')}
 
@@ -449,10 +497,10 @@ function updateTimerDisplay(v){
 }
 
 function startPlanning(){
-  G.phase='planning';G.myReady=false;G.opReady=false;G.myActions=[];G.opActions=null;G.selectedUnit=null;G.actionMode=null;
+  G.phase='planning';G.myReady=false;G.opReady=false;G.myActions={};G.unitOrder=[];G.opActions=null;G.selectedUnit=null;G.actionMode=null;
   G.units.forEach(u=>{u.shielded=false});showScreen('screenGame');setupCanvas();
   const rb=document.getElementById('btnGameReady');rb.disabled=false;rb.classList.remove('is-ready');rb.querySelector('.front').textContent='READY';
-  updateActionQueue();updateScoreDisplay();checkAutoSelectDead();
+  updateScoreDisplay();checkAutoSelectDead();
   if(G.timerConfig>0){
     startTimer(G.timerConfig,updateTimerDisplay,()=>submitPlan());
   }else{
@@ -465,13 +513,15 @@ function submitPlan(){
   if(G.myReady)return;G.myReady=true;stopTimer();
   const rb=document.getElementById('btnGameReady');rb.disabled=true;rb.classList.add('is-ready');rb.querySelector('.front').textContent='WAITING...';
   G.selectedUnit=null;G.actionMode=null;hideHint();
-  send({type:'plan-done',actions:G.myActions});if(G.opActions)runResolution();
+  const orderedActions=buildOrderedActions();
+  send({type:'plan-done',actions:orderedActions});if(G.opActions)runResolution();
 }
 
 async function runResolution(){
   G.phase='resolution';
-  const p1Acts=G.myPlayer===1?G.myActions:G.opActions;
-  const p2Acts=G.myPlayer===2?G.myActions:G.opActions;
+  const orderedActions=buildOrderedActions();
+  const p1Acts=G.myPlayer===1?orderedActions:G.opActions;
+  const p2Acts=G.myPlayer===2?orderedActions:G.opActions;
   for(let step=0;step<3;step++){
     const oldPos={};G.units.forEach(u=>{oldPos[u.id]={q:u.q,r:u.r}});
     resolveStep(p1Acts[step]||null,p2Acts[step]||null);
@@ -502,12 +552,12 @@ function createGame(){
   const roomId=Math.random().toString(36).substr(2,6).toUpperCase();
   G.timerConfig=TIMER_OPTIONS[timerIdx]||0;
   peer=new Peer('rhex-'+roomId,{debug:0});
-  peer.on('open',()=>{const url=location.origin+location.pathname+'?room='+roomId;document.getElementById('shareLink').value=url;document.getElementById('shareArea').style.display='';document.getElementById('btnCreate').style.display='none';document.getElementById('btnInstructions').style.display='none';document.getElementById('btnTimer').style.display='none'});
+  peer.on('open',()=>{const url=location.origin+location.pathname+'?room='+roomId;document.getElementById('shareLink').value=url;document.getElementById('shareArea').style.display='';document.getElementById('btnCreate').style.display='none';document.getElementById('btnInstructions').style.display='none'});
   peer.on('connection',c=>{conn=c;G.myPlayer=1;wireConn()});
   peer.on('error',e=>console.error('Peer error:',e));
 }
 function joinGame(roomId){
-  document.getElementById('btnCreate').style.display='none';document.getElementById('btnInstructions').style.display='none';document.getElementById('btnTimer').style.display='none';document.getElementById('joinArea').style.display='';
+  document.getElementById('btnCreate').style.display='none';document.getElementById('btnInstructions').style.display='none';document.getElementById('joinArea').style.display='';
   peer=new Peer(undefined,{debug:0});
   peer.on('open',()=>{conn=peer.connect('rhex-'+roomId,{reliable:true});conn.on('open',()=>{wireConn();send({type:'join'})})});
   peer.on('error',e=>console.error('Peer error:',e));
@@ -545,7 +595,7 @@ function init(){
   document.getElementById('btnCloseInstructions').onclick=()=>document.getElementById('instructions').classList.remove('visible');
 
   // Settings cog
-  document.getElementById('btnSettings').onclick=()=>document.getElementById('settingsModal').classList.add('visible');
+  document.getElementById('settingsCog').onclick=()=>document.getElementById('settingsModal').classList.add('visible');
   document.getElementById('btnSurrender').onclick=()=>{document.getElementById('settingsModal').classList.remove('visible');send({type:'rematch'});backToMenu()};
   document.getElementById('btnCloseSettings').onclick=()=>document.getElementById('settingsModal').classList.remove('visible');
 
