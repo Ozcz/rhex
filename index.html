@@ -62,7 +62,7 @@ h2{color:#fff;font-weight:300;letter-spacing:.15em;font-size:1.4em}
 #screenSetup{justify-content:center;align-items:center;gap:22px;padding:24px;height:100vh}
 .setup-header{text-align:center}
 .setup-header h2{font-size:1.2em}
-#setupCanvasWrap{width:min(86vw,440px);aspect-ratio:1/1;flex:none}
+#setupCanvasWrap{width:min(86vw,680px);aspect-ratio:1/1;flex:none}
 #setupCanvas{width:100%;height:100%;display:block;touch-action:none}
 .setup-bottom{display:flex;flex-direction:column;align-items:center;gap:12px}
 .setup-skill-row{display:flex;gap:10px;justify-content:center}
@@ -70,25 +70,25 @@ h2{color:#fff;font-weight:300;letter-spacing:.15em;font-size:1.4em}
 
 /* -- Game screen -- */
 /* Centered cluster: bounded board on top, HUD below (timer, badges, ready). */
-#screenGame{justify-content:center;align-items:center;gap:20px;padding:24px;height:100vh}
-#boardWrap{width:min(86vw,440px);aspect-ratio:1/1;flex:none}
+#screenGame{justify-content:center;align-items:center;gap:20px;padding:24px;height:100vh;background:#f0f0f0;color:#222}
+#boardWrap{width:min(86vw,680px);aspect-ratio:1/1;flex:none}
 #board{width:100%;height:100%;display:block;touch-action:none}
 .game-hud{display:flex;flex-direction:column;align-items:center;gap:14px}
-.timer-big{font-size:3rem;font-weight:300;color:#333;font-variant-numeric:tabular-nums;line-height:1;letter-spacing:.06em}
-.timer-big.urgent{color:#fff}
+.timer-big{font-size:4.5rem;font-weight:300;color:#333;font-variant-numeric:tabular-nums;line-height:1;letter-spacing:.06em}
+.timer-big.urgent{color:#000}
 .badges-row{display:flex;align-items:flex-end;justify-content:center;gap:24px}
 .badge{display:flex;flex-direction:column;align-items:center;gap:4px}
 .badge .pts{display:flex;flex-direction:column-reverse;gap:2px;justify-content:flex-end;min-height:0}
-.badge .pts .bar{width:24px;height:4px;border-radius:1px}
+.badge .pts .bar{width:32px;height:5px;border-radius:1px}
 .badge.p1 .pts .bar{background:#4ecdc4}
 .badge.p2 .pts .bar{background:#e85d75}
-.badge .crown{font-size:18px;line-height:1}
+.badge .crown{font-size:24px;line-height:1}
 .badge.p1 .crown{color:#4ecdc4}
 .badge.p2 .crown{color:#e85d75}
-.badge .ribbon{font-size:.55rem;letter-spacing:.12em;color:#999;border:.5px solid #444;border-radius:2px;padding:2px 8px;text-transform:uppercase}
-.diff-hex{position:relative;width:44px;height:50px;display:grid;place-items:center}
+.badge .ribbon{font-size:.55rem;letter-spacing:.12em;color:#666;border:.5px solid #bbb;border-radius:2px;padding:2px 8px;text-transform:uppercase}
+.diff-hex{position:relative;width:52px;height:58px;display:grid;place-items:center}
 .diff-hex svg{position:absolute;inset:0;width:100%;height:100%}
-.diff-hex span{position:relative;font-size:.85rem;color:#aaa;font-weight:400}
+.diff-hex span{position:relative;font-size:1rem;color:#aaa;font-weight:400}
 .action-btns{display:flex;gap:8px;justify-content:center}
 
 /* -- Overlays -- */
@@ -356,10 +356,10 @@ function render(){
   ctx.clearRect(0,0,cw,ch);
 
   // -- Board (HUD is rendered as HTML below the canvas, not here) --
-  // Hex thickness (white bottom layer)
-  for(const h of boardHexes){const s=hexToScreen(h.q,h.r);drawHexShape(ctx,s.x,s.y+HEX_THICK,HEX-2);ctx.fillStyle='#fff';ctx.fill()}
-  // Hex top face (black with thin white contour)
-  for(const h of boardHexes){const s=hexToScreen(h.q,h.r);drawHexShape(ctx,s.x,s.y,HEX-2);ctx.fillStyle='#000';ctx.fill();ctx.strokeStyle='#fff';ctx.lineWidth=.5;ctx.stroke()}
+  // Hex thickness (dark bottom layer for depth on light bg)
+  for(const h of boardHexes){const s=hexToScreen(h.q,h.r);drawHexShape(ctx,s.x,s.y+HEX_THICK,HEX-2);ctx.fillStyle='#222';ctx.fill()}
+  // Hex top face (white with thin black contour)
+  for(const h of boardHexes){const s=hexToScreen(h.q,h.r);drawHexShape(ctx,s.x,s.y,HEX-2);ctx.fillStyle='#fff';ctx.fill();ctx.strokeStyle='#000';ctx.lineWidth=.5;ctx.stroke()}
 
   // Highlights -- during active drag (include current hex as valid stay)
   if(drag.unit&&drag.moved&&G.phase==='planning'){
@@ -367,20 +367,20 @@ function render(){
     const stayS=hexToScreen(drag.unit.q,drag.unit.r);
     const isStayTarget=drag.targetHex&&drag.targetHex.q===drag.unit.q&&drag.targetHex.r===drag.unit.r;
     drawHexShape(ctx,stayS.x,stayS.y,HEX-4);
-    ctx.fillStyle=isStayTarget?'rgba(255,255,255,0.25)':'rgba(255,255,255,0.15)';
+    ctx.fillStyle=isStayTarget?'rgba(0,0,0,0.12)':'rgba(0,0,0,0.08)';
     ctx.fill();
     // Neighbor hexes
     for(const n of neighbors(drag.unit.q,drag.unit.r)){
       const s=hexToScreen(n.q,n.r);
       drawHexShape(ctx,s.x,s.y,HEX-4);
       const isT=drag.targetHex&&drag.targetHex.q===n.q&&drag.targetHex.r===n.r;
-      ctx.fillStyle=isT?'rgba(255,255,255,0.25)':'rgba(255,255,255,0.15)';
+      ctx.fillStyle=isT?'rgba(0,0,0,0.12)':'rgba(0,0,0,0.08)';
       ctx.fill();
     }
   }
   // Skill targeting highlights
-  if(G.actionMode==='skill-direction'){const u=unitById(G.selectedUnit);if(u)for(const d of DIRS)for(let s=1;s<=2;s++){const t={q:u.q+d.q*s,r:u.r+d.r*s};if(onBoard(t.q,t.r)){const sc=hexToScreen(t.q,t.r);drawHexShape(ctx,sc.x,sc.y,HEX-4);ctx.fillStyle='rgba(255,255,255,0.15)';ctx.fill()}}}
-  if(G.phase==='planning'&&G.actionMode==='respawn'){for(const h of spawnHexes(G.myPlayer))if(!unitAt(h.q,h.r)){const s=hexToScreen(h.q,h.r);drawHexShape(ctx,s.x,s.y,HEX-4);ctx.fillStyle='rgba(255,255,255,0.15)';ctx.fill()}}
+  if(G.actionMode==='skill-direction'){const u=unitById(G.selectedUnit);if(u)for(const d of DIRS)for(let s=1;s<=2;s++){const t={q:u.q+d.q*s,r:u.r+d.r*s};if(onBoard(t.q,t.r)){const sc=hexToScreen(t.q,t.r);drawHexShape(ctx,sc.x,sc.y,HEX-4);ctx.fillStyle='rgba(0,0,0,0.08)';ctx.fill()}}}
+  if(G.phase==='planning'&&G.actionMode==='respawn'){for(const h of spawnHexes(G.myPlayer))if(!unitAt(h.q,h.r)){const s=hexToScreen(h.q,h.r);drawHexShape(ctx,s.x,s.y,HEX-4);ctx.fillStyle='rgba(0,0,0,0.08)';ctx.fill()}}
 
   // Action lines
   if(G.phase==='planning'){
@@ -389,7 +389,7 @@ function render(){
     if(a.type==='move')to=hexToScreen(a.target.q,a.target.r);
     else if(a.type==='skill'&&a.direction){const end=onBoard(u.q+a.direction.q*2,u.r+a.direction.r*2)?2:1;to=hexToScreen(u.q+a.direction.q*end,u.r+a.direction.r*end)}
     else if(a.type==='respawn'&&a.target)to=hexToScreen(a.target.q,a.target.r);
-    if(to){ctx.beginPath();ctx.moveTo(from.x,from.y);ctx.lineTo(to.x,to.y);ctx.strokeStyle='rgba(255,255,255,0.2)';ctx.lineWidth=.5;ctx.setLineDash([4,4]);ctx.stroke();ctx.setLineDash([]);ctx.beginPath();ctx.arc(to.x,to.y,2,0,Math.PI*2);ctx.fillStyle='rgba(255,255,255,0.4)';ctx.fill()}
+    if(to){ctx.beginPath();ctx.moveTo(from.x,from.y);ctx.lineTo(to.x,to.y);ctx.strokeStyle='rgba(0,0,0,0.12)';ctx.lineWidth=.5;ctx.setLineDash([4,4]);ctx.stroke();ctx.setLineDash([]);ctx.beginPath();ctx.arc(to.x,to.y,2,0,Math.PI*2);ctx.fillStyle='rgba(0,0,0,0.25)';ctx.fill()}
     // Balloon on respawn target hex (unit not there yet)
     if(a.type==='respawn'&&a.target){
       const ts=hexToScreen(a.target.q,a.target.r);
@@ -397,8 +397,8 @@ function render(){
       if(orderIdx>=0){
         const br=HEX*0.2;
         ctx.beginPath();ctx.arc(ts.x,ts.y,br,0,Math.PI*2);
-        ctx.fillStyle='rgba(255,255,255,0.4)';ctx.fill();
-        ctx.fillStyle='#000';ctx.font=`600 ${br*1.3}px Inter,sans-serif`;
+        ctx.fillStyle='rgba(0,0,0,0.5)';ctx.fill();
+        ctx.fillStyle='#fff';ctx.font=`600 ${br*1.3}px Inter,sans-serif`;
         ctx.textAlign='center';ctx.textBaseline='middle';
         ctx.fillText(String(orderIdx+1),ts.x,ts.y);
       }
@@ -406,7 +406,7 @@ function render(){
   }
 
   // Drag line
-  if(drag.unit&&drag.moved&&drag.currentPos&&G.phase==='planning'){const from=hexToScreen(drag.unit.q,drag.unit.r);ctx.beginPath();ctx.moveTo(from.x,from.y);ctx.lineTo(drag.currentPos.x,drag.currentPos.y);ctx.strokeStyle='rgba(255,255,255,0.15)';ctx.lineWidth=.5;ctx.stroke()}
+  if(drag.unit&&drag.moved&&drag.currentPos&&G.phase==='planning'){const from=hexToScreen(drag.unit.q,drag.unit.r);ctx.beginPath();ctx.moveTo(from.x,from.y);ctx.lineTo(drag.currentPos.x,drag.currentPos.y);ctx.strokeStyle='rgba(0,0,0,0.08)';ctx.lineWidth=.5;ctx.stroke()}
 
   // Units
   for(const u of G.units){
@@ -416,8 +416,8 @@ function render(){
     const col=u.player===1?P1_COLOR:P2_COLOR;const r=HEX*0.28;
     ctx.beginPath();ctx.arc(s.x,s.y,r,0,Math.PI*2);
     ctx.fillStyle=u.cloaked?col+'44':(isDragging?col+'aa':col);ctx.fill();
-    ctx.strokeStyle='#fff';ctx.lineWidth=.5;ctx.stroke();
-    if(u.shielded){ctx.beginPath();ctx.arc(s.x,s.y,r+3,0,Math.PI*2);ctx.strokeStyle='#fff';ctx.lineWidth=.5;ctx.setLineDash([3,3]);ctx.stroke();ctx.setLineDash([])}
+    ctx.strokeStyle='#000';ctx.lineWidth=.5;ctx.stroke();
+    if(u.shielded){ctx.beginPath();ctx.arc(s.x,s.y,r+3,0,Math.PI*2);ctx.strokeStyle='#000';ctx.lineWidth=.5;ctx.setLineDash([3,3]);ctx.stroke();ctx.setLineDash([])}
     if(u.skill){ctx.font=`${HEX*0.22}px sans-serif`;ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(SKILL_DEF[u.skill].icon,s.x,s.y)}
     // Priority balloon -- translucent circle top-right with number
     if(u.player===G.myPlayer&&!isDragging){
@@ -425,15 +425,15 @@ function render(){
       if(orderIdx>=0){
         const bx=s.x+r*0.9,by=s.y-r*0.9,br=HEX*0.2;
         ctx.beginPath();ctx.arc(bx,by,br,0,Math.PI*2);
-        ctx.fillStyle='rgba(255,255,255,0.55)';ctx.fill();
-        ctx.fillStyle='#000';ctx.font=`600 ${br*1.3}px Inter,sans-serif`;
+        ctx.fillStyle='rgba(0,0,0,0.6)';ctx.fill();
+        ctx.fillStyle='#fff';ctx.font=`600 ${br*1.3}px Inter,sans-serif`;
         ctx.textAlign='center';ctx.textBaseline='middle';
         ctx.fillText(String(orderIdx+1),bx,by);
       }
     }
   }
 
-  if(drag.unit&&!drag.moved&&drag.isHold&&drag.startPos){ctx.beginPath();ctx.arc(drag.startPos.x,drag.startPos.y,HEX*0.4,0,Math.PI*2);ctx.strokeStyle='rgba(255,255,255,0.3)';ctx.lineWidth=.5;ctx.stroke()}
+  if(drag.unit&&!drag.moved&&drag.isHold&&drag.startPos){ctx.beginPath();ctx.arc(drag.startPos.x,drag.startPos.y,HEX*0.4,0,Math.PI*2);ctx.strokeStyle='rgba(0,0,0,0.2)';ctx.lineWidth=.5;ctx.stroke()}
 
   requestAnimationFrame(render);
 }
@@ -446,7 +446,7 @@ function setupMainCanvas(){
 }
 function resizeCanvas(){
   dpr=window.devicePixelRatio||1;const rect=canvas.getBoundingClientRect();cw=rect.width;ch=rect.height;canvas.width=cw*dpr;canvas.height=ch*dpr;ctx.setTransform(dpr,0,0,dpr,0,0);centerX=cw/2;
-  const maxH=ch/8*0.98;const maxW=cw/(5*S3*HEX_ASPECT)*0.98;HEX=Math.min(maxH,maxW,60);HEX=Math.max(HEX,16);
+  const maxH=ch/8*0.98;const maxW=cw/(5*S3*HEX_ASPECT)*0.98;HEX=Math.min(maxH,maxW,80);HEX=Math.max(HEX,18);
   centerY=getBoardCenterY();
 }
 
@@ -635,7 +635,7 @@ function resizeSetupCanvas(){
   setupCtx.setTransform(setupDpr,0,0,setupDpr,0,0);
   setupCenterX=setupCW/2;setupCenterY=setupCH/2;
   const maxH=setupCH/(5*1.5+0.5)*0.8;const maxW=setupCW/(5*S3*HEX_ASPECT)*0.8;
-  setupHEX=Math.min(maxH,maxW,50);setupHEX=Math.max(setupHEX,20);
+  setupHEX=Math.min(maxH,maxW,80);setupHEX=Math.max(setupHEX,18);
 }
 function onSetupPointerDown(e){
   if(G.myReady)return; // locked after pressing ready
@@ -655,9 +655,10 @@ function onSetupPointerDown(e){
 }
 
 function buildSetupUI(){
-  setupSelectedUnit=null;
-  // Set default skill to shield for all units
+  // Set default skill to shield and select the first unit
   myUnits().forEach(u=>{u.skill='shield'});
+  const mine=myUnits();
+  setupSelectedUnit=mine.length>0?mine[0].id:null;
 
   // Build skill buttons
   const row=document.getElementById('setupSkillRow');
@@ -710,7 +711,10 @@ function finishSetup(){
 }
 
 function startPlanning(){
-  G.phase='planning';G.myReady=false;G.opReady=false;G.myActions={};G.unitOrder=[];orderCounter=0;G.opActions=null;G.selectedUnit=null;G.actionMode=null;
+  G.phase='planning';G.myReady=false;G.opReady=false;G.myActions={};G.opActions=null;G.selectedUnit=null;G.actionMode=null;
+  // Auto-assign I/II/III to all alive units
+  G.unitOrder=myUnits().filter(u=>!u.dead).map(u=>u.id).slice(0,3);
+  orderCounter=G.unitOrder.length;
   G.units.forEach(u=>{u.shielded=false});showScreen('screenGame');setupMainCanvas();
   const rb=document.getElementById('btnGameReady');rb.disabled=false;rb.classList.remove('is-ready');rb.querySelector('.front').textContent='READY';
   checkAutoSelectDead();
