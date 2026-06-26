@@ -19,17 +19,32 @@ h1{font-size:3em;color:#fff;letter-spacing:.15em}
 h2{color:#fff}
 .subtitle{color:#999;font-size:1.1em}
 
-/* ── Buttons ── */
-button{background:#fff;color:#000;border:none;padding:12px 28px;border-radius:8px;font-size:1em;font-weight:700;cursor:pointer;transition:all .2s}
-button:hover{background:#ddd;transform:scale(1.03)}
-button:disabled{background:#333;color:#666;cursor:default;transform:none}
-.ready-btn{background:#fff!important;color:#000!important}
-.ready-btn:hover{background:#ddd!important}
-.ready-btn.is-ready{background:#666!important;color:#ccc!important}
-#btnInstructions{background:transparent;color:#999;border:1px solid #444;padding:8px 20px;font-weight:400;font-size:.9em}
-#btnInstructions:hover{color:#fff;border-color:#888;background:transparent}
-#btnBackToMenu{background:transparent;color:#999;border:1px solid #444;padding:6px 16px;font-weight:400;font-size:.8em;position:absolute;top:12px;left:12px}
-#btnBackToMenu:hover{color:#fff;border-color:#888;background:transparent}
+/* ── 3D Pushable buttons ── */
+.pushable{position:relative;border:none;background:transparent;padding:0;cursor:pointer;outline-offset:4px;transition:filter 250ms;font-family:inherit}
+.pushable .shadow{position:absolute;top:0;left:0;width:100%;height:100%;border-radius:12px;background:hsl(0deg 0% 0%/.25);will-change:transform;transform:translateY(2px);transition:transform 600ms cubic-bezier(.3,.7,.4,1)}
+.pushable .edge{position:absolute;top:0;left:0;width:100%;height:100%;border-radius:12px;background:linear-gradient(to left,hsl(0deg 0% 12%) 0%,hsl(0deg 0% 28%) 8%,hsl(0deg 0% 28%) 92%,hsl(0deg 0% 12%) 100%)}
+.pushable .front{display:block;position:relative;padding:12px 32px;border-radius:12px;font-size:1rem;font-weight:700;color:#000;background:#d0d0d0;will-change:transform;transform:translateY(-4px);transition:transform 600ms cubic-bezier(.3,.7,.4,1)}
+.pushable:hover{filter:brightness(110%)}
+.pushable:hover .front{transform:translateY(-6px);transition:transform 250ms cubic-bezier(.3,.7,.4,1.5)}
+.pushable:active .front{transform:translateY(-2px);transition:transform 150ms}
+.pushable:hover .shadow{transform:translateY(4px);transition:transform 250ms cubic-bezier(.3,.7,.4,1.5)}
+.pushable:active .shadow{transform:translateY(1px);transition:transform 150ms}
+.pushable:focus:not(:focus-visible){outline:none}
+.pushable:disabled{filter:brightness(40%);cursor:default}
+.pushable:disabled .front{transform:translateY(-2px)}
+.pushable:disabled:hover{filter:brightness(40%)}
+.pushable:disabled:hover .front{transform:translateY(-2px)}
+.pushable:disabled:active .front{transform:translateY(-2px)}
+/* Subtle variant (secondary buttons) */
+.pushable.subtle .edge{background:linear-gradient(to left,hsl(0deg 0% 8%) 0%,hsl(0deg 0% 18%) 8%,hsl(0deg 0% 18%) 92%,hsl(0deg 0% 8%) 100%)}
+.pushable.subtle .front{background:#333;color:#aaa;font-weight:400;padding:10px 24px;font-size:.9rem}
+/* Compact variant (small buttons) */
+.pushable.compact .front{padding:8px 18px;font-size:.85rem}
+/* Ready button in game */
+#btnGameReady .front{padding:12px 36px;font-size:1.1rem}
+.pushable.is-ready .front{background:#444;color:#888}
+/* Positioned menu button */
+#btnBackToMenu{position:absolute;top:12px;left:12px;z-index:5}
 
 /* ── Lobby ── */
 .link-box{display:flex;gap:8px;width:100%;max-width:400px}
@@ -81,8 +96,6 @@ canvas{flex:1;width:100%;min-height:0;display:block;touch-action:none}
 .action-tag:hover{background:#333}
 .action-tag .num{color:#fff;font-weight:700}
 .action-btns{display:flex;gap:8px;justify-content:center}
-.action-btns button{padding:10px 20px;font-size:1em}
-#btnGameReady{padding:12px 32px;font-size:1.1em}
 
 /* ── Overlays ── */
 .overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.8);align-items:center;justify-content:center;z-index:10;display:none}
@@ -103,7 +116,7 @@ canvas{flex:1;width:100%;min-height:0;display:block;touch-action:none}
 <div id="lobby" class="screen active">
   <h1>RHEX</h1>
   <p class="subtitle">Hex Strategy</p>
-  <button id="btnCreate">Create Game</button>
+  <button class="pushable" id="btnCreate"><span class="shadow"></span><span class="edge"></span><span class="front">Create Game</span></button>
   <div class="timer-config">
     <label for="timerSelect">Turn timer:</label>
     <select id="timerSelect">
@@ -113,12 +126,12 @@ canvas{flex:1;width:100%;min-height:0;display:block;touch-action:none}
       <option value="120">120s</option>
     </select>
   </div>
-  <button id="btnInstructions">How to Play</button>
+  <button class="pushable subtle" id="btnInstructions"><span class="shadow"></span><span class="edge"></span><span class="front">How to Play</span></button>
   <div id="shareArea" style="display:none">
     <p>Share this link with a friend:</p>
     <div class="link-box">
       <input id="shareLink" readonly>
-      <button id="btnCopy">Copy</button>
+      <button class="pushable compact" id="btnCopy"><span class="shadow"></span><span class="edge"></span><span class="front">Copy</span></button>
     </div>
     <p class="waiting">Waiting for opponent...</p>
   </div>
@@ -132,7 +145,7 @@ canvas{flex:1;width:100%;min-height:0;display:block;touch-action:none}
   <div class="setup-header"><h2>Choose Skills</h2></div>
   <div class="unit-cards" id="unitCards"></div>
   <p class="status-msg" id="setupStatus">Pick a skill for each unit, then press Ready.</p>
-  <button id="btnSetupReady" class="ready-btn">Ready</button>
+  <button class="pushable" id="btnSetupReady"><span class="shadow"></span><span class="edge"></span><span class="front">Ready</span></button>
 </div>
 
 <!-- ════════ GAME ════════ -->
@@ -149,7 +162,7 @@ canvas{flex:1;width:100%;min-height:0;display:block;touch-action:none}
   <div class="action-panel">
     <div class="action-queue" id="actionQueue"></div>
     <div class="action-btns">
-      <button id="btnGameReady" class="ready-btn">Ready</button>
+      <button class="pushable" id="btnGameReady"><span class="shadow"></span><span class="edge"></span><span class="front">Ready</span></button>
     </div>
   </div>
 </div>
@@ -158,8 +171,8 @@ canvas{flex:1;width:100%;min-height:0;display:block;touch-action:none}
 <div id="screenGameover" class="screen">
   <h2 id="winText"></h2>
   <div id="finalScore"></div>
-  <button id="btnRematch">Play Again</button>
-  <button id="btnBackToMenuEnd" style="background:transparent;color:#999;border:1px solid #444;padding:8px 20px;font-weight:400;font-size:.9em">Back to Menu</button>
+  <button class="pushable" id="btnRematch"><span class="shadow"></span><span class="edge"></span><span class="front">Play Again</span></button>
+  <button class="pushable subtle" id="btnBackToMenuEnd"><span class="shadow"></span><span class="edge"></span><span class="front">Back to Menu</span></button>
 </div>
 
 <!-- ════════ INSTRUCTIONS ════════ -->
@@ -188,7 +201,7 @@ canvas{flex:1;width:100%;min-height:0;display:block;touch-action:none}
       <li><b>Cloak</b> — Invisible, score 0 while hidden</li>
       <li><b>Decoy</b> — Swap with ally (once/game). Hold, then tap ally.</li>
     </ul>
-    <br><button id="btnCloseInstructions">Got it</button>
+    <br><button class="pushable compact" id="btnCloseInstructions"><span class="shadow"></span><span class="edge"></span><span class="front">Got it</span></button>
   </div>
 </div>
 
@@ -196,11 +209,11 @@ canvas{flex:1;width:100%;min-height:0;display:block;touch-action:none}
 <div id="overlay" class="overlay">
   <div style="text-align:center">
     <div class="overlay-text" id="overlayText"></div>
-    <button id="btnOverlayMenu" style="display:none;margin-top:20px">Back to Menu</button>
+    <button class="pushable compact" id="btnOverlayMenu" style="display:none;margin-top:20px"><span class="shadow"></span><span class="edge"></span><span class="front">Back to Menu</span></button>
   </div>
 </div>
 <div id="skillHint" class="skill-target-hint"></div>
-<button id="btnBackToMenu" style="display:none">Menu</button>
+<button class="pushable subtle compact" id="btnBackToMenu" style="display:none"><span class="shadow"></span><span class="edge"></span><span class="front">Menu</span></button>
 
 <script>
 (function(){
@@ -788,7 +801,7 @@ function buildSetupUI(){
   });
   const rb=document.getElementById('btnSetupReady');
   rb.onclick=()=>finishSetup(); rb.disabled=false;
-  rb.classList.remove('is-ready'); rb.textContent='Ready';
+  rb.classList.remove('is-ready'); rb.querySelector('.front').textContent='Ready';
   document.getElementById('setupStatus').textContent='Pick a skill for each unit, then press Ready.';
 }
 function finishSetup(){
@@ -797,7 +810,7 @@ function finishSetup(){
   G.myReady=true;
   document.getElementById('setupStatus').textContent='Waiting for opponent...';
   const rb=document.getElementById('btnSetupReady');
-  rb.disabled=true; rb.classList.add('is-ready'); rb.textContent='Waiting...';
+  rb.disabled=true; rb.classList.add('is-ready'); rb.querySelector('.front').textContent='Waiting...';
   send({type:'setup-done', units:myUnits().map(u=>({id:u.id,q:u.q,r:u.r,skill:u.skill}))});
   if(G.opReady) startPlanning();
 }
@@ -813,7 +826,7 @@ function startPlanning(){
   setupCanvas();
   document.getElementById('phaseLabel').textContent='Planning';
   const rb=document.getElementById('btnGameReady');
-  rb.disabled=false; rb.classList.remove('is-ready'); rb.textContent='Ready';
+  rb.disabled=false; rb.classList.remove('is-ready'); rb.querySelector('.front').textContent='Ready';
   updateActionQueue(); updateScoreDisplay();
   checkAutoSelectDead();
   startTimer(G.timerConfig,
@@ -826,7 +839,7 @@ function submitPlan(){
   if(G.myReady) return;
   G.myReady=true; stopTimer();
   const rb=document.getElementById('btnGameReady');
-  rb.disabled=true; rb.classList.add('is-ready'); rb.textContent='Waiting...';
+  rb.disabled=true; rb.classList.add('is-ready'); rb.querySelector('.front').textContent='Waiting...';
   G.selectedUnit=null; G.actionMode=null; hideHint();
   send({type:'plan-done', actions:G.myActions});
   if(G.opActions) runResolution();
