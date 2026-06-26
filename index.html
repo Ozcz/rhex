@@ -837,15 +837,14 @@ function submitPlan(){
 // ──────────────────────────────────────────────
 async function runResolution(){
   G.phase='resolution';
-  document.getElementById('phaseLabel').textContent='Resolving...';
-  showOverlay('Resolving...');
+  document.getElementById('phaseLabel').textContent='';
   const p1Acts=G.myPlayer===1?G.myActions:G.opActions;
   const p2Acts=G.myPlayer===2?G.myActions:G.opActions;
   for(let step=0;step<3;step++){
     resolveStep(p1Acts[step]||null, p2Acts[step]||null);
-    await sleep(1200);
+    if(step<2) await sleep(500);
   }
-  G.turnNum++; calcScores(); updateScoreDisplay(); hideOverlay();
+  G.turnNum++; calcScores(); updateScoreDisplay();
   if(checkWin()){
     G.phase='gameover'; showScreen('screenGameover');
     document.getElementById('winText').textContent=G.winner===G.myPlayer?'You Win!':'You Lose!';
