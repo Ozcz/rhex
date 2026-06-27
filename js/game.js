@@ -93,7 +93,6 @@ function startPlanning() {
   R.bowAim.active = false; R.bowAim.unitId = null;
   R.bowAim.targetHex = null; R.bowAim.currentPos = null;
   G.unitOrder = [null, null, null];
-  G.units.forEach(function(u) { u.shielded = false; });
 
   R.myUnits().forEach(function(u) {
     if (u.dead) {
@@ -268,7 +267,9 @@ function resolveStep(a1, a2, stepIdx) {
       R.G.arrows.push({
         fromQ: ku.q, fromR: ku.r,
         targetQ: ka.targetHex.q, targetR: ka.targetHex.r,
-        stepsRemaining: dist, player: ka.player
+        stepsRemaining: dist, totalDist: dist,
+        launchTime: performance.now(),
+        player: ka.player
       });
     }
     if (ka.skill === 'cloak') {

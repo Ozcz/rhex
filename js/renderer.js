@@ -183,30 +183,40 @@ function drawShieldEffect(c, x, y, unit) {
 
 function drawArrows(c) {
   var G = R.G;
+  var now = performance.now();
   for (var i = 0; i < G.arrows.length; i++) {
     var arrow = G.arrows[i];
     if (arrow.player !== G.myPlayer) continue;
-    var totalDist = R.hexDist(arrow.fromQ, arrow.fromR, arrow.targetQ, arrow.targetR);
-    if (totalDist === 0) continue;
+    var td = arrow.totalDist || 1;
+    if (td === 0) continue;
 
     var fromS = hexToScreen(arrow.fromQ, arrow.fromR);
     var toS = hexToScreen(arrow.targetQ, arrow.targetR);
-    var progress = 1 - (arrow.stepsRemaining / totalDist);
 
-    // Arrow arcs high up then comes down to target
+    // Time-based smooth animation
+    var flightTime = td * (R.ANIM_MS + 200);
+    var elapsed = now - (arrow.launchTime || now);
+    var progress = Math.min(1, elapsed / flightTime);
+
+    var offTop = -R.HEX;
     var ax, ay;
-    var peakY = Math.min(fromS.y, toS.y) - R.ch * 0.4;
-    if (progress < 0.5) {
-      var t = progress / 0.5;
-      ax = fromS.x + (toS.x - fromS.x) * t * 0.3;
-      ay = fromS.y + (peakY - fromS.y) * t;
+
+    if (progress < 0.35) {
+      // Phase 1: arrow rises from pawn straight up, exits top of screen
+      var t = progress / 0.35;
+      ax = fromS.x;
+      ay = fromS.y + (offTop - fromS.y) * t;
+    } else if (progress < 0.55) {
+      // Phase 2: off screen (not drawn)
+      continue;
     } else {
-      var t2 = (progress - 0.5) / 0.5;
-      ax = fromS.x + (toS.x - fromS.x) * (0.3 + 0.7 * t2);
-      ay = peakY + (toS.y - peakY) * t2;
+      // Phase 3: arrow falls from top of screen down to target
+      var t2 = (progress - 0.55) / 0.45;
+      ax = toS.x;
+      ay = offTop + (toS.y - offTop) * t2;
     }
 
-    c.font = (R.HEX * 0.7) + 'px sans-serif';
+    c.font = (R.HEX * 0.8) + 'px sans-serif';
     c.textAlign = 'center'; c.textBaseline = 'middle';
     c.fillText('\u{1F3F9}', ax, ay);
   }
