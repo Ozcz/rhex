@@ -187,14 +187,6 @@ function onHoldActivate(unit) {
 }
 
 function onPointerMove(e) {
-  // Update hover regardless of drag state
-  if (R.canvas) {
-    var hRect = R.canvas.getBoundingClientRect();
-    var hx = e.clientX - hRect.left, hy = e.clientY - hRect.top;
-    var hHex = R.screenToHex(hx, hy);
-    R.hoveredHex = R.onBoard(hHex.q, hHex.r) ? hHex : null;
-  }
-
   // Bow aim tracking
   if (R.bowAim.active) {
     e.preventDefault();

@@ -352,6 +352,12 @@ function hideOverlay() {
   document.getElementById('btnOverlayMenu').style.display = 'none';
 }
 
+function showDisconnectWarning() {
+  var el = document.getElementById('disconnectWarning');
+  el.style.display = '';
+  setTimeout(function() { el.style.display = 'none'; }, 3000);
+}
+
 R.showScreen = showScreen;
 R.updateTitleVisibility = updateTitleVisibility;
 R.backToMenu = backToMenu;
@@ -368,3 +374,4 @@ R.checkWin = checkWin;
 R.sleep = sleep;
 R.showOverlay = showOverlay;
 R.hideOverlay = hideOverlay;
+R.showDisconnectWarning = showDisconnectWarning;

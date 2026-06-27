@@ -25,20 +25,20 @@ function renderSetup() {
   for (var i = 0; i < R.boardHexes.length; i++) {
     var h = R.boardHexes[i];
     var s = hexToScreenSetup(h.q, h.r);
-    R.drawHexShape(c, s.x, s.y + R.HEX_THICK, R.HEX - 2);
+    R.drawHexShape(c, s.x, s.y + R.HEX_THICK, R.HEX - 5);
     c.fillStyle = '#fff'; c.fill();
     c.strokeStyle = '#fff'; c.lineWidth = 1; c.stroke();
   }
   for (var j = 0; j < R.boardHexes.length; j++) {
     var h2 = R.boardHexes[j];
     var s2 = hexToScreenSetup(h2.q, h2.r);
-    R.drawHexShape(c, s2.x, s2.y, R.HEX - 2);
+    R.drawHexShape(c, s2.x, s2.y, R.HEX - 5);
     c.fillStyle = '#000'; c.fill();
     c.strokeStyle = '#fff'; c.lineWidth = 1; c.stroke();
   }
 
-  var drawSz = R.HEX * 2.0;
-  var yShift = -drawSz * 0.1;
+  var drawSz = R.HEX * 2.4;
+  var yShift = -drawSz * 0.22;
   var mine = R.myUnits();
 
   for (var k = 0; k < mine.length; k++) {

@@ -27,8 +27,8 @@
     <p class="share-label">SHARE THIS LINK WITH A FRIEND:</p>
     <div class="share-url-row">
       <input id="shareLink" readonly>
+      <button class="pushable compact" id="btnCopy"><span class="shadow"></span><span class="edge"></span><span class="front">COPY</span></button>
     </div>
-    <button class="pushable compact full-width" id="btnCopy"><span class="shadow"></span><span class="edge"></span><span class="front">COPY</span></button>
     <p class="waiting">WAITING FOR OPPONENT</p>
     <div class="share-btn-row">
       <button class="pushable compact subtle" id="btnBackToMenuShare"><span class="shadow"></span><span class="edge"></span><span class="front">BACK</span></button>
@@ -137,6 +137,9 @@
   </div>
 </div>
 <div id="skillHint" class="skill-target-hint"></div>
+
+<!-- Disconnect warning -->
+<div id="disconnectWarning" class="disconnect-warning" style="display:none">OPPONENT DISCONNECTED</div>
 
 <!-- Hamburger menu button -->
 <div id="hamburgerBtn" style="display:none">&#9776;</div>

@@ -47,13 +47,12 @@ h2{color:#fff;font-weight:300;letter-spacing:.15em;font-size:1.4em}
 .pushable.is-ready{opacity:.45}
 .pushable.compact .front{padding:10px 22px;font-size:.72rem}
 .pushable.icon-only .front{padding:10px 14px;font-size:1rem;letter-spacing:0}
-#btnGameReady .front{padding:14px 40px;font-size:.85rem}
 .pushable.full-width{width:100%}
 .pushable.full-width .front{width:100%;text-align:center}
 
 /* -- Lobby -- */
 .lobby-row{display:flex;gap:10px;align-items:stretch}
-.share-url-row{display:flex;gap:0;width:100%;margin-bottom:10px}
+.share-url-row{display:flex;gap:8px;width:100%;align-items:stretch}
 .share-url-row input{flex:1;background:#000;border:1px solid #444;color:#fff;padding:12px 14px;border-radius:3px;font-size:.8em;font-family:inherit;letter-spacing:.05em}
 .waiting{color:#555;margin-top:8px;animation:pulse 1.5s infinite;font-size:.8em;letter-spacing:.1em}
 @keyframes pulse{0%,100%{opacity:.4}50%{opacity:1}}
@@ -119,6 +118,14 @@ h2{color:#fff;font-weight:300;letter-spacing:.15em;font-size:1.4em}
 #screenGameover{gap:24px}
 #screenGameover h2{font-size:2em;color:#fff;letter-spacing:.2em}
 #finalScore{font-size:1em;color:#555;letter-spacing:.1em}
+
+/* -- Disconnect warning banner -- */
+.disconnect-warning{
+  position:fixed;top:24px;left:50%;transform:translateX(-50%);z-index:30;
+  background:#000;border:1px solid #555;border-radius:3px;
+  padding:12px 28px;color:#fff;font-size:.78em;letter-spacing:.1em;
+  text-transform:uppercase;animation:pulse 1.5s infinite;
+}
 
 /* -- Hamburger menu button (top-right, squared) -- */
 #hamburgerBtn{

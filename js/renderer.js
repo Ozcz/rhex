@@ -73,6 +73,8 @@ function screenToHex(sx, sy) {
 
 /* ── Drawing helpers ── */
 
+var HEX_GAP = 5;
+
 function drawHexShape(c, cx, cy, size) {
   var w = size * R.HEX_ASPECT, h = size;
   c.beginPath();
@@ -115,35 +117,6 @@ function drawThickArrow(c, fromX, fromY, toX, toY, color, width) {
   c.closePath();
   c.fillStyle = color;
   c.fill();
-}
-
-/* ── Target crosshair for bow ── */
-
-function drawCrosshair(c, x, y, size, color) {
-  var r = size;
-  c.strokeStyle = color;
-  c.lineWidth = 2;
-  c.beginPath(); c.moveTo(x - r, y); c.lineTo(x + r, y); c.stroke();
-  c.beginPath(); c.moveTo(x, y - r); c.lineTo(x, y + r); c.stroke();
-  c.beginPath(); c.arc(x, y, r * 0.6, 0, Math.PI * 2); c.stroke();
-}
-
-/* ── Projectile arrow in flight ── */
-
-function drawProjectileArrow(c, x, y, angle, color) {
-  var len = R.HEX * 0.35;
-  c.save();
-  c.translate(x, y);
-  c.rotate(angle);
-  c.beginPath();
-  c.moveTo(len / 2, 0);
-  c.lineTo(-len / 2, -len / 3);
-  c.lineTo(-len / 4, 0);
-  c.lineTo(-len / 2, len / 3);
-  c.closePath();
-  c.fillStyle = color;
-  c.fill();
-  c.restore();
 }
 
 /* ── Animation helpers ── */
@@ -215,13 +188,29 @@ function drawArrows(c) {
     if (arrow.player !== G.myPlayer) continue;
     var totalDist = R.hexDist(arrow.fromQ, arrow.fromR, arrow.targetQ, arrow.targetR);
     if (totalDist === 0) continue;
-    var progress = 1 - (arrow.stepsRemaining / totalDist);
+
     var fromS = hexToScreen(arrow.fromQ, arrow.fromR);
     var toS = hexToScreen(arrow.targetQ, arrow.targetR);
-    var ax = fromS.x + (toS.x - fromS.x) * progress;
-    var ay = fromS.y + (toS.y - fromS.y) * progress - R.HEX * 0.5 * (1 - Math.abs(progress * 2 - 1));
-    var angle = Math.atan2(toS.y - fromS.y, toS.x - fromS.x);
-    drawProjectileArrow(c, ax, ay, angle, inkA(0.7));
+    var progress = 1 - (arrow.stepsRemaining / totalDist);
+
+    // Arrow flies up off screen from source, then falls down to target
+    var ax, ay;
+    var peakY = -R.HEX * 2;
+    if (progress < 0.5) {
+      // Rising phase: from source upward off the board
+      var t = progress * 2;
+      ax = fromS.x + (toS.x - fromS.x) * 0.5 * t;
+      ay = fromS.y + (peakY - fromS.y) * t;
+    } else {
+      // Falling phase: from above down to target
+      var t2 = (progress - 0.5) * 2;
+      ax = fromS.x + (toS.x - fromS.x) * (0.5 + 0.5 * t2);
+      ay = peakY + (toS.y - peakY) * t2;
+    }
+
+    c.font = (R.HEX * 0.5) + 'px sans-serif';
+    c.textAlign = 'center'; c.textBaseline = 'middle';
+    c.fillText('\u{1F3F9}', ax, ay);
   }
 }
 
@@ -236,22 +225,22 @@ function render() {
   R.INK = parseRGB(cs.getPropertyValue('--c-fg'));
   R.PAPER = parseRGB(cs.getPropertyValue('--c-bg'));
 
-  // Board hexes: thickness layer (all at base)
+  var hexDraw = R.HEX - HEX_GAP;
+
+  // Board hexes: thickness layer
   for (var hi = 0; hi < R.boardHexes.length; hi++) {
     var h = R.boardHexes[hi];
     var s = hexToScreen(h.q, h.r);
-    drawHexShape(ctx, s.x, s.y + R.HEX_THICK, R.HEX - 2);
+    drawHexShape(ctx, s.x, s.y + R.HEX_THICK, hexDraw);
     ctx.fillStyle = paperS(); ctx.fill();
     ctx.strokeStyle = inkS(); ctx.lineWidth = 1; ctx.stroke();
   }
 
-  // Board hexes: top face (hover lifts up)
+  // Board hexes: top face (no hover lift)
   for (var hi2 = 0; hi2 < R.boardHexes.length; hi2++) {
     var h2 = R.boardHexes[hi2];
     var s2 = hexToScreen(h2.q, h2.r);
-    var isHovered = R.hoveredHex && R.hoveredHex.q === h2.q && R.hoveredHex.r === h2.r;
-    var lift = isHovered ? 3 : 0;
-    drawHexShape(ctx, s2.x, s2.y - lift, R.HEX - 2);
+    drawHexShape(ctx, s2.x, s2.y, hexDraw);
     ctx.fillStyle = paperS(); ctx.fill();
     ctx.strokeStyle = inkS(); ctx.lineWidth = 1; ctx.stroke();
   }
@@ -260,19 +249,19 @@ function render() {
   if (R.drag.unit && R.drag.moved && G.phase === 'planning') {
     var stayS = hexToScreen(R.drag.unit.q, R.drag.unit.r);
     var isStayT = R.drag.targetHex && R.drag.targetHex.q === R.drag.unit.q && R.drag.targetHex.r === R.drag.unit.r;
-    drawHexShape(ctx, stayS.x, stayS.y, R.HEX - 4);
+    drawHexShape(ctx, stayS.x, stayS.y, hexDraw);
     ctx.fillStyle = isStayT ? inkA(0.12) : inkA(0.08); ctx.fill();
     var nb = R.neighbors(R.drag.unit.q, R.drag.unit.r);
     for (var ni = 0; ni < nb.length; ni++) {
       var n = nb[ni];
       var ns = hexToScreen(n.q, n.r);
-      drawHexShape(ctx, ns.x, ns.y, R.HEX - 4);
+      drawHexShape(ctx, ns.x, ns.y, hexDraw);
       var isT = R.drag.targetHex && R.drag.targetHex.q === n.q && R.drag.targetHex.r === n.r;
       ctx.fillStyle = isT ? inkA(0.12) : inkA(0.08); ctx.fill();
     }
   }
 
-  // Bow target crosshairs (assigned)
+  // Bow target icons (assigned) — 🎯 emoji
   if (G.phase === 'planning') {
     for (var oi = 0; oi < G.unitOrder.length; oi++) {
       var uid = G.unitOrder[oi];
@@ -280,17 +269,23 @@ function render() {
       var a = G.myActions[uid];
       if (a && a.skill === 'bow' && a.bowTarget) {
         var ts = hexToScreen(a.bowTarget.q, a.bowTarget.r);
-        drawCrosshair(ctx, ts.x, ts.y, R.HEX * 0.25, inkA(0.5));
+        ctx.font = (R.HEX * 0.5) + 'px sans-serif';
+        ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        ctx.fillText('\u{1F3AF}', ts.x, ts.y);
       }
     }
   }
 
-  // Bow aim drag: highlight target hex + crosshair preview
+  // Bow aim drag: highlight hex + 🎯 preview
   if (R.bowAim.active && R.bowAim.targetHex) {
     var ats = hexToScreen(R.bowAim.targetHex.q, R.bowAim.targetHex.r);
-    drawHexShape(ctx, ats.x, ats.y, R.HEX - 4);
+    drawHexShape(ctx, ats.x, ats.y, hexDraw);
     ctx.fillStyle = inkA(0.15); ctx.fill();
-    drawCrosshair(ctx, ats.x, ats.y, R.HEX * 0.25, inkA(0.3));
+    ctx.globalAlpha = 0.5;
+    ctx.font = (R.HEX * 0.5) + 'px sans-serif';
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText('\u{1F3AF}', ats.x, ats.y);
+    ctx.globalAlpha = 1.0;
   }
 
   // Respawn highlights
@@ -303,14 +298,14 @@ function render() {
         var sh = spawns[si];
         if (!R.unitAt(sh.q, sh.r)) {
           var ss = hexToScreen(sh.q, sh.r);
-          drawHexShape(ctx, ss.x, ss.y, R.HEX - 4);
+          drawHexShape(ctx, ss.x, ss.y, hexDraw);
           ctx.fillStyle = inkA(0.08); ctx.fill();
         }
       }
     }
   }
 
-  // Action indicators: thick arrows for moves, lines for bow aim
+  // Action indicators: thick arrows for moves
   if (G.phase === 'planning') {
     for (var ai = 0; ai < G.unitOrder.length; ai++) {
       var auid = G.unitOrder[ai];
@@ -320,14 +315,12 @@ function render() {
       var au = R.unitById(act.unitId);
       if (!au) continue;
 
-      // Movement arrow
       if (act.move && !au.dead) {
         var mFrom = hexToScreen(au.q, au.r);
         var mTo = hexToScreen(act.move.q, act.move.r);
         drawThickArrow(ctx, mFrom.x, mFrom.y, mTo.x, mTo.y, inkA(0.18), 4);
       }
 
-      // Bow aim line
       if (act.skill === 'bow' && act.bowTarget && !au.dead) {
         var bFrom = hexToScreen(au.q, au.r);
         var bTo = hexToScreen(act.bowTarget.q, act.bowTarget.r);
@@ -336,7 +329,6 @@ function render() {
         ctx.setLineDash([4, 4]); ctx.stroke(); ctx.setLineDash([]);
       }
 
-      // Respawn arrow
       if (act.type === 'respawn' && act.target) {
         var rTo = hexToScreen(act.target.q, act.target.r);
         var rOrderIdx = G.unitOrder.indexOf(act.unitId);
@@ -372,8 +364,8 @@ function render() {
   }
 
   // Draw units as SVG pawns
-  var drawSize = R.HEX * 2.0;
-  var yShift = -drawSize * 0.1;
+  var drawSize = R.HEX * 2.4;
+  var yShift = -drawSize * 0.22;
 
   for (var ui = 0; ui < G.units.length; ui++) {
     var u = G.units[ui];
@@ -391,16 +383,16 @@ function render() {
     ctx.restore();
 
     // Shield visual
-    if (u.shielded || R.shieldAnims[u.id]) drawShieldEffect(ctx, us.x, us.y, u);
+    if (u.shielded || R.shieldAnims[u.id]) drawShieldEffect(ctx, us.x, us.y + yShift, u);
 
     // Active skill: big icon on top of pawn
     var uAct = isMine ? G.myActions[u.id] : null;
     if (uAct && uAct.skill && R.SKILL_DEF[uAct.skill]) {
       ctx.save();
       ctx.globalAlpha = 0.85;
-      ctx.font = (R.HEX * 0.55) + 'px sans-serif';
+      ctx.font = (R.HEX * 0.6) + 'px sans-serif';
       ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-      ctx.fillText(R.SKILL_DEF[uAct.skill].icon, us.x, us.y + yShift - drawSize * 0.12);
+      ctx.fillText(R.SKILL_DEF[uAct.skill].icon, us.x, us.y + yShift - drawSize * 0.15);
       ctx.restore();
     }
 
@@ -409,7 +401,7 @@ function render() {
       var orderIdx = G.unitOrder.indexOf(u.id);
       if (orderIdx >= 0) {
         var pr = drawSize / 2;
-        var bx = us.x + pr * 0.5, by = us.y + yShift - pr * 0.55;
+        var bx = us.x + pr * 0.45, by = us.y + yShift - pr * 0.6;
         var br = R.HEX * 0.22;
 
         // Order balloon
@@ -459,7 +451,6 @@ function setupMainCanvas() {
     R.canvas.addEventListener('pointermove', R.onPointerMove);
     R.canvas.addEventListener('pointerup', R.onPointerUp);
     R.canvas.addEventListener('pointercancel', R.onPointerUp);
-    R.canvas.addEventListener('pointerleave', function() { R.hoveredHex = null; });
     R.canvasReady = true;
   }
   requestAnimationFrame(render);

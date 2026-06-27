@@ -31,8 +31,8 @@ function joinGame(roomId) {
 function wireConn() {
   R.conn.on('data', onMessage);
   R.conn.on('close', function() {
-    R.showOverlay('OPPONENT DISCONNECTED', true);
-    setTimeout(function() { R.backToMenu(); }, 3000);
+    R.backToMenu();
+    R.showDisconnectWarning();
   });
 }
 
