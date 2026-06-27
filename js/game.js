@@ -190,14 +190,17 @@ async function runResolution() {
   for (var step = 0; step < 3; step++) {
     var oldPos = {};
     G.units.forEach(function(u) { oldPos[u.id] = {q: u.q, r: u.r}; });
-    resolveStep(p1Acts[step] || null, p2Acts[step] || null, step);
+
     advanceArrows();
+    resolveStep(p1Acts[step] || null, p2Acts[step] || null, step);
+
     G.units.forEach(function(u) {
       var o = oldPos[u.id];
       if (o && (o.q !== u.q || o.r !== u.r)) R.startUnitAnim(u, o.q, o.r);
     });
     await sleep(R.ANIM_MS + 200);
   }
+  advanceArrows();
 
   G.turnNum++;
   calcScores();
@@ -233,37 +236,38 @@ function resolveStep(a1, a2, stepIdx) {
     }
   }
 
-  // Activate shields (compound: skill field)
-  for (var si = 0; si < actions.length; si++) {
-    if (actions[si].skill === 'shield') {
-      var su = R.unitById(actions[si].unitId);
+  var skillers = actions.filter(function(a) { return a.type === 'skill'; });
+  var movers = actions.filter(function(a) { return a.type === 'move'; });
+
+  // Activate shields first
+  for (var si = 0; si < skillers.length; si++) {
+    if (skillers[si].skill === 'shield') {
+      var su = R.unitById(skillers[si].unitId);
       if (su && !su.dead) { su.shielded = true; R.triggerShieldAnim(su.id, false); }
     }
   }
 
-  // Process moves (compound: move field)
-  var movers = actions.filter(function(a) { return a.move && a.type !== 'respawn'; });
+  // Process moves
   if (movers.length === 2) {
-    var t0 = movers[0].move, t1 = movers[1].move;
+    var t0 = movers[0].target, t1 = movers[1].target;
     var u0 = R.unitById(movers[0].unitId), u1 = R.unitById(movers[1].unitId);
-    if (t0.q === t1.q && t0.r === t1.r) { /* cancel: both move to same hex */ }
-    else if (u0 && u1 && t0.q === u1.q && t0.r === u1.r && t1.q === u0.q && t1.r === u0.r) { /* cancel: swap */ }
+    if (t0.q === t1.q && t0.r === t1.r) { /* cancel */ }
+    else if (u0 && u1 && t0.q === u1.q && t0.r === u1.r && t1.q === u0.q && t1.r === u0.r) { /* swap cancel */ }
     else { for (var mi = 0; mi < movers.length; mi++) processMove(movers[mi]); }
   } else {
     for (var mj = 0; mj < movers.length; mj++) processMove(movers[mj]);
   }
 
   // Process other skills: bow, cloak
-  for (var ki = 0; ki < actions.length; ki++) {
-    var ka = actions[ki];
-    if (ka.type === 'respawn') continue;
+  for (var ki = 0; ki < skillers.length; ki++) {
+    var ka = skillers[ki];
     var ku = R.unitById(ka.unitId);
     if (!ku || ku.dead) continue;
-    if (ka.skill === 'bow' && ka.bowTarget) {
-      var dist = R.hexDist(ku.q, ku.r, ka.bowTarget.q, ka.bowTarget.r);
+    if (ka.skill === 'bow' && ka.targetHex) {
+      var dist = R.hexDist(ku.q, ku.r, ka.targetHex.q, ka.targetHex.r);
       R.G.arrows.push({
         fromQ: ku.q, fromR: ku.r,
-        targetQ: ka.bowTarget.q, targetR: ka.bowTarget.r,
+        targetQ: ka.targetHex.q, targetR: ka.targetHex.r,
         stepsRemaining: dist, player: ka.player
       });
     }
@@ -273,10 +277,10 @@ function resolveStep(a1, a2, stepIdx) {
   }
 }
 
-function processMove(a) {
-  var u = R.unitById(a.unitId);
+function processMove(m) {
+  var u = R.unitById(m.unitId);
   if (!u || u.dead) return;
-  var enemy = R.unitAt(a.move.q, a.move.r);
+  var enemy = R.unitAt(m.target.q, m.target.r);
   if (enemy && enemy.player !== u.player) {
     if (enemy.shielded) {
       enemy.shielded = false;
@@ -287,7 +291,7 @@ function processMove(a) {
   } else if (enemy && enemy.player === u.player) {
     return;
   }
-  u.q = a.move.q; u.r = a.move.r; u.cloaked = false;
+  u.q = m.target.q; u.r = m.target.r; u.cloaked = false;
 }
 
 /* ── Arrow advancement ── */

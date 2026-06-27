@@ -193,22 +193,20 @@ function drawArrows(c) {
     var toS = hexToScreen(arrow.targetQ, arrow.targetR);
     var progress = 1 - (arrow.stepsRemaining / totalDist);
 
-    // Arrow flies up off screen from source, then falls down to target
+    // Arrow arcs high up then comes down to target
     var ax, ay;
-    var peakY = -R.HEX * 2;
+    var peakY = Math.min(fromS.y, toS.y) - R.ch * 0.4;
     if (progress < 0.5) {
-      // Rising phase: from source upward off the board
-      var t = progress * 2;
-      ax = fromS.x + (toS.x - fromS.x) * 0.5 * t;
+      var t = progress / 0.5;
+      ax = fromS.x + (toS.x - fromS.x) * t * 0.3;
       ay = fromS.y + (peakY - fromS.y) * t;
     } else {
-      // Falling phase: from above down to target
-      var t2 = (progress - 0.5) * 2;
-      ax = fromS.x + (toS.x - fromS.x) * (0.5 + 0.5 * t2);
+      var t2 = (progress - 0.5) / 0.5;
+      ax = fromS.x + (toS.x - fromS.x) * (0.3 + 0.7 * t2);
       ay = peakY + (toS.y - peakY) * t2;
     }
 
-    c.font = (R.HEX * 0.5) + 'px sans-serif';
+    c.font = (R.HEX * 0.7) + 'px sans-serif';
     c.textAlign = 'center'; c.textBaseline = 'middle';
     c.fillText('\u{1F3F9}', ax, ay);
   }
@@ -267,8 +265,8 @@ function render() {
       var uid = G.unitOrder[oi];
       if (!uid) continue;
       var a = G.myActions[uid];
-      if (a && a.skill === 'bow' && a.bowTarget) {
-        var ts = hexToScreen(a.bowTarget.q, a.bowTarget.r);
+      if (a && a.type === 'skill' && a.skill === 'bow' && a.targetHex) {
+        var ts = hexToScreen(a.targetHex.q, a.targetHex.r);
         ctx.font = (R.HEX * 0.5) + 'px sans-serif';
         ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
         ctx.fillText('\u{1F3AF}', ts.x, ts.y);
@@ -305,7 +303,7 @@ function render() {
     }
   }
 
-  // Action indicators: thick arrows for moves
+  // Action indicators
   if (G.phase === 'planning') {
     for (var ai = 0; ai < G.unitOrder.length; ai++) {
       var auid = G.unitOrder[ai];
@@ -315,15 +313,15 @@ function render() {
       var au = R.unitById(act.unitId);
       if (!au) continue;
 
-      if (act.move && !au.dead) {
+      if (act.type === 'move' && !au.dead) {
         var mFrom = hexToScreen(au.q, au.r);
-        var mTo = hexToScreen(act.move.q, act.move.r);
+        var mTo = hexToScreen(act.target.q, act.target.r);
         drawThickArrow(ctx, mFrom.x, mFrom.y, mTo.x, mTo.y, inkA(0.18), 4);
       }
 
-      if (act.skill === 'bow' && act.bowTarget && !au.dead) {
+      if (act.type === 'skill' && act.skill === 'bow' && act.targetHex && !au.dead) {
         var bFrom = hexToScreen(au.q, au.r);
-        var bTo = hexToScreen(act.bowTarget.q, act.bowTarget.r);
+        var bTo = hexToScreen(act.targetHex.q, act.targetHex.r);
         ctx.beginPath(); ctx.moveTo(bFrom.x, bFrom.y); ctx.lineTo(bTo.x, bTo.y);
         ctx.strokeStyle = inkA(0.12); ctx.lineWidth = 1;
         ctx.setLineDash([4, 4]); ctx.stroke(); ctx.setLineDash([]);
@@ -385,43 +383,31 @@ function render() {
     // Shield visual
     if (u.shielded || R.shieldAnims[u.id]) drawShieldEffect(ctx, us.x, us.y + yShift, u);
 
-    // Active skill: big icon on top of pawn
-    var uAct = isMine ? G.myActions[u.id] : null;
-    if (uAct && uAct.skill && R.SKILL_DEF[uAct.skill]) {
+    // Skill icon: ALWAYS on pawn, faded unless active
+    var uAct = G.myActions[u.id] || null;
+    if (u.skill && R.SKILL_DEF[u.skill]) {
+      var skillActive = uAct && uAct.type === 'skill';
       ctx.save();
-      ctx.globalAlpha = 0.85;
+      ctx.globalAlpha = skillActive ? 0.85 : 0.25;
       ctx.font = (R.HEX * 0.6) + 'px sans-serif';
       ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-      ctx.fillText(R.SKILL_DEF[uAct.skill].icon, us.x, us.y + yShift - drawSize * 0.15);
+      ctx.fillText(R.SKILL_DEF[u.skill].icon, us.x, us.y + yShift);
       ctx.restore();
     }
 
-    // Balloons: order (I/II/III) and skill type below it
+    // Order balloon (I/II/III) only
     if (isMine && !isDragging) {
       var orderIdx = G.unitOrder.indexOf(u.id);
       if (orderIdx >= 0) {
         var pr = drawSize / 2;
         var bx = us.x + pr * 0.45, by = us.y + yShift - pr * 0.6;
         var br = R.HEX * 0.22;
-
-        // Order balloon
         ctx.beginPath(); ctx.arc(bx, by, br, 0, Math.PI * 2);
         ctx.fillStyle = inkA(0.85); ctx.fill();
         ctx.fillStyle = paperS();
         ctx.font = '600 ' + (br * 1.2) + 'px Inter,sans-serif';
         ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
         ctx.fillText(['I','II','III'][orderIdx] || String(orderIdx + 1), bx, by);
-
-        // Skill type balloon (below order balloon)
-        if (u.skill && R.SKILL_DEF[u.skill]) {
-          var sby = by + br * 2.3;
-          var sbr = R.HEX * 0.18;
-          ctx.beginPath(); ctx.arc(bx, sby, sbr, 0, Math.PI * 2);
-          ctx.fillStyle = inkA(0.6); ctx.fill();
-          ctx.font = (sbr * 1.4) + 'px sans-serif';
-          ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-          ctx.fillText(R.SKILL_DEF[u.skill].icon, bx, sby);
-        }
       }
     }
   }
