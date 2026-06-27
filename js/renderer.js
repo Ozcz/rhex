@@ -181,44 +181,59 @@ function drawShieldEffect(c, x, y, unit) {
 
 /* ── Arrow visuals (in-flight projectiles) ── */
 
+function drawArrowProjectile(c, x, y, goingUp) {
+  var sz = R.HEX * 0.5;
+  var dir = goingUp ? -1 : 1;
+  c.save();
+  c.translate(x, y);
+  // Shaft
+  c.beginPath();
+  c.moveTo(0, dir * sz * 0.7);
+  c.lineTo(0, dir * -sz * 0.3);
+  c.strokeStyle = inkA(0.8);
+  c.lineWidth = 2.5;
+  c.stroke();
+  // Arrowhead
+  c.beginPath();
+  c.moveTo(0, dir * -sz * 0.8);
+  c.lineTo(-sz * 0.22, dir * -sz * 0.25);
+  c.lineTo(sz * 0.22, dir * -sz * 0.25);
+  c.closePath();
+  c.fillStyle = inkA(0.8);
+  c.fill();
+  c.restore();
+}
+
 function drawArrows(c) {
   var G = R.G;
   var now = performance.now();
+  var ANIM_DUR = 400;
+  var offTop = -R.HEX;
+
   for (var i = 0; i < G.arrows.length; i++) {
     var arrow = G.arrows[i];
     if (arrow.player !== G.myPlayer) continue;
-    var td = arrow.totalDist || 1;
-    if (td === 0) continue;
 
     var fromS = hexToScreen(arrow.fromQ, arrow.fromR);
     var toS = hexToScreen(arrow.targetQ, arrow.targetR);
 
-    // Time-based smooth animation
-    var flightTime = td * (R.ANIM_MS + 200);
-    var elapsed = now - (arrow.launchTime || now);
-    var progress = Math.min(1, elapsed / flightTime);
-
-    var offTop = -R.HEX;
-    var ax, ay;
-
-    if (progress < 0.35) {
-      // Phase 1: arrow rises from pawn straight up, exits top of screen
-      var t = progress / 0.35;
-      ax = fromS.x;
-      ay = fromS.y + (offTop - fromS.y) * t;
-    } else if (progress < 0.55) {
-      // Phase 2: off screen (not drawn)
-      continue;
-    } else {
-      // Phase 3: arrow falls from top of screen down to target
-      var t2 = (progress - 0.55) / 0.45;
-      ax = toS.x;
-      ay = offTop + (toS.y - offTop) * t2;
+    // Launch animation: arrow rises from pawn off the top of screen
+    if (arrow.launchTime) {
+      var elapsed = now - arrow.launchTime;
+      if (elapsed < ANIM_DUR) {
+        var t = elapsed / ANIM_DUR;
+        drawArrowProjectile(c, fromS.x, fromS.y + (offTop - fromS.y) * t, true);
+      }
     }
 
-    c.font = (R.HEX * 0.8) + 'px sans-serif';
-    c.textAlign = 'center'; c.textBaseline = 'middle';
-    c.fillText('\u{1F3F9}', ax, ay);
+    // Landing animation: arrow falls from top of screen to target
+    if (arrow.landingTime) {
+      var elapsed2 = now - arrow.landingTime;
+      if (elapsed2 < ANIM_DUR) {
+        var t2 = elapsed2 / ANIM_DUR;
+        drawArrowProjectile(c, toS.x, offTop + (toS.y - offTop) * t2, false);
+      }
+    }
   }
 }
 

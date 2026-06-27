@@ -299,11 +299,22 @@ function processMove(m) {
 
 function advanceArrows() {
   var G = R.G;
-  var toRemove = [];
+  var now = performance.now();
+
+  // Clean up arrows whose landing animation finished
+  for (var j = G.arrows.length - 1; j >= 0; j--) {
+    if (G.arrows[j].landingTime && now - G.arrows[j].landingTime > 500) {
+      G.arrows.splice(j, 1);
+    }
+  }
+
+  // Advance in-flight arrows (skip ones already landing)
   for (var i = 0; i < G.arrows.length; i++) {
     var arrow = G.arrows[i];
+    if (arrow.landingTime) continue;
     arrow.stepsRemaining--;
     if (arrow.stepsRemaining <= 0) {
+      arrow.landingTime = performance.now();
       var target = R.unitAt(arrow.targetQ, arrow.targetR);
       if (target && target.player !== arrow.player) {
         if (target.shielded) {
@@ -313,10 +324,8 @@ function advanceArrows() {
           target.dead = true; target.cloaked = false;
         }
       }
-      toRemove.push(i);
     }
   }
-  for (var j = toRemove.length - 1; j >= 0; j--) G.arrows.splice(toRemove[j], 1);
 }
 
 /* ── Scoring & win ── */

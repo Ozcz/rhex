@@ -47,7 +47,7 @@ function renderSetup() {
     var us = hexToScreenSetup(u.q, u.r);
 
     // Draw SVG pawn (white on dark setup screen)
-    c.drawImage(R.pawnWhiteCanvas, us.x - drawSz / 2, us.y + yShift - drawSz / 2, drawSz, drawSz);
+    c.drawImage(R.pawnBlackCanvas, us.x - drawSz / 2, us.y + yShift - drawSz / 2, drawSz, drawSz);
 
     // Selection ring
     if (R.setupSelectedUnit === u.id) {
