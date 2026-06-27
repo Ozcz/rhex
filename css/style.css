@@ -1,0 +1,130 @@
+/* -- Reset & base -- */
+*{margin:0;padding:0;box-sizing:border-box}
+
+/* Theme color variables (animatable). --c-bg = background, --c-fg = ink.
+   Default: dark (black bg, white ink). body.inverted flips them.
+   body.theme-anim makes the change fade smoothly. */
+@property --c-bg{syntax:'<color>';inherits:true;initial-value:#000000}
+@property --c-fg{syntax:'<color>';inherits:true;initial-value:#ffffff}
+
+body{
+  --c-bg:#000000;--c-fg:#ffffff;
+  background:var(--c-bg);color:var(--c-fg);
+  font-family:'Inter',system-ui,sans-serif;font-weight:300;
+  letter-spacing:.04em;height:100vh;overflow:hidden;
+  display:flex;flex-direction:column;
+}
+body.theme-anim{transition:--c-bg 1.4s ease,--c-fg 1.4s ease,background-color 1.4s ease}
+body.inverted{--c-bg:#ffffff;--c-fg:#000000}
+
+/* -- Screen containers -- */
+.screen{display:none;flex:1;flex-direction:column;align-items:center;justify-content:center;padding:20px;gap:20px}
+.screen.active{display:flex}
+h1{font-size:2.8em;color:#fff;letter-spacing:.25em;font-weight:300}
+h2{color:#fff;font-weight:300;letter-spacing:.15em;font-size:1.4em}
+.version{color:#555;font-size:.75em;letter-spacing:.2em;text-transform:uppercase;margin-bottom:32px}
+
+/* -- App title (fixed top center, hidden during game) -- */
+#appTitle{position:absolute;top:60px;left:50%;transform:translateX(-50%);z-index:6;text-align:center;pointer-events:none}
+#appTitle h1{margin:0}
+#appTitle .version{margin-bottom:0}
+
+/* -- 3D pushable buttons (single shared design) --
+   edge = the extruded side (bg fill + ink border = stroked thickness),
+   front = the top face (bg fill + ink border), raised 5px above the edge.
+   Both use theme vars so buttons invert with the color theme.
+   Every button has the SAME 5px thickness. */
+.pushable{position:relative;border:none;background:transparent;padding:0;cursor:pointer;font-family:inherit;transition:filter 150ms}
+.pushable .shadow{display:none}
+.pushable .edge{position:absolute;inset:0;border-radius:3px;background:var(--c-bg);border:1px solid var(--c-fg);transform:translateY(0)}
+.pushable .front{display:block;position:relative;padding:13px 34px;border-radius:3px;font-size:.8rem;font-weight:400;letter-spacing:.12em;text-transform:uppercase;color:var(--c-fg);background:var(--c-bg);border:1px solid var(--c-fg);transform:translateY(-5px);transition:transform 150ms cubic-bezier(.3,.7,.4,1)}
+.pushable:hover .front{transform:translateY(-7px);transition:transform 150ms cubic-bezier(.3,.7,.4,1.5)}
+.pushable:active .front{transform:translateY(-2px);transition:transform 150ms}
+.pushable:focus:not(:focus-visible){outline:none}
+.pushable:disabled{opacity:.35;cursor:default}
+.pushable:disabled .front{transform:translateY(-5px)}
+.pushable.subtle{opacity:.6}
+.pushable.is-ready{opacity:.45}
+.pushable.compact .front{padding:10px 22px;font-size:.72rem}
+.pushable.icon-only .front{padding:10px 14px;font-size:1rem;letter-spacing:0}
+#btnGameReady .front{padding:14px 40px;font-size:.85rem}
+.pushable.full-width{width:100%}
+.pushable.full-width .front{width:100%;text-align:center}
+
+/* -- Lobby -- */
+.lobby-row{display:flex;gap:10px;align-items:stretch}
+.share-url-row{display:flex;gap:0;width:100%;margin-bottom:10px}
+.share-url-row input{flex:1;background:#000;border:1px solid #444;color:#fff;padding:12px 14px;border-radius:3px;font-size:.8em;font-family:inherit;letter-spacing:.05em}
+.waiting{color:#555;margin-top:8px;animation:pulse 1.5s infinite;font-size:.8em;letter-spacing:.1em}
+@keyframes pulse{0%,100%{opacity:.4}50%{opacity:1}}
+#shareArea{max-width:420px;width:100%}
+#btnTimer .front{min-width:80px;text-align:center}
+/* Share button row: menu + timer UNDER the URL bar, each 50% width */
+.share-btn-row{display:flex;gap:8px;width:100%;margin-top:16px}
+.share-btn-row .pushable{flex:1}
+.share-btn-row .pushable .front{width:100%;text-align:center;padding:10px 0}
+.share-label{color:#555;font-size:.8em;letter-spacing:.08em;margin-bottom:10px}
+
+/* -- Modals -- */
+.modal{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.92);z-index:20;display:none;align-items:center;justify-content:center;padding:20px}
+.modal.visible{display:flex}
+.modal-content{background:#000;border:1px solid #333;border-radius:4px;padding:28px;max-width:460px;width:100%;max-height:80vh;overflow-y:auto;color:#888;font-size:.82em;line-height:1.7}
+.modal-content h3{color:#fff;margin:16px 0 6px;font-size:.85em;letter-spacing:.15em;text-transform:uppercase;font-weight:400}
+.modal-content h3:first-child{margin-top:0}
+.modal-content p{margin-bottom:8px}
+.modal-content .skill-list{margin:4px 0 8px 16px}
+.modal-content .skill-list li{margin:3px 0}
+.settings-list{display:flex;flex-direction:column;gap:12px;margin-top:16px}
+
+/* -- Setup screen (board-based skill selection) -- */
+#screenSetup{justify-content:center;align-items:center;gap:22px;padding:24px;height:100vh}
+.setup-header{text-align:center}
+.setup-header h2{font-size:1.2em}
+#setupCanvasWrap{width:min(86vw,680px);aspect-ratio:1/1;flex:none}
+#setupCanvas{width:100%;height:100%;display:block;touch-action:none}
+.setup-bottom{display:flex;flex-direction:column;align-items:center;gap:12px}
+.setup-skill-row{display:flex;gap:10px;justify-content:center}
+.status-msg{color:#555;font-size:.7rem;text-align:center;letter-spacing:.08em}
+
+/* -- Game screen -- */
+#screenGame{justify-content:center;align-items:center;gap:20px;padding:24px;height:100vh}
+#boardWrap{width:min(86vw,680px);aspect-ratio:1/1;flex:none}
+#board{width:100%;height:100%;display:block;touch-action:none}
+.game-hud{display:flex;flex-direction:column;align-items:center;gap:14px}
+.timer-big{font-size:4.5rem;font-weight:300;color:#333;font-variant-numeric:tabular-nums;line-height:1;letter-spacing:.06em}
+.timer-big.urgent{color:#fff}
+.badges-row{display:flex;align-items:flex-end;justify-content:center;gap:24px}
+.badge{display:flex;flex-direction:column;align-items:center;gap:4px}
+.badge .pts{display:flex;flex-direction:column-reverse;gap:2px;justify-content:flex-end;min-height:0}
+.badge .pts .bar{width:32px;height:5px;border-radius:1px}
+.badge.p1 .pts .bar{background:#4ecdc4}
+.badge.p2 .pts .bar{background:#e85d75}
+.badge .crown{font-size:24px;line-height:1}
+.badge.p1 .crown{color:#4ecdc4}
+.badge.p2 .crown{color:#e85d75}
+.badge .ribbon{font-size:.55rem;letter-spacing:.12em;color:#666;border:1px solid #bbb;border-radius:2px;padding:2px 8px;text-transform:uppercase}
+.diff-hex{position:relative;width:52px;height:58px;display:grid;place-items:center}
+.diff-hex svg{position:absolute;inset:0;width:100%;height:100%}
+.diff-hex span{position:relative;font-size:1rem;color:#aaa;font-weight:400}
+.action-btns{display:flex;gap:8px;justify-content:center}
+
+/* -- Overlays -- */
+.overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.85);align-items:center;justify-content:center;z-index:10;display:none}
+.overlay.visible{display:flex}
+.overlay-text{font-size:1.4em;font-weight:300;color:#fff;text-align:center;letter-spacing:.15em;animation:pulse 1.5s infinite}
+.skill-target-hint{position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:#111;border:1px solid #333;padding:10px 20px;border-radius:3px;color:#888;font-size:.78em;z-index:5;display:none;letter-spacing:.06em;text-transform:uppercase}
+.skill-target-hint.visible{display:block}
+
+/* -- Game over -- */
+#screenGameover{gap:24px}
+#screenGameover h2{font-size:2em;color:#fff;letter-spacing:.2em}
+#finalScore{font-size:1em;color:#555;letter-spacing:.1em}
+
+/* -- Hamburger menu button (top-right, squared) -- */
+#hamburgerBtn{
+  position:absolute;top:16px;right:16px;z-index:5;
+  cursor:pointer;user-select:none;display:none;
+  width:44px;height:44px;
+  background:var(--c-bg);border:1px solid var(--c-fg);border-radius:3px;
+  color:var(--c-fg);font-size:22px;line-height:42px;text-align:center;
+}
