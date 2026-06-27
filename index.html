@@ -11,12 +11,22 @@
 <style>
 /* -- Reset & base -- */
 *{margin:0;padding:0;box-sizing:border-box}
+
+/* Theme color variables (animatable). --c-bg = background, --c-fg = ink.
+   Default: dark (black bg, white ink). body.inverted flips them.
+   body.theme-anim makes the change fade smoothly. */
+@property --c-bg{syntax:'<color>';inherits:true;initial-value:#000000}
+@property --c-fg{syntax:'<color>';inherits:true;initial-value:#ffffff}
+
 body{
-  background:#000;color:#e8e8e8;
+  --c-bg:#000000;--c-fg:#ffffff;
+  background:var(--c-bg);color:var(--c-fg);
   font-family:'Inter',system-ui,sans-serif;font-weight:300;
   letter-spacing:.04em;height:100vh;overflow:hidden;
   display:flex;flex-direction:column;
 }
+body.theme-anim{transition:--c-bg 1.4s ease,--c-fg 1.4s ease,background-color 1.4s ease}
+body.inverted{--c-bg:#ffffff;--c-fg:#000000}
 
 /* -- Screen containers -- */
 .screen{display:none;flex:1;flex-direction:column;align-items:center;justify-content:center;padding:20px;gap:20px}
@@ -30,27 +40,25 @@ h2{color:#fff;font-weight:300;letter-spacing:.15em;font-size:1.4em}
 #appTitle h1{margin:0}
 #appTitle .version{margin-bottom:0}
 
-/* -- 3D pushable buttons -- */
-.pushable{position:relative;border:none;background:transparent;padding:0;cursor:pointer;outline-offset:4px;transition:filter 150ms;font-family:inherit}
-.pushable .shadow{position:absolute;top:0;left:0;width:100%;height:100%;border-radius:3px;background:transparent;will-change:transform;transform:translateY(2px);transition:transform 400ms cubic-bezier(.3,.7,.4,1)}
-.pushable .edge{position:absolute;top:0;left:0;width:100%;height:100%;border-radius:3px;background:#fff}
-.pushable .front{display:block;position:relative;padding:14px 40px;border-radius:3px;font-size:.85rem;font-weight:400;letter-spacing:.12em;text-transform:uppercase;color:#fff;background:#000;border:1px solid #fff;will-change:transform;transform:translateY(-4px);transition:transform 150ms cubic-bezier(.3,.7,.4,1)}
-.pushable:hover{filter:brightness(130%)}
-.pushable:hover .front{transform:translateY(-6px);transition:transform 150ms cubic-bezier(.3,.7,.4,1.5)}
+/* -- 3D pushable buttons (single shared design) --
+   edge = the extruded side (bg fill + ink border = stroked thickness),
+   front = the top face (bg fill + ink border), raised 5px above the edge.
+   Both use theme vars so buttons invert with the color theme.
+   Every button has the SAME 5px thickness. */
+.pushable{position:relative;border:none;background:transparent;padding:0;cursor:pointer;font-family:inherit;transition:filter 150ms}
+.pushable .shadow{display:none}
+.pushable .edge{position:absolute;inset:0;border-radius:3px;background:var(--c-bg);border:1px solid var(--c-fg);transform:translateY(0)}
+.pushable .front{display:block;position:relative;padding:13px 34px;border-radius:3px;font-size:.8rem;font-weight:400;letter-spacing:.12em;text-transform:uppercase;color:var(--c-fg);background:var(--c-bg);border:1px solid var(--c-fg);transform:translateY(-5px);transition:transform 150ms cubic-bezier(.3,.7,.4,1)}
+.pushable:hover .front{transform:translateY(-7px);transition:transform 150ms cubic-bezier(.3,.7,.4,1.5)}
 .pushable:active .front{transform:translateY(-2px);transition:transform 150ms}
-.pushable:hover .shadow{transform:translateY(4px);transition:transform 150ms cubic-bezier(.3,.7,.4,1.5)}
-.pushable:active .shadow{transform:translateY(1px);transition:transform 150ms}
 .pushable:focus:not(:focus-visible){outline:none}
-.pushable:disabled{opacity:.25;cursor:default}
-.pushable:disabled .front,.pushable:disabled:hover .front,.pushable:disabled:active .front{transform:translateY(-4px)}
-.pushable:disabled:hover{filter:none}
-.pushable.subtle .edge{background:#666}
-.pushable.subtle .front{color:#666;border-color:#666}
-.pushable.compact .front{padding:10px 24px;font-size:.75rem}
+.pushable:disabled{opacity:.35;cursor:default}
+.pushable:disabled .front{transform:translateY(-5px)}
+.pushable.subtle{opacity:.6}
+.pushable.is-ready{opacity:.45}
+.pushable.compact .front{padding:10px 22px;font-size:.72rem}
 .pushable.icon-only .front{padding:10px 14px;font-size:1rem;letter-spacing:0}
-.pushable.is-ready .front{color:#444;border-color:#444}
-.pushable.is-ready .edge{background:#444}
-#btnGameReady .front{padding:14px 44px;font-size:.9rem}
+#btnGameReady .front{padding:14px 40px;font-size:.85rem}
 .pushable.full-width{width:100%}
 .pushable.full-width .front{width:100%;text-align:center}
 
@@ -130,8 +138,8 @@ h2{color:#fff;font-weight:300;letter-spacing:.15em;font-size:1.4em}
   position:absolute;top:16px;right:16px;z-index:5;
   cursor:pointer;user-select:none;display:none;
   width:44px;height:44px;
-  background:#000;border:1px solid #fff;border-radius:3px;
-  color:#fff;font-size:22px;line-height:44px;text-align:center;
+  background:var(--c-bg);border:1px solid var(--c-fg);border-radius:3px;
+  color:var(--c-fg);font-size:22px;line-height:42px;text-align:center;
 }
 </style>
 </head>
@@ -629,6 +637,9 @@ function backToMenu() {
   stopTimer();
   if (conn) { conn.close(); conn = null; }
   if (peer) { peer.destroy(); peer = null; }
+  // Instant revert to dark theme (no fade) when leaving the match
+  document.body.classList.remove('theme-anim');
+  document.body.classList.remove('inverted');
   G.phase = 'lobby';
   G.myPlayer = 0;
   G.myReady = false;
@@ -759,23 +770,62 @@ function resizeCanvas() {
    MAIN RENDER LOOP
    ======================================================== */
 
+// Parse "rgb(r, g, b)" (or rgba) into [r,g,b]
+function parseRGB(str) {
+  const m = (str || '').match(/(\d+\.?\d*)/g);
+  if (!m || m.length < 3) return [255, 255, 255];
+  return [Math.round(+m[0]), Math.round(+m[1]), Math.round(+m[2])];
+}
+
+// Current theme colors, read live each frame so they animate with the CSS variable
+let INK = [255, 255, 255], PAPER = [0, 0, 0];
+function inkS() { return 'rgb(' + INK[0] + ',' + INK[1] + ',' + INK[2] + ')'; }
+function paperS() { return 'rgb(' + PAPER[0] + ',' + PAPER[1] + ',' + PAPER[2] + ')'; }
+function inkA(a) { return 'rgba(' + INK[0] + ',' + INK[1] + ',' + INK[2] + ',' + a + ')'; }
+
+// Draw a chess-pawn silhouette directly (so it can use live theme colors)
+function drawPawnShape(c, x, y, size, fill, stroke) {
+  const s = size * 0.46;
+  c.fillStyle = fill;
+  if (stroke) { c.strokeStyle = stroke; c.lineWidth = 1.5; }
+  // Base
+  c.beginPath(); c.ellipse(x, y + s * 0.72, s * 0.7, s * 0.18, 0, 0, Math.PI * 2); c.fill(); if (stroke) c.stroke();
+  // Body
+  c.beginPath();
+  c.moveTo(x - s * 0.52, y + s * 0.55);
+  c.lineTo(x - s * 0.22, y - s * 0.15);
+  c.lineTo(x + s * 0.22, y - s * 0.15);
+  c.lineTo(x + s * 0.52, y + s * 0.55);
+  c.closePath(); c.fill(); if (stroke) c.stroke();
+  // Collar
+  c.beginPath(); c.ellipse(x, y - s * 0.15, s * 0.28, s * 0.1, 0, 0, Math.PI * 2); c.fill(); if (stroke) c.stroke();
+  // Head
+  c.beginPath(); c.arc(x, y - s * 0.46, s * 0.28, 0, Math.PI * 2); c.fill(); if (stroke) c.stroke();
+}
+
 function render() {
   ctx.clearRect(0, 0, cw, ch);
 
-  // -- Draw board hexes --
-  // Bottom layer (3D thickness): white fill + stroke
+  // Read animated theme colors (so the canvas fades with the rest of the UI)
+  const cs = getComputedStyle(document.body);
+  INK = parseRGB(cs.getPropertyValue('--c-fg'));
+  PAPER = parseRGB(cs.getPropertyValue('--c-bg'));
+
+  // -- Draw board hexes (same look as buttons: bg fill + ink stroke,
+  //    with an extruded side below for the stroked thickness) --
+  // Bottom layer (3D thickness): bg fill + ink stroke, offset down
   for (const h of boardHexes) {
     const s = hexToScreen(h.q, h.r);
     drawHexShape(ctx, s.x, s.y + HEX_THICK, HEX - 2);
-    ctx.fillStyle = '#fff'; ctx.fill();
-    ctx.strokeStyle = '#fff'; ctx.lineWidth = 1; ctx.stroke();
+    ctx.fillStyle = paperS(); ctx.fill();
+    ctx.strokeStyle = inkS(); ctx.lineWidth = 1; ctx.stroke();
   }
-  // Top layer: black fill + white stroke
+  // Top layer (face): bg fill + ink stroke
   for (const h of boardHexes) {
     const s = hexToScreen(h.q, h.r);
     drawHexShape(ctx, s.x, s.y, HEX - 2);
-    ctx.fillStyle = '#000'; ctx.fill();
-    ctx.strokeStyle = '#fff'; ctx.lineWidth = 1; ctx.stroke();
+    ctx.fillStyle = paperS(); ctx.fill();
+    ctx.strokeStyle = inkS(); ctx.lineWidth = 1; ctx.stroke();
   }
 
   // -- Drag highlights (valid move targets) --
@@ -784,14 +834,14 @@ function render() {
     const stayS = hexToScreen(drag.unit.q, drag.unit.r);
     const isStayTarget = drag.targetHex && drag.targetHex.q === drag.unit.q && drag.targetHex.r === drag.unit.r;
     drawHexShape(ctx, stayS.x, stayS.y, HEX - 4);
-    ctx.fillStyle = isStayTarget ? 'rgba(255,255,255,0.12)' : 'rgba(255,255,255,0.08)';
+    ctx.fillStyle = isStayTarget ? inkA(0.12) : inkA(0.08);
     ctx.fill();
     // Neighbor hexes
     for (const n of neighbors(drag.unit.q, drag.unit.r)) {
       const s = hexToScreen(n.q, n.r);
       drawHexShape(ctx, s.x, s.y, HEX - 4);
       const isT = drag.targetHex && drag.targetHex.q === n.q && drag.targetHex.r === n.r;
-      ctx.fillStyle = isT ? 'rgba(255,255,255,0.12)' : 'rgba(255,255,255,0.08)';
+      ctx.fillStyle = isT ? inkA(0.12) : inkA(0.08);
       ctx.fill();
     }
   }
@@ -804,7 +854,7 @@ function render() {
       if (a && a.type === 'skill' && a.skill === 'bow' && a.targetHex) {
         const ts = hexToScreen(a.targetHex.q, a.targetHex.r);
         // Draw X marker
-        ctx.strokeStyle = 'rgba(255,255,255,0.5)';
+        ctx.strokeStyle = inkA(0.5);
         ctx.lineWidth = 2;
         const xr = HEX * 0.2;
         ctx.beginPath(); ctx.moveTo(ts.x - xr, ts.y - xr); ctx.lineTo(ts.x + xr, ts.y + xr); ctx.stroke();
@@ -817,10 +867,10 @@ function render() {
   if (bowAim.active && bowAim.targetHex) {
     const ts = hexToScreen(bowAim.targetHex.q, bowAim.targetHex.r);
     drawHexShape(ctx, ts.x, ts.y, HEX - 4);
-    ctx.fillStyle = 'rgba(255,255,255,0.15)';
+    ctx.fillStyle = inkA(0.15);
     ctx.fill();
     // X marker preview
-    ctx.strokeStyle = 'rgba(255,255,255,0.3)';
+    ctx.strokeStyle = inkA(0.3);
     ctx.lineWidth = 2;
     const xr = HEX * 0.2;
     ctx.beginPath(); ctx.moveTo(ts.x - xr, ts.y - xr); ctx.lineTo(ts.x + xr, ts.y + xr); ctx.stroke();
@@ -837,7 +887,7 @@ function render() {
         if (!unitAt(h.q, h.r)) {
           const s = hexToScreen(h.q, h.r);
           drawHexShape(ctx, s.x, s.y, HEX - 4);
-          ctx.fillStyle = 'rgba(255,255,255,0.08)';
+          ctx.fillStyle = inkA(0.08);
           ctx.fill();
         }
       }
@@ -868,14 +918,14 @@ function render() {
         ctx.beginPath();
         ctx.moveTo(from.x, from.y);
         ctx.lineTo(to.x, to.y);
-        ctx.strokeStyle = 'rgba(255,255,255,0.12)';
+        ctx.strokeStyle = inkA(0.12);
         ctx.lineWidth = 1;
         ctx.setLineDash([4, 4]);
         ctx.stroke();
         ctx.setLineDash([]);
         ctx.beginPath();
         ctx.arc(to.x, to.y, 2, 0, Math.PI * 2);
-        ctx.fillStyle = 'rgba(255,255,255,0.25)';
+        ctx.fillStyle = inkA(0.25);
         ctx.fill();
       }
 
@@ -886,8 +936,8 @@ function render() {
         if (orderIdx >= 0) {
           const br = HEX * 0.2;
           ctx.beginPath(); ctx.arc(ts.x, ts.y, br, 0, Math.PI * 2);
-          ctx.fillStyle = 'rgba(255,255,255,0.7)'; ctx.fill();
-          ctx.fillStyle = '#000';
+          ctx.fillStyle = inkA(0.85); ctx.fill();
+          ctx.fillStyle = paperS();
           ctx.font = '600 ' + (br * 1.3) + 'px Inter,sans-serif';
           ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
           const roman = ['I', 'II', 'III'][orderIdx] || String(orderIdx + 1);
@@ -903,7 +953,7 @@ function render() {
     ctx.beginPath();
     ctx.moveTo(from.x, from.y);
     ctx.lineTo(drag.currentPos.x, drag.currentPos.y);
-    ctx.strokeStyle = 'rgba(255,255,255,0.08)';
+    ctx.strokeStyle = inkA(0.08);
     ctx.lineWidth = 1;
     ctx.stroke();
   }
@@ -916,7 +966,7 @@ function render() {
       ctx.beginPath();
       ctx.moveTo(from.x, from.y);
       ctx.lineTo(bowAim.currentPos.x, bowAim.currentPos.y);
-      ctx.strokeStyle = 'rgba(255,255,255,0.15)';
+      ctx.strokeStyle = inkA(0.15);
       ctx.lineWidth = 1;
       ctx.setLineDash([4, 4]);
       ctx.stroke();
@@ -931,17 +981,15 @@ function render() {
     const isDragging = drag.unit && drag.unit.id === u.id && drag.moved;
     const s = isDragging ? drag.currentPos : getUnitScreenPos(u);
     const isMine = u.player === G.myPlayer;
-    const pawnCanvas = isMine ? pawnWhiteCanvas : pawnBlackCanvas;
     const drawSize = HEX * 0.9;
 
-    // Draw pawn silhouette
-    if (pawnCanvas) {
-      ctx.save();
-      if (u.cloaked) ctx.globalAlpha = 0.3;
-      else if (isDragging) ctx.globalAlpha = 0.7;
-      ctx.drawImage(pawnCanvas, s.x - drawSize / 2, s.y - drawSize / 2, drawSize, drawSize);
-      ctx.restore();
-    }
+    // Draw pawn silhouette with live theme colors.
+    // Mine = ink fill (white on dark, black on light); opponent = paper fill + ink outline.
+    ctx.save();
+    if (u.cloaked) ctx.globalAlpha = 0.3;
+    else if (isDragging) ctx.globalAlpha = 0.7;
+    drawPawnShape(ctx, s.x, s.y, drawSize, isMine ? inkS() : paperS(), isMine ? null : inkS());
+    ctx.restore();
 
     // Shield animation effect
     if (u.shielded || shieldAnims[u.id]) {
@@ -964,8 +1012,8 @@ function render() {
         const bx = s.x + pr * 0.7, by = s.y - pr * 0.7;
         const br = HEX * 0.22;
         ctx.beginPath(); ctx.arc(bx, by, br, 0, Math.PI * 2);
-        ctx.fillStyle = 'rgba(255,255,255,0.7)'; ctx.fill();
-        ctx.fillStyle = '#000';
+        ctx.fillStyle = inkA(0.85); ctx.fill();
+        ctx.fillStyle = paperS();
         ctx.font = '600 ' + (br * 1.2) + 'px Inter,sans-serif';
         ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
         const roman = ['I', 'II', 'III'][orderIdx] || String(orderIdx + 1);
@@ -981,7 +1029,7 @@ function render() {
   if (drag.unit && !drag.moved && drag.isHold && drag.startPos) {
     ctx.beginPath();
     ctx.arc(drag.startPos.x, drag.startPos.y, HEX * 0.4, 0, Math.PI * 2);
-    ctx.strokeStyle = 'rgba(255,255,255,0.2)';
+    ctx.strokeStyle = inkA(0.2);
     ctx.lineWidth = 1;
     ctx.stroke();
   }
@@ -1151,6 +1199,23 @@ function onPointerDown(e) {
     return;
   }
 
+  // Pressing on an existing bow target cross picks it up to re-aim
+  for (const uid of G.unitOrder) {
+    if (!uid) continue;
+    const a = G.myActions[uid];
+    if (a && a.type === 'skill' && a.skill === 'bow' && a.targetHex &&
+        a.targetHex.q === hex.q && a.targetHex.r === hex.r) {
+      canvas.setPointerCapture(e.pointerId);
+      bowAim.active = true;
+      bowAim.unitId = uid;
+      bowAim.currentPos = {x: sx, y: sy};
+      bowAim.targetHex = {q: hex.q, r: hex.r};
+      delete G.myActions[uid]; // re-assigned on release
+      showHint('DRAG THE TARGET, RELEASE TO FIRE');
+      return;
+    }
+  }
+
   // Check if tapping a dead unit's respawn target
   const deadUnassigned = myUnits().find(u => u.dead && !G.myActions[u.id]);
   if (deadUnassigned && hex.r === spawnRow(G.myPlayer) && !unitAt(hex.q, hex.r)) {
@@ -1172,12 +1237,46 @@ function onPointerDown(e) {
     drag.moved = false;
     drag.isHold = false;
     drag.holdTimer = setTimeout(() => {
-      if (!drag.moved) {
+      if (!drag.moved && drag.unit) {
         drag.isHold = true;
         if (navigator.vibrate) navigator.vibrate(30);
+        onHoldActivate(drag.unit);   // activate skill WHILE still holding
       }
     }, LONG_PRESS_MS);
     return;
+  }
+}
+
+// Called when a unit is held long enough. Activates its skill immediately
+// so the player can keep holding and (for bow) drag the target without lifting.
+function onHoldActivate(unit) {
+  if (!unit.skill) return;
+  const sd = SKILL_DEF[unit.skill];
+  const existing = G.myActions[unit.id];
+
+  if (sd.targeted) {
+    // BOW: holding again cancels an existing aimed shot
+    if (existing && existing.type === 'skill' && existing.skill === 'bow') {
+      delete G.myActions[unit.id];
+      bowAim.active = false; bowAim.unitId = null; bowAim.targetHex = null; bowAim.currentPos = null;
+      hideHint();
+      return;
+    }
+    // Enter aim mode: a target cross now follows the finger
+    lockUnit(unit.id);
+    bowAim.active = true;
+    bowAim.unitId = unit.id;
+    bowAim.currentPos = drag.currentPos ? {x: drag.currentPos.x, y: drag.currentPos.y} : null;
+    bowAim.targetHex = {q: unit.q, r: unit.r}; // starts on the unit (dist 0 = no shot)
+    showHint('DRAG THE TARGET, RELEASE TO FIRE');
+  } else {
+    // SHIELD / CLOAK: toggle on/off immediately
+    if (existing && existing.type === 'skill') {
+      delete G.myActions[unit.id];
+    } else {
+      lockUnit(unit.id);
+      assignAction({unitId: unit.id, type: 'skill', skill: unit.skill});
+    }
   }
 }
 
@@ -1246,8 +1345,7 @@ function onPointerUp(e) {
 
   if (drag.unit) {
     if (drag.isHold && !drag.moved) {
-      // Long press: toggle skill
-      toggleSkill(drag.unit);
+      // Skill already handled in onHoldActivate (bow stays in aim mode here)
     } else if (drag.moved && drag.targetHex) {
       // Drag to adjacent hex: assign move
       if (drag.targetHex.q === drag.unit.q && drag.targetHex.r === drag.unit.r) {
@@ -1271,34 +1369,6 @@ function onPointerUp(e) {
   drag.currentPos = null;
   drag.moved = false;
   drag.isHold = false;
-}
-
-function toggleSkill(unit) {
-  const existing = G.myActions[unit.id];
-  // If already has skill action, cancel it
-  if (existing && existing.type === 'skill') {
-    delete G.myActions[unit.id];
-    hideHint();
-    return;
-  }
-  // Remove any existing action for this unit
-  if (existing) delete G.myActions[unit.id];
-
-  if (!unit.skill) return;
-
-  const sd = SKILL_DEF[unit.skill];
-  if (sd.targeted) {
-    // Bow: enter drag-to-target mode
-    bowAim.active = true;
-    bowAim.unitId = unit.id;
-    bowAim.currentPos = drag.startPos ? {...drag.startPos} : null;
-    bowAim.targetHex = null;
-    showHint('DRAG TO TARGET HEX FOR ARROW');
-  } else {
-    // Non-targeted skill (shield, cloak): assign immediately
-    lockUnit(unit.id);
-    assignAction({unitId: unit.id, type: 'skill', skill: unit.skill});
-  }
 }
 
 function assignAction(action) {
@@ -1516,6 +1586,9 @@ function startSetup() {
   G.phase = 'setup';
   G.myReady = false;
   G.opReady = false;
+  // Setup is always dark (revert any inversion instantly)
+  document.body.classList.remove('theme-anim');
+  document.body.classList.remove('inverted');
   initUnits();
   showScreen('screenSetup');
   buildSetupUI();
@@ -1570,6 +1643,11 @@ function startPlanning() {
 
   showScreen('screenGame');
   setupMainCanvas();
+
+  // Fade the whole UI to inverted colors when the match is in play.
+  // (Idempotent: on later turns it's already inverted, so no re-fade.)
+  document.body.classList.add('theme-anim');
+  document.body.classList.add('inverted');
 
   // Setup ready and reset buttons
   const rb = document.getElementById('btnGameReady');
@@ -1697,6 +1775,9 @@ async function runResolution() {
 
   if (checkWin()) {
     G.phase = 'gameover';
+    // Match ended -> instant revert to dark theme
+    document.body.classList.remove('theme-anim');
+    document.body.classList.remove('inverted');
     showScreen('screenGameover');
     document.getElementById('winText').textContent = G.winner === G.myPlayer ? 'YOU WIN' : 'YOU LOSE';
     document.getElementById('finalScore').textContent = 'P1 ' + G.scores[1] + '  --  P2 ' + G.scores[2];
