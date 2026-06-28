@@ -250,12 +250,11 @@ function render() {
 
   var hexDraw = R.HEX - HEX_GAP;
 
-  // Board hexes: thickness layer
+  // Board hexes: thickness layer (outline only, no fill — matches button edge)
   for (var hi = 0; hi < R.boardHexes.length; hi++) {
     var h = R.boardHexes[hi];
     var s = hexToScreen(h.q, h.r);
     drawHexShape(ctx, s.x, s.y + R.HEX_THICK, hexDraw);
-    ctx.fillStyle = paperS(); ctx.fill();
     ctx.strokeStyle = inkS(); ctx.lineWidth = 1; ctx.stroke();
   }
 

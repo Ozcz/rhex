@@ -55,6 +55,7 @@ function resetAllAssignments() {
 
 function onPointerDown(e) {
   var G = R.G;
+  if (G.phase === 'setup') { if (R.onSetupPointerDown) R.onSetupPointerDown(e); return; }
   if (G.phase !== 'planning' || G.myReady) return;
   e.preventDefault();
   var rect = R.canvas.getBoundingClientRect();

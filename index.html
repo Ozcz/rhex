@@ -41,10 +41,12 @@
   </div>
 </div>
 
+<!-- SHARED BOARD (visible during setup and game) -->
+<div id="boardWrap"><canvas id="board"></canvas></div>
+
 <!-- SETUP SCREEN -->
 <div id="screenSetup" class="screen">
   <div class="setup-header"><h2>ASSIGN SKILLS</h2></div>
-  <div id="setupCanvasWrap"><canvas id="setupCanvas"></canvas></div>
   <div class="setup-bottom">
     <div class="setup-skill-row" id="setupSkillRow"></div>
     <p class="status-msg" id="setupStatus">TAP A UNIT, THEN TAP A SKILL BELOW</p>
@@ -54,7 +56,6 @@
 
 <!-- GAME SCREEN -->
 <div id="screenGame" class="screen">
-  <div id="boardWrap"><canvas id="board"></canvas></div>
   <div class="game-hud">
     <div class="timer-big" id="gameTimer">60</div>
     <div class="badges-row">

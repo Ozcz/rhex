@@ -1,38 +1,26 @@
 'use strict';
 
-function hexToScreenSetup(q, r) {
-  var raw = R.hexToPixelRaw(q, r);
-  var flip = R.G.myPlayer === 1 ? -1 : 1;
-  return {x: R.setupCenterX + raw.x * flip, y: R.setupCenterY + raw.y * flip};
-}
-
-function screenToHexSetup(sx, sy) {
-  var flip = R.G.myPlayer === 1 ? -1 : 1;
-  var oldHEX = R.HEX;
-  R.HEX = R.setupHEX;
-  var result = R.pixelToHexRaw((sx - R.setupCenterX) * flip, (sy - R.setupCenterY) * flip);
-  R.HEX = oldHEX;
-  return result;
-}
+// Setup uses the shared board canvas (R.canvas / R.ctx)
 
 function renderSetup() {
-  if (!R.setupCtx) return;
-  var c = R.setupCtx;
-  c.clearRect(0, 0, R.setupCW, R.setupCH);
-  var savedHEX = R.HEX;
-  R.HEX = R.setupHEX;
+  if (!R.ctx || R.G.phase !== 'setup') return;
+  var c = R.ctx;
+  c.clearRect(0, 0, R.cw, R.ch);
 
+  var hexDraw = R.HEX - 5;
+
+  // Board hexes: thickness layer (outline only)
   for (var i = 0; i < R.boardHexes.length; i++) {
     var h = R.boardHexes[i];
-    var s = hexToScreenSetup(h.q, h.r);
-    R.drawHexShape(c, s.x, s.y + R.HEX_THICK, R.HEX - 5);
-    c.fillStyle = '#fff'; c.fill();
+    var s = R.hexToScreen(h.q, h.r);
+    R.drawHexShape(c, s.x, s.y + R.HEX_THICK, hexDraw);
     c.strokeStyle = '#fff'; c.lineWidth = 1; c.stroke();
   }
+  // Board hexes: top face
   for (var j = 0; j < R.boardHexes.length; j++) {
     var h2 = R.boardHexes[j];
-    var s2 = hexToScreenSetup(h2.q, h2.r);
-    R.drawHexShape(c, s2.x, s2.y, R.HEX - 5);
+    var s2 = R.hexToScreen(h2.q, h2.r);
+    R.drawHexShape(c, s2.x, s2.y, hexDraw);
     c.fillStyle = '#000'; c.fill();
     c.strokeStyle = '#fff'; c.lineWidth = 1; c.stroke();
   }
@@ -44,18 +32,15 @@ function renderSetup() {
   for (var k = 0; k < mine.length; k++) {
     var u = mine[k];
     if (u.dead) continue;
-    var us = hexToScreenSetup(u.q, u.r);
+    var us = R.hexToScreen(u.q, u.r);
 
-    // Draw SVG pawn (white on dark setup screen)
     c.drawImage(R.pawnBlackCanvas, us.x - drawSz / 2, us.y + yShift - drawSz / 2, drawSz, drawSz);
 
-    // Selection ring
     if (R.setupSelectedUnit === u.id) {
-      c.beginPath(); c.arc(us.x, us.y, drawSz * 0.35, 0, Math.PI * 2);
+      c.beginPath(); c.arc(us.x, us.y + yShift, drawSz * 0.35, 0, Math.PI * 2);
       c.strokeStyle = '#fff'; c.lineWidth = 1.5; c.stroke();
     }
 
-    // Skill icon on pawn
     if (u.skill) {
       c.font = (R.HEX * 0.45) + 'px sans-serif';
       c.textAlign = 'center'; c.textBaseline = 'middle';
@@ -63,46 +48,20 @@ function renderSetup() {
     }
   }
 
-  R.HEX = savedHEX;
   requestAnimationFrame(renderSetup);
 }
 
 function initSetupCanvas() {
-  R.setupCanvas = document.getElementById('setupCanvas');
-  R.setupCtx = R.setupCanvas.getContext('2d');
-  resizeSetupCanvas();
-  if (!R.setupCanvasReady) {
-    window.addEventListener('resize', resizeSetupCanvas);
-    R.setupCanvas.addEventListener('pointerdown', onSetupPointerDown);
-    R.setupCanvasReady = true;
-  }
+  R.setupMainCanvas();
   requestAnimationFrame(renderSetup);
-}
-
-function resizeSetupCanvas() {
-  if (!R.setupCanvas) return;
-  R.setupDpr = window.devicePixelRatio || 1;
-  var rect = R.setupCanvas.getBoundingClientRect();
-  R.setupCW = rect.width; R.setupCH = rect.height;
-  R.setupCanvas.width = R.setupCW * R.setupDpr;
-  R.setupCanvas.height = R.setupCH * R.setupDpr;
-  R.setupCtx.setTransform(R.setupDpr, 0, 0, R.setupDpr, 0, 0);
-  R.setupCenterX = R.setupCW / 2;
-  R.setupCenterY = R.setupCH / 2;
-  var maxH = R.setupCH / 8 * 0.98;
-  var maxW = R.setupCW / (5 * R.S3 * R.HEX_ASPECT) * 0.98;
-  R.setupHEX = Math.min(maxH, maxW, 80);
-  R.setupHEX = Math.max(R.setupHEX, 18);
 }
 
 function onSetupPointerDown(e) {
   if (R.G.myReady) return;
   e.preventDefault();
-  var rect = R.setupCanvas.getBoundingClientRect();
+  var rect = R.canvas.getBoundingClientRect();
   var sx = e.clientX - rect.left, sy = e.clientY - rect.top;
-  var savedHEX = R.HEX; R.HEX = R.setupHEX;
-  var hex = screenToHexSetup(sx, sy);
-  R.HEX = savedHEX;
+  var hex = R.screenToHex(sx, sy);
   if (!R.onBoard(hex.q, hex.r)) return;
   var unit = R.myUnits().find(function(u) { return !u.dead && u.q === hex.q && u.r === hex.r; });
   if (unit) {
@@ -157,10 +116,8 @@ function updateSetupSkillButtons() {
   });
 }
 
-R.hexToScreenSetup = hexToScreenSetup;
-R.screenToHexSetup = screenToHexSetup;
 R.renderSetup = renderSetup;
 R.initSetupCanvas = initSetupCanvas;
-R.resizeSetupCanvas = resizeSetupCanvas;
+R.onSetupPointerDown = onSetupPointerDown;
 R.buildSetupUI = buildSetupUI;
 R.updateSetupSkillButtons = updateSetupSkillButtons;

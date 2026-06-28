@@ -7,6 +7,8 @@ function showScreen(id) {
   document.getElementById(id).classList.add('active');
   document.getElementById('hamburgerBtn').style.display =
     (id === 'screenSetup' || id === 'screenGame') ? '' : 'none';
+  document.getElementById('boardWrap').style.display =
+    (id === 'screenSetup' || id === 'screenGame') ? '' : 'none';
   updateTitleVisibility();
 }
 

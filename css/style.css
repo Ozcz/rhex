@@ -60,8 +60,8 @@ h2{color:#fff;font-weight:300;letter-spacing:.15em;font-size:1.4em}
 #btnTimer .front{min-width:80px;text-align:center}
 /* Share button row: menu + timer UNDER the URL bar, each 50% width */
 .share-btn-row{display:flex;gap:8px;width:100%;margin-top:16px}
-.share-btn-row .pushable{flex:1}
-.share-btn-row .pushable .front{width:100%;text-align:center;padding:10px 0}
+.share-btn-row .pushable{flex:1 1 0;min-width:0;overflow:hidden}
+.share-btn-row .pushable .front{width:100%;text-align:center;padding:10px 0;overflow:hidden;white-space:nowrap}
 .share-label{color:#555;font-size:.8em;letter-spacing:.08em;margin-bottom:10px}
 
 /* -- Modals -- */
@@ -75,20 +75,20 @@ h2{color:#fff;font-weight:300;letter-spacing:.15em;font-size:1.4em}
 .modal-content .skill-list li{margin:3px 0}
 .settings-list{display:flex;flex-direction:column;gap:12px;margin-top:16px}
 
+/* -- Shared board canvas (visible during setup + game) -- */
+#boardWrap{position:fixed;top:50%;left:50%;transform:translate(-50%,-55%);width:min(86vw,680px);aspect-ratio:1/1;z-index:1;display:none;pointer-events:auto}
+#board{width:100%;height:100%;display:block;touch-action:none}
+
 /* -- Setup screen (board-based skill selection) -- */
-#screenSetup{justify-content:center;align-items:center;gap:22px;padding:24px;height:100vh}
+#screenSetup{justify-content:flex-end;align-items:center;gap:12px;padding:24px 24px 40px;height:100vh;z-index:2}
 .setup-header{text-align:center}
 .setup-header h2{font-size:1.2em}
-#setupCanvasWrap{width:min(86vw,680px);aspect-ratio:1/1;flex:none}
-#setupCanvas{width:100%;height:100%;display:block;touch-action:none}
 .setup-bottom{display:flex;flex-direction:column;align-items:center;gap:12px}
 .setup-skill-row{display:flex;gap:10px;justify-content:center}
 .status-msg{color:#555;font-size:.7rem;text-align:center;letter-spacing:.08em}
 
 /* -- Game screen -- */
-#screenGame{justify-content:center;align-items:center;gap:20px;padding:24px;height:100vh}
-#boardWrap{width:min(86vw,680px);aspect-ratio:1/1;flex:none}
-#board{width:100%;height:100%;display:block;touch-action:none}
+#screenGame{justify-content:flex-end;align-items:center;gap:14px;padding:24px 24px 40px;height:100vh;z-index:2}
 .game-hud{display:flex;flex-direction:column;align-items:center;gap:14px}
 .timer-big{font-size:4.5rem;font-weight:300;color:#333;font-variant-numeric:tabular-nums;line-height:1;letter-spacing:.06em}
 .timer-big.urgent{color:#fff}
@@ -106,8 +106,9 @@ h2{color:#fff;font-weight:300;letter-spacing:.15em;font-size:1.4em}
 .diff-hex svg{position:absolute;inset:0;width:100%;height:100%}
 .diff-hex span{position:relative;font-size:1rem;color:#aaa;font-weight:400}
 .action-btns{display:flex;gap:8px;width:100%;max-width:420px}
-.action-btns .pushable{flex:1 1 0;min-width:0}
-.action-btns .pushable .front{width:100%;text-align:center}
+.action-btns .pushable{flex:1 1 0;min-width:0;overflow:hidden}
+.action-btns .pushable .edge{left:0;right:0}
+.action-btns .pushable .front{width:100%;text-align:center;overflow:hidden;white-space:nowrap}
 
 /* -- Overlays -- */
 .overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.85);align-items:center;justify-content:center;z-index:10;display:none}
