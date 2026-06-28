@@ -243,7 +243,9 @@ function drawArrows(c) {
 
 function render() {
   var G = R.G;
+  if (G.phase === 'lobby' || G.phase === 'setup') return;
   var ctx = R.ctx;
+  if (!ctx) return;
   var now = performance.now();
   ctx.clearRect(0, 0, R.cw, R.ch);
 
@@ -510,6 +512,9 @@ function setupMainCanvas() {
     R.canvas.addEventListener('pointercancel', R.onPointerUp);
     R.canvasReady = true;
   }
+}
+
+function startGameRenderLoop() {
   requestAnimationFrame(render);
 }
 
@@ -548,4 +553,5 @@ R.drawShieldEffect = drawShieldEffect;
 R.drawArrows = drawArrows;
 R.render = render;
 R.setupMainCanvas = setupMainCanvas;
+R.startGameRenderLoop = startGameRenderLoop;
 R.resizeCanvas = resizeCanvas;

@@ -120,6 +120,7 @@ function startPlanning() {
 
   showScreen('screenGame');
   R.setupMainCanvas();
+  R.startGameRenderLoop();
   document.body.classList.add('theme-anim');
   document.body.classList.add('inverted');
 
