@@ -69,6 +69,8 @@ function startSetup() {
   R.stopSound('waiting');
   R.stopSound('ambience');
   R.boardAnimStart = performance.now();
+  R.enemyPawnAnimStart = 0;
+  R.prevScores = [0, 0, 0];
   setTimeout(function() { R.pawnAnimStart = performance.now(); }, 700);
   R.initUnits();
   showScreen('screenSetup');

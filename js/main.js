@@ -56,16 +56,17 @@ function init() {
     if (btn && !btn.disabled) R.playSound('button');
   });
 
-  // Start ambience on first user interaction
-  document.addEventListener('pointerdown', function startAmbience() {
-    if (R.G.phase === 'lobby') R.playSound('ambience');
-    document.removeEventListener('pointerdown', startAmbience);
+  // Start ambience after first user interaction (only if still on lobby, not clicking a button)
+  document.addEventListener('click', function startAmbience() {
+    if (R.G.phase === 'lobby' && !document.getElementById('shareArea').style.display.length) {
+      R.playSound('ambience');
+    }
+    document.removeEventListener('click', startAmbience);
   });
 
   R.updateTitleVisibility();
   R.buildPawnCanvases();
 
-  // Trigger fade-in animations
   setTimeout(function() { document.body.classList.add('loaded'); }, 50);
 }
 

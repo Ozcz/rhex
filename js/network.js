@@ -32,6 +32,7 @@ function wireConn() {
   R.conn.on('data', onMessage);
   R.conn.on('close', function() {
     R.backToMenu();
+    R.playSound('ambience');
     R.showDisconnectWarning();
   });
 }

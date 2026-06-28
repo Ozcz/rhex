@@ -2,11 +2,6 @@
 
 // Setup uses the shared board canvas (R.canvas / R.ctx)
 
-function drawIconSetup(c, img, x, y, size) {
-  if (!img || !img.complete) return;
-  c.drawImage(img, x - size/2, y - size/2, size, size);
-}
-
 function renderSetup() {
   if (!R.ctx || R.G.phase !== 'setup') return;
   var c = R.ctx;
@@ -62,10 +57,10 @@ function renderSetup() {
       c.strokeStyle = '#fff'; c.lineWidth = 1.5; c.stroke();
     }
 
-    if (u.skill && R.icons) {
+    if (u.skill && R.icons && R.SKILL_DEF[u.skill]) {
       var iconKey = R.SKILL_DEF[u.skill].svgKey + '_white';
       c.globalAlpha = pawnT * 0.6;
-      drawIconSetup(c, R.icons[iconKey], us.x, us.y + yShift + dropY, R.HEX * 0.55);
+      R.drawIcon(c, R.icons[iconKey], us.x, us.y + yShift + dropY, R.HEX * 0.55);
     }
     c.restore();
   }

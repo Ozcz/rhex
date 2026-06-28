@@ -154,7 +154,8 @@ function triggerShieldAnim(unitId, blocking) {
   R.shieldAnims[unitId] = {startTime: performance.now(), blocking: !!blocking};
 }
 
-function drawShieldEffect(c, x, y, unit) {
+function drawShieldEffect(c, x, y, unit, isMine) {
+  var ico = R.icons['shield' + (isMine ? '_white' : '_black')];
   var anim = R.shieldAnims[unit.id];
   var now = performance.now();
   if (anim) {
@@ -164,20 +165,18 @@ function drawShieldEffect(c, x, y, unit) {
     var t = Math.min(1, elapsed / duration);
     if (anim.blocking) {
       c.globalAlpha = 0.7 * (1 - t);
-      var scaleB = 0.4 + t * 0.3;
-      drawIcon(c, R.icons.shield_white, x, y, R.HEX * scaleB);
+      drawIcon(c, ico, x, y, R.HEX * (0.4 + t * 0.3));
       c.globalAlpha = 1.0;
     } else {
       c.globalAlpha = 0.5;
-      var scaleE = 0.2 + t * 0.4;
-      drawIcon(c, R.icons.shield_white, x, y, R.HEX * scaleE);
+      drawIcon(c, ico, x, y, R.HEX * (0.2 + t * 0.4));
       c.globalAlpha = 1.0;
     }
     return;
   }
   if (unit.shielded) {
     c.globalAlpha = 0.5;
-    drawIcon(c, R.icons.shield_white, x, y, R.HEX * 0.6);
+    drawIcon(c, ico, x, y, R.HEX * 0.6);
     c.globalAlpha = 1.0;
   }
 }
@@ -252,6 +251,9 @@ function render() {
   R.INK = parseRGB(cs.getPropertyValue('--c-fg'));
   R.PAPER = parseRGB(cs.getPropertyValue('--c-bg'));
 
+  var isDark = R.INK[0] > 128;
+  var inkIcon = isDark ? '_white' : '_black';
+
   var hexDraw = R.HEX - HEX_GAP;
 
   // Board hexes: thickness layer (outline only, no fill — matches button edge)
@@ -317,7 +319,7 @@ function render() {
       var a = G.myActions[uid];
       if (a && a.type === 'skill' && a.skill === 'bow' && a.targetHex) {
         var ts = hexToScreen(a.targetHex.q, a.targetHex.r);
-        drawIcon(ctx, R.icons.target_white, ts.x, ts.y, R.HEX * 0.5);
+        drawIcon(ctx, R.icons['target' + inkIcon], ts.x, ts.y, R.HEX * 0.5);
       }
     }
   }
@@ -328,7 +330,7 @@ function render() {
     drawHexShape(ctx, ats.x, ats.y, hexDraw);
     ctx.fillStyle = inkA(0.15); ctx.fill();
     ctx.globalAlpha = 0.5;
-    drawIcon(ctx, R.icons.target_white, ats.x, ats.y, R.HEX * 0.5);
+    drawIcon(ctx, R.icons['target' + inkIcon], ats.x, ats.y, R.HEX * 0.5);
     ctx.globalAlpha = 1.0;
   }
 
@@ -448,7 +450,7 @@ function render() {
     ctx.restore();
 
     // Shield visual
-    if (u.shielded || R.shieldAnims[u.id]) drawShieldEffect(ctx, us.x, us.y + yShift + pawnYOffset, u);
+    if (u.shielded || R.shieldAnims[u.id]) drawShieldEffect(ctx, us.x, us.y + yShift + pawnYOffset, u, isMine);
 
     // Skill icon: ALWAYS on pawn, faded unless active — SVG icon
     var uAct = G.myActions[u.id] || null;
@@ -457,7 +459,7 @@ function render() {
       var skillActive = uAct && uAct.type === 'skill';
       ctx.save();
       ctx.globalAlpha = (skillActive ? 0.85 : 0.25) * pawnAnimT;
-      drawIcon(ctx, R.icons[sd.svgKey + (isMine ? '_white' : '_black')], us.x, us.y + yShift + pawnYOffset, R.HEX * 0.55);
+      drawIcon(ctx, R.icons[sd.svgKey + (isMine ? '_black' : '_white')], us.x, us.y + yShift + pawnYOffset, R.HEX * 0.55);
       ctx.restore();
     }
 

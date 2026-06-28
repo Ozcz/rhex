@@ -29,14 +29,6 @@ R.dpr = 1;
 R.centerX = 0;
 R.centerY = 0;
 
-R.setupCanvas = null;
-R.setupCtx = null;
-R.setupCW = 0;
-R.setupCH = 0;
-R.setupDpr = 1;
-R.setupCenterX = 0;
-R.setupCenterY = 0;
-R.setupHEX = 40;
 R.setupSelectedUnit = null;
 
 R.drag = {
@@ -53,7 +45,6 @@ R.pawnSize = 0;
 R.shieldAnims = {};
 
 R.canvasReady = false;
-R.setupCanvasReady = false;
 
 R.INK = [255, 255, 255];
 R.PAPER = [0, 0, 0];
