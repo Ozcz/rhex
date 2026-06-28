@@ -65,6 +65,11 @@ function startSetup() {
   G.opReady = false;
   document.body.classList.remove('theme-anim');
   document.body.classList.remove('inverted');
+  R.playSound('gameFound');
+  R.stopSound('waiting');
+  R.stopSound('ambience');
+  R.boardAnimStart = performance.now();
+  setTimeout(function() { R.pawnAnimStart = performance.now(); }, 700);
   R.initUnits();
   showScreen('screenSetup');
   R.buildSetupUI();
@@ -108,6 +113,8 @@ function startPlanning() {
       }
     }
   });
+
+  if (G.turnNum === 0) R.enemyPawnAnimStart = performance.now();
 
   showScreen('screenGame');
   R.setupMainCanvas();
@@ -156,6 +163,7 @@ function buildPts(id, score) {
   for (var i = 0; i < score; i++) {
     var b = document.createElement('div');
     b.className = 'bar';
+    b.style.animationDelay = (i * 0.1) + 's';
     el.appendChild(b);
   }
 }
@@ -205,6 +213,15 @@ async function runResolution() {
 
   G.turnNum++;
   calcScores();
+
+  var p1Diff = G.scores[1] - R.prevScores[1];
+  var p2Diff = G.scores[2] - R.prevScores[2];
+  var maxDiff = Math.max(p1Diff, p2Diff, 0);
+  for (var ci = 0; ci < maxDiff; ci++) {
+    (function(delay) { setTimeout(function() { R.playSound('coin'); }, delay); })(ci * 120);
+  }
+  R.prevScores = [0, G.scores[1], G.scores[2]];
+
   updateGameHUD();
 
   if (checkWin()) {
@@ -244,7 +261,7 @@ function resolveStep(a1, a2, stepIdx) {
   for (var si = 0; si < skillers.length; si++) {
     if (skillers[si].skill === 'shield') {
       var su = R.unitById(skillers[si].unitId);
-      if (su && !su.dead) { su.shielded = true; R.triggerShieldAnim(su.id, false); }
+      if (su && !su.dead) { su.shielded = true; R.triggerShieldAnim(su.id, false); R.playSound('shield'); }
     }
   }
 
@@ -252,8 +269,8 @@ function resolveStep(a1, a2, stepIdx) {
   if (movers.length === 2) {
     var t0 = movers[0].target, t1 = movers[1].target;
     var u0 = R.unitById(movers[0].unitId), u1 = R.unitById(movers[1].unitId);
-    if (t0.q === t1.q && t0.r === t1.r) { /* cancel */ }
-    else if (u0 && u1 && t0.q === u1.q && t0.r === u1.r && t1.q === u0.q && t1.r === u0.r) { /* swap cancel */ }
+    if (t0.q === t1.q && t0.r === t1.r) { R.playSound('collision'); /* cancel */ }
+    else if (u0 && u1 && t0.q === u1.q && t0.r === u1.r && t1.q === u0.q && t1.r === u0.r) { R.playSound('collision'); /* swap cancel */ }
     else { for (var mi = 0; mi < movers.length; mi++) processMove(movers[mi]); }
   } else {
     for (var mj = 0; mj < movers.length; mj++) processMove(movers[mj]);
@@ -273,9 +290,11 @@ function resolveStep(a1, a2, stepIdx) {
         launchTime: performance.now(),
         player: ka.player
       });
+      R.playSound('arrow');
     }
     if (ka.skill === 'cloak') {
       ku.cloaked = !ku.cloaked;
+      R.playSound('vanish');
     }
   }
 }
@@ -288,9 +307,11 @@ function processMove(m) {
     if (enemy.shielded) {
       enemy.shielded = false;
       R.triggerShieldAnim(enemy.id, true);
+      R.playSound('shield');
       return;
     }
     enemy.dead = true; enemy.cloaked = false;
+    R.playSound('defeat');
   } else if (enemy && enemy.player === u.player) {
     return;
   }
@@ -317,13 +338,16 @@ function advanceArrows() {
     arrow.stepsRemaining--;
     if (arrow.stepsRemaining <= 0) {
       arrow.landingTime = performance.now();
+      R.playSound('target');
       var target = R.unitAt(arrow.targetQ, arrow.targetR);
       if (target && target.player !== arrow.player) {
         if (target.shielded) {
           target.shielded = false;
           R.triggerShieldAnim(target.id, true);
+          R.playSound('shield');
         } else {
           target.dead = true; target.cloaked = false;
+          R.playSound('defeat');
         }
       }
     }

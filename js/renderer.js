@@ -95,6 +95,13 @@ function parseRGB(str) {
   return [Math.round(+m[0]), Math.round(+m[1]), Math.round(+m[2])];
 }
 
+/* ── SVG icon draw helper ── */
+
+function drawIcon(c, img, x, y, size) {
+  if (!img || !img.complete) return;
+  c.drawImage(img, x - size/2, y - size/2, size, size);
+}
+
 /* ── Thick arrow for movement indicators ── */
 
 function drawThickArrow(c, fromX, fromY, toX, toY, color, width) {
@@ -157,24 +164,20 @@ function drawShieldEffect(c, x, y, unit) {
     var t = Math.min(1, elapsed / duration);
     if (anim.blocking) {
       c.globalAlpha = 0.7 * (1 - t);
-      c.font = (R.HEX * (0.4 + t * 0.3)) + 'px sans-serif';
-      c.textAlign = 'center'; c.textBaseline = 'middle';
-      c.fillText('\u{1F6E1}', x, y);
+      var scaleB = 0.4 + t * 0.3;
+      drawIcon(c, R.icons.shield_white, x, y, R.HEX * scaleB);
       c.globalAlpha = 1.0;
     } else {
       c.globalAlpha = 0.5;
-      c.font = (R.HEX * (0.2 + t * 0.4)) + 'px sans-serif';
-      c.textAlign = 'center'; c.textBaseline = 'middle';
-      c.fillText('\u{1F6E1}', x, y);
+      var scaleE = 0.2 + t * 0.4;
+      drawIcon(c, R.icons.shield_white, x, y, R.HEX * scaleE);
       c.globalAlpha = 1.0;
     }
     return;
   }
   if (unit.shielded) {
     c.globalAlpha = 0.5;
-    c.font = (R.HEX * 0.6) + 'px sans-serif';
-    c.textAlign = 'center'; c.textBaseline = 'middle';
-    c.fillText('\u{1F6E1}', x, y);
+    drawIcon(c, R.icons.shield_white, x, y, R.HEX * 0.6);
     c.globalAlpha = 1.0;
   }
 }
@@ -242,6 +245,7 @@ function drawArrows(c) {
 function render() {
   var G = R.G;
   var ctx = R.ctx;
+  var now = performance.now();
   ctx.clearRect(0, 0, R.cw, R.ch);
 
   var cs = getComputedStyle(document.body);
@@ -254,17 +258,39 @@ function render() {
   for (var hi = 0; hi < R.boardHexes.length; hi++) {
     var h = R.boardHexes[hi];
     var s = hexToScreen(h.q, h.r);
-    drawHexShape(ctx, s.x, s.y + R.HEX_THICK, hexDraw);
+
+    // Hex spawn ripple animation
+    var dist = R.hexDist(0, 0, h.q, h.r);
+    var delay = dist * 120;
+    var elapsed = now - R.boardAnimStart - delay;
+    if (R.boardAnimStart > 0 && elapsed < 0) continue;
+    var hexAlpha = (R.boardAnimStart > 0 && elapsed < 300) ? Math.min(1, elapsed / 300) : 1;
+    var hexRise = (R.boardAnimStart > 0 && elapsed < 300) ? (1 - elapsed/300) * 15 : 0;
+
+    ctx.globalAlpha = hexAlpha;
+    drawHexShape(ctx, s.x, s.y + R.HEX_THICK - hexRise, hexDraw);
     ctx.strokeStyle = inkS(); ctx.lineWidth = 1; ctx.stroke();
+    ctx.globalAlpha = 1;
   }
 
   // Board hexes: top face (no hover lift)
   for (var hi2 = 0; hi2 < R.boardHexes.length; hi2++) {
     var h2 = R.boardHexes[hi2];
     var s2 = hexToScreen(h2.q, h2.r);
-    drawHexShape(ctx, s2.x, s2.y, hexDraw);
+
+    // Hex spawn ripple animation
+    var dist2 = R.hexDist(0, 0, h2.q, h2.r);
+    var delay2 = dist2 * 120;
+    var elapsed2 = now - R.boardAnimStart - delay2;
+    if (R.boardAnimStart > 0 && elapsed2 < 0) continue;
+    var hexAlpha2 = (R.boardAnimStart > 0 && elapsed2 < 300) ? Math.min(1, elapsed2 / 300) : 1;
+    var hexRise2 = (R.boardAnimStart > 0 && elapsed2 < 300) ? (1 - elapsed2/300) * 15 : 0;
+
+    ctx.globalAlpha = hexAlpha2;
+    drawHexShape(ctx, s2.x, s2.y - hexRise2, hexDraw);
     ctx.fillStyle = paperS(); ctx.fill();
     ctx.strokeStyle = inkS(); ctx.lineWidth = 1; ctx.stroke();
+    ctx.globalAlpha = 1;
   }
 
   // Drag highlights (valid move targets)
@@ -283,7 +309,7 @@ function render() {
     }
   }
 
-  // Bow target icons (assigned) — 🎯 emoji
+  // Bow target icons (assigned) — SVG icon
   if (G.phase === 'planning') {
     for (var oi = 0; oi < G.unitOrder.length; oi++) {
       var uid = G.unitOrder[oi];
@@ -291,22 +317,18 @@ function render() {
       var a = G.myActions[uid];
       if (a && a.type === 'skill' && a.skill === 'bow' && a.targetHex) {
         var ts = hexToScreen(a.targetHex.q, a.targetHex.r);
-        ctx.font = (R.HEX * 0.5) + 'px sans-serif';
-        ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-        ctx.fillText('\u{1F3AF}', ts.x, ts.y);
+        drawIcon(ctx, R.icons.target_white, ts.x, ts.y, R.HEX * 0.5);
       }
     }
   }
 
-  // Bow aim drag: highlight hex + 🎯 preview
+  // Bow aim drag: highlight hex + target preview
   if (R.bowAim.active && R.bowAim.targetHex) {
     var ats = hexToScreen(R.bowAim.targetHex.q, R.bowAim.targetHex.r);
     drawHexShape(ctx, ats.x, ats.y, hexDraw);
     ctx.fillStyle = inkA(0.15); ctx.fill();
     ctx.globalAlpha = 0.5;
-    ctx.font = (R.HEX * 0.5) + 'px sans-serif';
-    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-    ctx.fillText('\u{1F3AF}', ats.x, ats.y);
+    drawIcon(ctx, R.icons.target_white, ats.x, ats.y, R.HEX * 0.5);
     ctx.globalAlpha = 1.0;
   }
 
@@ -399,23 +421,43 @@ function render() {
     var pawnCanvas = isMine ? R.pawnWhiteCanvas : R.pawnBlackCanvas;
 
     ctx.save();
-    if (u.cloaked) ctx.globalAlpha = 0.3;
-    else if (isDragging) ctx.globalAlpha = 0.7;
-    ctx.drawImage(pawnCanvas, us.x - drawSize / 2, us.y + yShift - drawSize / 2, drawSize, drawSize);
+
+    // Pawn entrance animation
+    var pawnAnimT = 1;
+    if (R.pawnAnimStart > 0) {
+      var pIdx = isMine ? R.myUnits().indexOf(u) : R.opUnits().indexOf(u);
+      var pDelay = pIdx * 120;
+      var pElapsed = now - R.pawnAnimStart - pDelay;
+      if (pElapsed < 0) { ctx.restore(); continue; }
+      pawnAnimT = Math.min(1, pElapsed / 300);
+    }
+    if (R.enemyPawnAnimStart > 0 && !isMine) {
+      var eIdx = R.opUnits().indexOf(u);
+      var eDelay = eIdx * 120;
+      var eElapsed = now - R.enemyPawnAnimStart - eDelay;
+      if (eElapsed < 0) { ctx.restore(); continue; }
+      pawnAnimT = Math.min(1, eElapsed / 300);
+    }
+
+    var pawnYOffset = (1 - pawnAnimT) * -20;
+
+    if (u.cloaked) ctx.globalAlpha = 0.3 * pawnAnimT;
+    else if (isDragging) ctx.globalAlpha = 0.7 * pawnAnimT;
+    else ctx.globalAlpha = pawnAnimT;
+    ctx.drawImage(pawnCanvas, us.x - drawSize / 2, us.y + yShift - drawSize / 2 + pawnYOffset, drawSize, drawSize);
     ctx.restore();
 
     // Shield visual
-    if (u.shielded || R.shieldAnims[u.id]) drawShieldEffect(ctx, us.x, us.y + yShift, u);
+    if (u.shielded || R.shieldAnims[u.id]) drawShieldEffect(ctx, us.x, us.y + yShift + pawnYOffset, u);
 
-    // Skill icon: ALWAYS on pawn, faded unless active
+    // Skill icon: ALWAYS on pawn, faded unless active — SVG icon
     var uAct = G.myActions[u.id] || null;
     if (u.skill && R.SKILL_DEF[u.skill]) {
+      var sd = R.SKILL_DEF[u.skill];
       var skillActive = uAct && uAct.type === 'skill';
       ctx.save();
-      ctx.globalAlpha = skillActive ? 0.85 : 0.25;
-      ctx.font = (R.HEX * 0.6) + 'px sans-serif';
-      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-      ctx.fillText(R.SKILL_DEF[u.skill].icon, us.x, us.y + yShift);
+      ctx.globalAlpha = (skillActive ? 0.85 : 0.25) * pawnAnimT;
+      drawIcon(ctx, R.icons[sd.svgKey + (isMine ? '_white' : '_black')], us.x, us.y + yShift + pawnYOffset, R.HEX * 0.55);
       ctx.restore();
     }
 
@@ -424,14 +466,17 @@ function render() {
       var orderIdx = G.unitOrder.indexOf(u.id);
       if (orderIdx >= 0) {
         var pr = drawSize / 2;
-        var bx = us.x + pr * 0.45, by = us.y + yShift - pr * 0.6;
+        var bx = us.x + pr * 0.45, by = us.y + yShift - pr * 0.6 + pawnYOffset;
         var br = R.HEX * 0.22;
+        ctx.save();
+        ctx.globalAlpha = pawnAnimT;
         ctx.beginPath(); ctx.arc(bx, by, br, 0, Math.PI * 2);
         ctx.fillStyle = inkA(0.85); ctx.fill();
         ctx.fillStyle = paperS();
         ctx.font = '600 ' + (br * 1.2) + 'px Inter,sans-serif';
         ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
         ctx.fillText(['I','II','III'][orderIdx] || String(orderIdx + 1), bx, by);
+        ctx.restore();
       }
     }
   }
@@ -488,6 +533,7 @@ R.buildPawnCanvases = buildPawnCanvases;
 R.hexToScreen = hexToScreen;
 R.screenToHex = screenToHex;
 R.drawHexShape = drawHexShape;
+R.drawIcon = drawIcon;
 R.inkS = inkS;
 R.paperS = paperS;
 R.inkA = inkA;

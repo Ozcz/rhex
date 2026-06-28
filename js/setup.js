@@ -2,27 +2,37 @@
 
 // Setup uses the shared board canvas (R.canvas / R.ctx)
 
+function drawIconSetup(c, img, x, y, size) {
+  if (!img || !img.complete) return;
+  c.drawImage(img, x - size/2, y - size/2, size, size);
+}
+
 function renderSetup() {
   if (!R.ctx || R.G.phase !== 'setup') return;
   var c = R.ctx;
+  var now = performance.now();
   c.clearRect(0, 0, R.cw, R.ch);
 
   var hexDraw = R.HEX - 5;
 
-  // Board hexes: thickness layer (outline only)
+  // Hex ripple animation
   for (var i = 0; i < R.boardHexes.length; i++) {
     var h = R.boardHexes[i];
     var s = R.hexToScreen(h.q, h.r);
-    R.drawHexShape(c, s.x, s.y + R.HEX_THICK, hexDraw);
+    var dist = R.hexDist(0, 0, h.q, h.r);
+    var delay = dist * 120;
+    var elapsed = now - R.boardAnimStart - delay;
+    if (R.boardAnimStart > 0 && elapsed < 0) continue;
+    var alpha = (R.boardAnimStart > 0 && elapsed < 300) ? Math.min(1, elapsed / 300) : 1;
+    var rise = (R.boardAnimStart > 0 && elapsed < 300) ? (1 - elapsed / 300) * 15 : 0;
+
+    c.globalAlpha = alpha;
+    R.drawHexShape(c, s.x, s.y - rise + R.HEX_THICK, hexDraw);
     c.strokeStyle = '#fff'; c.lineWidth = 1; c.stroke();
-  }
-  // Board hexes: top face
-  for (var j = 0; j < R.boardHexes.length; j++) {
-    var h2 = R.boardHexes[j];
-    var s2 = R.hexToScreen(h2.q, h2.r);
-    R.drawHexShape(c, s2.x, s2.y, hexDraw);
+    R.drawHexShape(c, s.x, s.y - rise, hexDraw);
     c.fillStyle = '#000'; c.fill();
     c.strokeStyle = '#fff'; c.lineWidth = 1; c.stroke();
+    c.globalAlpha = 1;
   }
 
   var drawSz = R.HEX * 2.4;
@@ -34,18 +44,30 @@ function renderSetup() {
     if (u.dead) continue;
     var us = R.hexToScreen(u.q, u.r);
 
-    c.drawImage(R.pawnBlackCanvas, us.x - drawSz / 2, us.y + yShift - drawSz / 2, drawSz, drawSz);
+    // Pawn entrance animation
+    var pawnT = 1;
+    if (R.pawnAnimStart > 0) {
+      var pElapsed = now - R.pawnAnimStart - k * 150;
+      if (pElapsed < 0) continue;
+      pawnT = Math.min(1, pElapsed / 300);
+    }
+
+    c.save();
+    c.globalAlpha = pawnT;
+    var dropY = (1 - pawnT) * -25;
+    c.drawImage(R.pawnBlackCanvas, us.x - drawSz / 2, us.y + yShift + dropY - drawSz / 2, drawSz, drawSz);
 
     if (R.setupSelectedUnit === u.id) {
-      c.beginPath(); c.arc(us.x, us.y + yShift, drawSz * 0.35, 0, Math.PI * 2);
+      c.beginPath(); c.arc(us.x, us.y + yShift + dropY, drawSz * 0.35, 0, Math.PI * 2);
       c.strokeStyle = '#fff'; c.lineWidth = 1.5; c.stroke();
     }
 
-    if (u.skill) {
-      c.font = (R.HEX * 0.45) + 'px sans-serif';
-      c.textAlign = 'center'; c.textBaseline = 'middle';
-      c.fillText(R.SKILL_DEF[u.skill].icon, us.x, us.y + yShift);
+    if (u.skill && R.icons) {
+      var iconKey = R.SKILL_DEF[u.skill].svgKey + '_white';
+      c.globalAlpha = pawnT * 0.6;
+      drawIconSetup(c, R.icons[iconKey], us.x, us.y + yShift + dropY, R.HEX * 0.55);
     }
+    c.restore();
   }
 
   requestAnimationFrame(renderSetup);
@@ -83,7 +105,7 @@ function buildSetupUI() {
     var btn = document.createElement('button');
     btn.className = 'pushable compact';
     btn.dataset.skill = key;
-    btn.innerHTML = '<span class="shadow"></span><span class="edge"></span><span class="front">' + sd.icon + ' ' + sd.name.toUpperCase() + '</span>';
+    btn.innerHTML = '<span class="shadow"></span><span class="edge"></span><span class="front"><img src="assets/sprites/' + sd.svgFile + '.svg" class="skill-icon"> ' + sd.name.toUpperCase() + '</span>';
     btn.addEventListener('click', (function(k) {
       return function() {
         if (R.G.myReady || !R.setupSelectedUnit) return;

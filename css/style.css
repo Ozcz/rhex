@@ -1,9 +1,6 @@
 /* -- Reset & base -- */
 *{margin:0;padding:0;box-sizing:border-box}
 
-/* Theme color variables (animatable). --c-bg = background, --c-fg = ink.
-   Default: dark (black bg, white ink). body.inverted flips them.
-   body.theme-anim makes the change fade smoothly. */
 @property --c-bg{syntax:'<color>';inherits:true;initial-value:#000000}
 @property --c-fg{syntax:'<color>';inherits:true;initial-value:#ffffff}
 
@@ -17,6 +14,19 @@ body{
 body.theme-anim{transition:--c-bg 1.4s ease,--c-fg 1.4s ease,background-color 1.4s ease}
 body.inverted{--c-bg:#ffffff;--c-fg:#000000}
 
+/* -- Entrance animations -- */
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+@keyframes fadeInUp{from{opacity:0;transform:translateY(15px)}to{opacity:1;transform:translateY(0)}}
+@keyframes barDrop{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:translateY(0)}}
+
+#appTitle{opacity:0;transition:opacity 0.8s ease}
+body.loaded #appTitle{opacity:1}
+
+#lobby .lobby-row{opacity:0}
+#lobby .pushable.subtle{opacity:0}
+body.loaded #lobby .lobby-row{animation:fadeInUp 0.6s ease 0.5s both}
+body.loaded #lobby .pushable.subtle{animation:fadeInUp 0.6s ease 0.7s both}
+
 /* -- Screen containers -- */
 .screen{display:none;flex:1;flex-direction:column;align-items:center;justify-content:center;padding:20px;gap:20px}
 .screen.active{display:flex}
@@ -24,16 +34,12 @@ h1{font-size:2.8em;color:#fff;letter-spacing:.25em;font-weight:300}
 h2{color:#fff;font-weight:300;letter-spacing:.15em;font-size:1.4em}
 .version{color:#555;font-size:.75em;letter-spacing:.2em;text-transform:uppercase;margin-bottom:32px}
 
-/* -- App title (fixed top center, hidden during game) -- */
+/* -- App title (fixed top center) -- */
 #appTitle{position:absolute;top:60px;left:50%;transform:translateX(-50%);z-index:6;text-align:center;pointer-events:none}
 #appTitle h1{margin:0}
 #appTitle .version{margin-bottom:0}
 
-/* -- 3D pushable buttons (single shared design) --
-   edge = the extruded side (bg fill + ink border = stroked thickness),
-   front = the top face (bg fill + ink border), raised 5px above the edge.
-   Both use theme vars so buttons invert with the color theme.
-   Every button has the SAME 5px thickness. */
+/* -- 3D pushable buttons -- */
 .pushable{position:relative;border:none;background:transparent;padding:0;cursor:pointer;font-family:inherit;transition:filter 150ms}
 .pushable .shadow{display:none}
 .pushable .edge{position:absolute;inset:0;border-radius:3px;background:var(--c-bg);border:1px solid var(--c-fg);transform:translateY(0)}
@@ -50,15 +56,17 @@ h2{color:#fff;font-weight:300;letter-spacing:.15em;font-size:1.4em}
 .pushable.full-width{width:100%}
 .pushable.full-width .front{width:100%;text-align:center}
 
+/* Skill icon in setup buttons */
+.skill-icon{width:14px;height:14px;filter:invert(1);vertical-align:middle;margin-right:4px}
+
 /* -- Lobby -- */
 .lobby-row{display:flex;gap:10px;align-items:stretch}
 .share-url-row{display:flex;gap:8px;width:100%;align-items:stretch}
 .share-url-row input{flex:1;background:#000;border:1px solid #444;color:#fff;padding:12px 14px;border-radius:3px;font-size:.8em;font-family:inherit;letter-spacing:.05em}
 .waiting{color:#555;margin-top:8px;animation:pulse 1.5s infinite;font-size:.8em;letter-spacing:.1em}
 @keyframes pulse{0%,100%{opacity:.4}50%{opacity:1}}
-#shareArea{max-width:420px;width:100%}
+#shareArea{max-width:420px;width:100%;animation:fadeIn 0.4s ease both}
 #btnTimer .front{min-width:80px;text-align:center}
-/* Share button row: menu + timer UNDER the URL bar, each 50% width */
 .share-btn-row{display:flex;gap:8px;width:100%;margin-top:16px}
 .share-btn-row .pushable{flex:1 1 0;min-width:0;overflow:hidden}
 .share-btn-row .pushable .front{width:100%;text-align:center;padding:10px 0;overflow:hidden;white-space:nowrap}
@@ -75,11 +83,11 @@ h2{color:#fff;font-weight:300;letter-spacing:.15em;font-size:1.4em}
 .modal-content .skill-list li{margin:3px 0}
 .settings-list{display:flex;flex-direction:column;gap:12px;margin-top:16px}
 
-/* -- Shared board canvas (visible during setup + game) -- */
+/* -- Shared board canvas -- */
 #boardWrap{position:fixed;top:50%;left:50%;transform:translate(-50%,-55%);width:min(86vw,680px);aspect-ratio:1/1;z-index:1;display:none;pointer-events:auto}
 #board{width:100%;height:100%;display:block;touch-action:none}
 
-/* -- Setup screen (board-based skill selection) -- */
+/* -- Setup screen -- */
 #screenSetup{justify-content:flex-end;align-items:center;gap:12px;padding:24px 24px 40px;height:100vh;z-index:2}
 .setup-header{text-align:center}
 .setup-header h2{font-size:1.2em}
@@ -95,7 +103,7 @@ h2{color:#fff;font-weight:300;letter-spacing:.15em;font-size:1.4em}
 .badges-row{display:flex;align-items:flex-end;justify-content:center;gap:24px}
 .badge{display:flex;flex-direction:column;align-items:center;gap:4px}
 .badge .pts{display:flex;flex-direction:column-reverse;gap:2px;justify-content:flex-end;min-height:0}
-.badge .pts .bar{width:32px;height:5px;border-radius:1px}
+.badge .pts .bar{width:32px;height:5px;border-radius:1px;animation:barDrop 0.3s ease both}
 .badge.p1 .pts .bar{background:#4ecdc4}
 .badge.p2 .pts .bar{background:#e85d75}
 .badge .crown{font-size:24px;line-height:1}
@@ -122,7 +130,7 @@ h2{color:#fff;font-weight:300;letter-spacing:.15em;font-size:1.4em}
 #screenGameover h2{font-size:2em;color:#fff;letter-spacing:.2em}
 #finalScore{font-size:1em;color:#555;letter-spacing:.1em}
 
-/* -- Disconnect warning banner -- */
+/* -- Disconnect warning -- */
 .disconnect-warning{
   position:fixed;top:24px;left:50%;transform:translateX(-50%);z-index:30;
   background:#000;border:1px solid #555;border-radius:3px;
@@ -130,7 +138,7 @@ h2{color:#fff;font-weight:300;letter-spacing:.15em;font-size:1.4em}
   text-transform:uppercase;animation:pulse 1.5s infinite;
 }
 
-/* -- Hamburger menu button (top-right, squared) -- */
+/* -- Hamburger menu button -- */
 #hamburgerBtn{
   position:absolute;top:16px;right:16px;z-index:5;
   cursor:pointer;user-select:none;display:none;

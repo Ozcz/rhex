@@ -59,3 +59,8 @@ R.INK = [255, 255, 255];
 R.PAPER = [0, 0, 0];
 
 R.hoveredHex = null;
+
+R.boardAnimStart = 0;
+R.pawnAnimStart = 0;
+R.enemyPawnAnimStart = 0;
+R.prevScores = [0, 0, 0];
