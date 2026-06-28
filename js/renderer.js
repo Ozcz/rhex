@@ -243,9 +243,12 @@ function drawArrows(c) {
 
 function render() {
   var G = R.G;
-  if (G.phase === 'lobby' || G.phase === 'setup') return;
+  if (G.phase !== 'planning' && G.phase !== 'resolution' && G.phase !== 'gameover') {
+    requestAnimationFrame(render);
+    return;
+  }
   var ctx = R.ctx;
-  if (!ctx) return;
+  if (!ctx) { requestAnimationFrame(render); return; }
   var now = performance.now();
   ctx.clearRect(0, 0, R.cw, R.ch);
 
