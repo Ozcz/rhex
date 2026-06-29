@@ -50,19 +50,16 @@ function init() {
     R.playSound('ambience');
   };
 
-  // Button click sound on all pushable buttons
   document.addEventListener('pointerdown', function(e) {
     var btn = e.target.closest('.pushable');
     if (btn && !btn.disabled) R.playSound('button');
   });
 
-  // Start ambience after first user interaction (only if still on lobby, not clicking a button)
-  document.addEventListener('click', function startAmbience() {
-    if (R.G.phase === 'lobby' && !document.getElementById('shareArea').style.display.length) {
-      R.playSound('ambience');
-    }
-    document.removeEventListener('click', startAmbience);
-  });
+  // Ambience starts on first interaction
+  document.addEventListener('pointerdown', function startAmbience() {
+    R.playSound('ambience');
+    document.removeEventListener('pointerdown', startAmbience);
+  }, {once: true});
 
   R.updateTitleVisibility();
   R.buildPawnCanvases();

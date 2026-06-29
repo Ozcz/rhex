@@ -87,7 +87,6 @@ function finishSetup() {
   var rb = document.getElementById('btnSetupReady');
   rb.disabled = true;
   rb.classList.add('is-ready');
-  rb.querySelector('.front').textContent = 'WAITING...';
   R.send({type: 'setup-done', units: R.myUnits().map(function(u) { return {id: u.id, q: u.q, r: u.r, skill: u.skill}; })});
   if (G.opReady) startPlanning();
 }
@@ -103,6 +102,8 @@ function startPlanning() {
   R.bowAim.targetHex = null; R.bowAim.currentPos = null;
   G.unitOrder = [null, null, null];
 
+  if (G.turnNum === 0) R.enemyPawnAnimStart = performance.now();
+
   R.myUnits().forEach(function(u) {
     if (u.dead) {
       var spawn = R.spawnHexes(G.myPlayer).find(function(h) { return !R.unitAt(h.q, h.r); });
@@ -115,8 +116,6 @@ function startPlanning() {
       }
     }
   });
-
-  if (G.turnNum === 0) R.enemyPawnAnimStart = performance.now();
 
   showScreen('screenGame');
   R.setupMainCanvas();
@@ -136,7 +135,7 @@ function startPlanning() {
 
   if (G.timerConfig > 0) {
     startTimer(G.timerConfig, function() {
-      updateGameHUD();
+      updateTimerOnly();
       if (G.myPlayer === 1 && G.timerVal % 5 === 0) R.send({type: 'timer-sync', val: G.timerVal});
     }, function() { submitPlan(); });
   } else {
@@ -146,28 +145,53 @@ function startPlanning() {
 
 /* ── HUD ── */
 
-function updateGameHUD() {
+function updateTimerOnly() {
   var G = R.G;
   var t = document.getElementById('gameTimer');
   if (t) {
     t.textContent = G.timerConfig > 0 ? String(G.timerVal) : '∞';
     t.classList.toggle('urgent', G.timerConfig > 0 && G.timerVal <= 3);
   }
-  buildPts('p1pts', G.scores[1]);
-  buildPts('p2pts', G.scores[2]);
-  var sd = document.getElementById('scoreDiff');
-  if (sd) sd.textContent = String(Math.abs(G.scores[1] - G.scores[2]));
 }
 
-function buildPts(id, score) {
+function updateGameHUD() {
+  updateTimerOnly();
+  var G = R.G;
+  var sd = document.getElementById('scoreDiff');
+  if (sd) sd.textContent = String(Math.abs(G.scores[1] - G.scores[2]));
+
+  // Animate score bars: compare with previous, animate gains/losses
+  animateScoreBars('p1pts', G.scores[1], R.prevScores[1], '#4ecdc4');
+  animateScoreBars('p2pts', G.scores[2], R.prevScores[2], '#e85d75');
+}
+
+function animateScoreBars(id, newScore, oldScore, color) {
   var el = document.getElementById(id);
   if (!el) return;
-  el.innerHTML = '';
-  for (var i = 0; i < score; i++) {
-    var b = document.createElement('div');
-    b.className = 'bar';
-    b.style.animationDelay = (i * 0.1) + 's';
-    el.appendChild(b);
+  var currentBars = el.children.length;
+
+  if (newScore > currentBars) {
+    // Add new bars with drop animation
+    for (var i = currentBars; i < newScore; i++) {
+      var b = document.createElement('div');
+      b.className = 'bar';
+      b.style.background = color;
+      b.style.animationDelay = ((i - currentBars) * 0.1) + 's';
+      el.appendChild(b);
+    }
+  } else if (newScore < currentBars) {
+    // Remove bars with fade-up animation
+    var toRemove = currentBars - newScore;
+    for (var j = 0; j < toRemove; j++) {
+      var bar = el.lastElementChild;
+      if (bar) {
+        bar.style.animation = 'barFadeUp 0.3s ease forwards';
+        bar.style.animationDelay = (j * 0.1) + 's';
+        (function(b) {
+          setTimeout(function() { if (b.parentNode) b.parentNode.removeChild(b); }, 300 + j * 100);
+        })(bar);
+      }
+    }
   }
 }
 
@@ -181,7 +205,6 @@ function submitPlan() {
   var rb = document.getElementById('btnGameReady');
   rb.disabled = true;
   rb.classList.add('is-ready');
-  rb.querySelector('.front').textContent = 'WAITING...';
   R.hideHint();
   R.bowAim.active = false; R.bowAim.unitId = null;
   R.bowAim.targetHex = null; R.bowAim.currentPos = null;
@@ -215,12 +238,13 @@ async function runResolution() {
   advanceArrows();
 
   G.turnNum++;
+  var oldScores = [0, R.prevScores[1], R.prevScores[2]];
   calcScores();
 
-  var p1Diff = G.scores[1] - R.prevScores[1];
-  var p2Diff = G.scores[2] - R.prevScores[2];
-  var maxDiff = Math.max(p1Diff, p2Diff, 0);
-  for (var ci = 0; ci < maxDiff; ci++) {
+  var p1Diff = G.scores[1] - oldScores[1];
+  var p2Diff = G.scores[2] - oldScores[2];
+  var gains = Math.max(p1Diff, p2Diff, 0);
+  for (var ci = 0; ci < gains; ci++) {
     (function(delay) { setTimeout(function() { R.playSound('coin'); }, delay); })(ci * 120);
   }
   R.prevScores = [0, G.scores[1], G.scores[2]];
@@ -260,7 +284,7 @@ function resolveStep(a1, a2, stepIdx) {
   var skillers = actions.filter(function(a) { return a.type === 'skill'; });
   var movers = actions.filter(function(a) { return a.type === 'move'; });
 
-  // Activate shields first
+  // Activate shields
   for (var si = 0; si < skillers.length; si++) {
     if (skillers[si].skill === 'shield') {
       var su = R.unitById(skillers[si].unitId);
@@ -268,15 +292,42 @@ function resolveStep(a1, a2, stepIdx) {
     }
   }
 
-  // Process moves
-  if (movers.length === 2) {
-    var t0 = movers[0].target, t1 = movers[1].target;
-    var u0 = R.unitById(movers[0].unitId), u1 = R.unitById(movers[1].unitId);
-    if (t0.q === t1.q && t0.r === t1.r) { R.playSound('collision'); /* cancel */ }
-    else if (u0 && u1 && t0.q === u1.q && t0.r === u1.r && t1.q === u0.q && t1.r === u0.r) { R.playSound('collision'); /* swap cancel */ }
-    else { for (var mi = 0; mi < movers.length; mi++) processMove(movers[mi]); }
+  // Separate normal movers from passive movers (shielded/cloaked units move AFTER)
+  var normalMovers = [];
+  var passiveMovers = [];
+  for (var mi = 0; mi < movers.length; mi++) {
+    var mu = R.unitById(movers[mi].unitId);
+    if (mu && (mu.shielded || mu.cloaked)) {
+      passiveMovers.push(movers[mi]);
+    } else {
+      normalMovers.push(movers[mi]);
+    }
+  }
+
+  // Check if both are passive → cancel + reveal stealth
+  if (normalMovers.length === 0 && passiveMovers.length === 2) {
+    var pu0 = R.unitById(passiveMovers[0].unitId);
+    var pu1 = R.unitById(passiveMovers[1].unitId);
+    if (pu0 && pu0.cloaked) { pu0.cloaked = false; R.playSound('vanish'); }
+    if (pu1 && pu1.cloaked) { pu1.cloaked = false; R.playSound('vanish'); }
+    R.playSound('collision');
+    // Neither moves
   } else {
-    for (var mj = 0; mj < movers.length; mj++) processMove(movers[mj]);
+    // Process normal moves first
+    if (normalMovers.length === 2) {
+      var t0 = normalMovers[0].target, t1 = normalMovers[1].target;
+      var u0 = R.unitById(normalMovers[0].unitId), u1 = R.unitById(normalMovers[1].unitId);
+      if (t0.q === t1.q && t0.r === t1.r) { R.playSound('collision'); }
+      else if (u0 && u1 && t0.q === u1.q && t0.r === u1.r && t1.q === u0.q && t1.r === u0.r) { R.playSound('collision'); }
+      else { for (var ni = 0; ni < normalMovers.length; ni++) processMove(normalMovers[ni]); }
+    } else {
+      for (var nj = 0; nj < normalMovers.length; nj++) processMove(normalMovers[nj]);
+    }
+
+    // Then process passive moves (shielded/cloaked, resolve after)
+    for (var pi = 0; pi < passiveMovers.length; pi++) {
+      processMove(passiveMovers[pi]);
+    }
   }
 
   // Process other skills: bow, cloak
@@ -318,7 +369,7 @@ function processMove(m) {
   } else if (enemy && enemy.player === u.player) {
     return;
   }
-  u.q = m.target.q; u.r = m.target.r; u.cloaked = false;
+  u.q = m.target.q; u.r = m.target.r;
 }
 
 /* ── Arrow advancement ── */
@@ -326,15 +377,11 @@ function processMove(m) {
 function advanceArrows() {
   var G = R.G;
   var now = performance.now();
-
-  // Clean up arrows whose landing animation finished
   for (var j = G.arrows.length - 1; j >= 0; j--) {
     if (G.arrows[j].landingTime && now - G.arrows[j].landingTime > 500) {
       G.arrows.splice(j, 1);
     }
   }
-
-  // Advance in-flight arrows (skip ones already landing)
   for (var i = 0; i < G.arrows.length; i++) {
     var arrow = G.arrows[i];
     if (arrow.landingTime) continue;

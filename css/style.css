@@ -18,6 +18,7 @@ body.inverted{--c-bg:#ffffff;--c-fg:#000000}
 @keyframes fadeIn{from{opacity:0}to{opacity:1}}
 @keyframes fadeInUp{from{opacity:0;transform:translateY(15px)}to{opacity:1;transform:translateY(0)}}
 @keyframes barDrop{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:translateY(0)}}
+@keyframes barFadeUp{from{opacity:1;transform:translateY(0)}to{opacity:0;transform:translateY(-8px)}}
 
 
 #lobby .lobby-row{opacity:0}
