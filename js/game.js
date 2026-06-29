@@ -292,39 +292,35 @@ function resolveStep(a1, a2, stepIdx) {
     }
   }
 
-  // Separate normal movers from passive movers (shielded/cloaked units move AFTER)
+  // Split movers: normal first, passive (shielded/cloaked) after
   var normalMovers = [];
   var passiveMovers = [];
   for (var mi = 0; mi < movers.length; mi++) {
     var mu = R.unitById(movers[mi].unitId);
-    if (mu && (mu.shielded || mu.cloaked)) {
-      passiveMovers.push(movers[mi]);
-    } else {
-      normalMovers.push(movers[mi]);
-    }
+    if (mu && (mu.shielded || mu.cloaked)) passiveMovers.push(movers[mi]);
+    else normalMovers.push(movers[mi]);
   }
 
-  // Check if both are passive → cancel + reveal stealth
-  if (normalMovers.length === 0 && passiveMovers.length === 2) {
-    var pu0 = R.unitById(passiveMovers[0].unitId);
-    var pu1 = R.unitById(passiveMovers[1].unitId);
-    if (pu0 && pu0.cloaked) { pu0.cloaked = false; R.playSound('vanish'); }
-    if (pu1 && pu1.cloaked) { pu1.cloaked = false; R.playSound('vanish'); }
+  // Both passive at same step → cancel moves, reveal stealth
+  if (passiveMovers.length === 2 && normalMovers.length === 0) {
+    for (var ri = 0; ri < passiveMovers.length; ri++) {
+      var ru = R.unitById(passiveMovers[ri].unitId);
+      if (ru && ru.cloaked) { ru.cloaked = false; R.playSound('vanish'); }
+    }
     R.playSound('collision');
-    // Neither moves
   } else {
-    // Process normal moves first
+    // Normal movers: check collisions between them
     if (normalMovers.length === 2) {
       var t0 = normalMovers[0].target, t1 = normalMovers[1].target;
       var u0 = R.unitById(normalMovers[0].unitId), u1 = R.unitById(normalMovers[1].unitId);
       if (t0.q === t1.q && t0.r === t1.r) { R.playSound('collision'); }
       else if (u0 && u1 && t0.q === u1.q && t0.r === u1.r && t1.q === u0.q && t1.r === u0.r) { R.playSound('collision'); }
-      else { for (var ni = 0; ni < normalMovers.length; ni++) processMove(normalMovers[ni]); }
-    } else {
-      for (var nj = 0; nj < normalMovers.length; nj++) processMove(normalMovers[nj]);
+      else { processMove(normalMovers[0]); processMove(normalMovers[1]); }
+    } else if (normalMovers.length === 1) {
+      processMove(normalMovers[0]);
     }
 
-    // Then process passive moves (shielded/cloaked, resolve after)
+    // Passive movers resolve after normal movers
     for (var pi = 0; pi < passiveMovers.length; pi++) {
       processMove(passiveMovers[pi]);
     }
