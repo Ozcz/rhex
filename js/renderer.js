@@ -457,14 +457,12 @@ function render() {
     // Shield visual
     if (u.shielded || R.shieldAnims[u.id]) drawShieldEffect(ctx, us.x, us.y + yShift + pawnYOffset, u, isMine);
 
-    // Skill icon on pawn belly — only when not already shown by shield/cloak effects
-    var uAct = G.myActions[u.id] || null;
-    var showSkillIcon = u.skill && R.SKILL_DEF[u.skill] && !u.shielded && !R.shieldAnims[u.id] && !u.cloaked;
-    if (showSkillIcon) {
+    // Skill icon on pawn belly — opaque when active state, faded when inactive
+    if (u.skill && R.SKILL_DEF[u.skill]) {
       var sd = R.SKILL_DEF[u.skill];
-      var skillActive = uAct && uAct.type === 'skill';
+      var skillIsOn = u.shielded || u.cloaked;
       ctx.save();
-      ctx.globalAlpha = (skillActive ? 0.85 : 0.25) * pawnAnimT;
+      ctx.globalAlpha = (skillIsOn ? 0.85 : 0.25) * pawnAnimT;
       drawIcon(ctx, R.icons[sd.svgKey + (isMine ? '_black' : '_white')], us.x, us.y + yShift + pawnYOffset + drawSize * 0.18, R.HEX * 0.5);
       ctx.restore();
     }

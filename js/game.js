@@ -210,7 +210,8 @@ function submitPlan() {
   R.bowAim.targetHex = null; R.bowAim.currentPos = null;
 
   var orderedActions = R.buildOrderedActions();
-  R.send({type: 'plan-done', actions: orderedActions});
+  var unitStates = R.myUnits().map(function(u) { return {id: u.id, shielded: u.shielded, cloaked: u.cloaked}; });
+  R.send({type: 'plan-done', actions: orderedActions, states: unitStates});
   if (G.opActions) runResolution();
 }
 
@@ -284,14 +285,6 @@ function resolveStep(a1, a2, stepIdx) {
   var skillers = actions.filter(function(a) { return a.type === 'skill'; });
   var movers = actions.filter(function(a) { return a.type === 'move'; });
 
-  // Activate shields
-  for (var si = 0; si < skillers.length; si++) {
-    if (skillers[si].skill === 'shield') {
-      var su = R.unitById(skillers[si].unitId);
-      if (su && !su.dead) { su.shielded = true; R.triggerShieldAnim(su.id, false); R.playSound('shield'); }
-    }
-  }
-
   // Split movers: normal first, passive (shielded/cloaked) after
   var normalMovers = [];
   var passiveMovers = [];
@@ -326,7 +319,7 @@ function resolveStep(a1, a2, stepIdx) {
     }
   }
 
-  // Process other skills: bow, cloak
+  // Process bow skill (only skill that uses the action system)
   for (var ki = 0; ki < skillers.length; ki++) {
     var ka = skillers[ki];
     var ku = R.unitById(ka.unitId);
@@ -341,10 +334,6 @@ function resolveStep(a1, a2, stepIdx) {
         player: ka.player
       });
       R.playSound('arrow');
-    }
-    if (ka.skill === 'cloak') {
-      ku.cloaked = !ku.cloaked;
-      R.playSound('vanish');
     }
   }
 }

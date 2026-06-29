@@ -1,11 +1,10 @@
 'use strict';
 
 /*
-  Actions are MUTUALLY EXCLUSIVE: a unit either MOVES or uses a SKILL, never both.
-  Action types:
-  - {unitId, type:'move',    target:{q,r}}
-  - {unitId, type:'skill',   skill:'shield'|'cloak'|'bow', targetHex?:{q,r}, distance?:number}
-  - {unitId, type:'respawn', target:{q,r}}
+  Shield/Cloak are PERSISTENT UNIT STATE toggled by hold — NOT actions.
+  Only BOW uses the action system as type:'skill'.
+  Move is type:'move'. Respawn is type:'respawn'.
+  A unit can be shielded/cloaked AND have a move assigned.
 */
 
 function buildOrderedActions() {
@@ -97,7 +96,7 @@ function onPointerDown(e) {
     }
   }
 
-  // Tap spawn hex for dead unit (allows reassignment)
+  // Tap spawn hex for dead unit
   if (hex.r === R.spawnRow(G.myPlayer) && !R.unitAt(hex.q, hex.r)) {
     var hexTaken = false;
     for (var key in G.myActions) {
@@ -143,15 +142,15 @@ function onPointerDown(e) {
   }
 }
 
-// Hold = activate/deactivate skill (REPLACES any existing move)
+// Hold = toggle shield/cloak STATE on unit, or enter bow aim
 function onHoldActivate(unit) {
   if (!unit.skill) return;
   var G = R.G;
   var sd = R.SKILL_DEF[unit.skill];
-  var existing = G.myActions[unit.id];
 
   if (sd.targeted) {
-    // BOW: toggle. If already bow, cancel. Otherwise enter aim.
+    // BOW: uses action system (mutually exclusive with move)
+    var existing = G.myActions[unit.id];
     if (existing && existing.type === 'skill' && existing.skill === 'bow') {
       delete G.myActions[unit.id];
       R.bowAim.active = false; R.bowAim.unitId = null;
@@ -166,14 +165,15 @@ function onHoldActivate(unit) {
     R.bowAim.currentPos = R.drag.currentPos ? {x: R.drag.currentPos.x, y: R.drag.currentPos.y} : null;
     R.bowAim.targetHex = {q: unit.q, r: unit.r};
     showHint('DRAG THE TARGET, RELEASE TO FIRE');
-  } else {
-    // SHIELD / CLOAK: toggle. Replaces any move.
-    lockUnit(unit.id);
-    if (existing && existing.type === 'skill' && existing.skill === unit.skill) {
-      delete G.myActions[unit.id];
-    } else {
-      G.myActions[unit.id] = {unitId: unit.id, type: 'skill', skill: unit.skill};
-    }
+  } else if (unit.skill === 'shield') {
+    // SHIELD: toggle persistent state directly on unit
+    unit.shielded = !unit.shielded;
+    if (unit.shielded) R.triggerShieldAnim(unit.id, false);
+    R.playSound('shield');
+  } else if (unit.skill === 'cloak') {
+    // CLOAK: toggle persistent state directly on unit
+    unit.cloaked = !unit.cloaked;
+    R.playSound('vanish');
   }
 }
 
@@ -232,14 +232,13 @@ function onPointerUp(e) {
 
   if (R.drag.unit) {
     if (R.drag.isHold && !R.drag.moved) {
-      // Skill handled in onHoldActivate
+      // Shield/cloak toggle handled in onHoldActivate (changes unit state, not action)
     } else if (R.drag.moved && R.drag.targetHex) {
       if (R.drag.targetHex.q === R.drag.unit.q && R.drag.targetHex.r === R.drag.unit.r) {
-        // Dragged back to self: cancel action
         delete G.myActions[R.drag.unit.id];
         lockUnit(R.drag.unit.id);
       } else {
-        // Drag = assign MOVE (replaces any skill)
+        // Assign move — does NOT affect shield/cloak state
         lockUnit(R.drag.unit.id);
         G.myActions[R.drag.unit.id] = {unitId: R.drag.unit.id, type: 'move', target: {q: R.drag.targetHex.q, r: R.drag.targetHex.r}};
       }

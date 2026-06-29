@@ -70,6 +70,13 @@ function onMessage(data) {
       break;
     case 'plan-done':
       G.opActions = data.actions;
+      if (data.states) {
+        for (var si = 0; si < data.states.length; si++) {
+          var st = data.states[si];
+          var su = R.unitById(st.id);
+          if (su) { su.shielded = st.shielded; su.cloaked = st.cloaked; }
+        }
+      }
       G.opReady = true;
       if (G.myReady) R.runResolution();
       break;
