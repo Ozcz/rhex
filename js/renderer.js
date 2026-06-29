@@ -461,7 +461,7 @@ function render() {
     var uAct = G.myActions[u.id] || null;
     if (u.skill && R.SKILL_DEF[u.skill]) {
       var sd = R.SKILL_DEF[u.skill];
-      var skillActive = uAct && uAct.type === 'skill';
+      var skillActive = (uAct && uAct.type === 'skill') || u.shielded || u.cloaked;
       ctx.save();
       ctx.globalAlpha = (skillActive ? 0.85 : 0.25) * pawnAnimT;
       drawIcon(ctx, R.icons[sd.svgKey + (isMine ? '_black' : '_white')], us.x, us.y + yShift + pawnYOffset, R.HEX * 0.55);
