@@ -1,11 +1,12 @@
 'use strict';
 
 /*
-  Shield/Cloak are PERSISTENT UNIT STATE toggled by hold — NOT actions.
+  Shield/Cloak are persistent unit states. During planning, toggles are
+  tracked in R.plannedToggles (local only). Applied during resolution.
   Only BOW uses the action system as type:'skill'.
-  Move is type:'move'. Respawn is type:'respawn'.
-  A unit can be shielded/cloaked AND have a move assigned.
 */
+
+R.plannedToggles = {};
 
 function buildOrderedActions() {
   var result = [];
@@ -32,6 +33,7 @@ function resetAllAssignments() {
   var G = R.G;
   G.myActions = {};
   G.unitOrder = [null, null, null];
+  R.plannedToggles = {};
   R.bowAim.active = false;
   R.bowAim.unitId = null;
   R.bowAim.targetHex = null;
@@ -52,6 +54,12 @@ function resetAllAssignments() {
   });
 }
 
+function isSkillPlannedOn(unit) {
+  var toggle = R.plannedToggles[unit.id];
+  if (toggle !== undefined) return toggle;
+  return unit.shielded || unit.cloaked;
+}
+
 function onPointerDown(e) {
   var G = R.G;
   if (G.phase === 'setup') { if (R.onSetupPointerDown) R.onSetupPointerDown(e); return; }
@@ -63,7 +71,6 @@ function onPointerDown(e) {
 
   if (!R.onBoard(hex.q, hex.r)) { hideHint(); return; }
 
-  // Bow aim active: tapping finalizes
   if (R.bowAim.active) {
     var bu = R.unitById(R.bowAim.unitId);
     if (bu && R.onBoard(hex.q, hex.r)) {
@@ -79,7 +86,6 @@ function onPointerDown(e) {
     return;
   }
 
-  // Tap existing bow target to re-aim
   for (var oi = 0; oi < G.unitOrder.length; oi++) {
     var uid = G.unitOrder[oi];
     if (!uid) continue;
@@ -96,7 +102,6 @@ function onPointerDown(e) {
     }
   }
 
-  // Tap spawn hex for dead unit
   if (hex.r === R.spawnRow(G.myPlayer) && !R.unitAt(hex.q, hex.r)) {
     var hexTaken = false;
     for (var key in G.myActions) {
@@ -120,7 +125,6 @@ function onPointerDown(e) {
     }
   }
 
-  // Tap a player unit: start drag/hold interaction
   var unit = R.unitAt(hex.q, hex.r);
   if (unit && unit.player === G.myPlayer && !unit.dead) {
     R.canvas.setPointerCapture(e.pointerId);
@@ -142,14 +146,12 @@ function onPointerDown(e) {
   }
 }
 
-// Hold = toggle shield/cloak STATE on unit, or enter bow aim
 function onHoldActivate(unit) {
   if (!unit.skill) return;
-  var G = R.G;
   var sd = R.SKILL_DEF[unit.skill];
 
   if (sd.targeted) {
-    // BOW: uses action system (mutually exclusive with move)
+    var G = R.G;
     var existing = G.myActions[unit.id];
     if (existing && existing.type === 'skill' && existing.skill === 'bow') {
       delete G.myActions[unit.id];
@@ -165,15 +167,11 @@ function onHoldActivate(unit) {
     R.bowAim.currentPos = R.drag.currentPos ? {x: R.drag.currentPos.x, y: R.drag.currentPos.y} : null;
     R.bowAim.targetHex = {q: unit.q, r: unit.r};
     showHint('DRAG THE TARGET, RELEASE TO FIRE');
-  } else if (unit.skill === 'shield') {
-    // SHIELD: toggle persistent state directly on unit
-    unit.shielded = !unit.shielded;
-    if (unit.shielded) R.triggerShieldAnim(unit.id, false);
-    R.playSound('shield');
-  } else if (unit.skill === 'cloak') {
-    // CLOAK: toggle persistent state directly on unit
-    unit.cloaked = !unit.cloaked;
-    R.playSound('vanish');
+  } else {
+    // Shield/Cloak: toggle PLANNED state (not applied until resolution)
+    var currentlyOn = isSkillPlannedOn(unit);
+    R.plannedToggles[unit.id] = !currentlyOn;
+    R.playSound(unit.skill === 'shield' ? 'shield' : 'vanish');
   }
 }
 
@@ -212,7 +210,6 @@ function onPointerUp(e) {
   clearTimeout(R.drag.holdTimer);
   var G = R.G;
 
-  // Bow aim release
   if (R.bowAim.active && R.bowAim.targetHex) {
     var u = R.unitById(R.bowAim.unitId);
     if (u) {
@@ -232,13 +229,12 @@ function onPointerUp(e) {
 
   if (R.drag.unit) {
     if (R.drag.isHold && !R.drag.moved) {
-      // Shield/cloak toggle handled in onHoldActivate (changes unit state, not action)
+      // handled in onHoldActivate
     } else if (R.drag.moved && R.drag.targetHex) {
       if (R.drag.targetHex.q === R.drag.unit.q && R.drag.targetHex.r === R.drag.unit.r) {
         delete G.myActions[R.drag.unit.id];
         lockUnit(R.drag.unit.id);
       } else {
-        // Assign move — does NOT affect shield/cloak state
         lockUnit(R.drag.unit.id);
         G.myActions[R.drag.unit.id] = {unitId: R.drag.unit.id, type: 'move', target: {q: R.drag.targetHex.q, r: R.drag.targetHex.r}};
       }
@@ -275,6 +271,7 @@ R.resetAllAssignments = resetAllAssignments;
 R.onPointerDown = onPointerDown;
 R.onPointerMove = onPointerMove;
 R.onPointerUp = onPointerUp;
+R.isSkillPlannedOn = isSkillPlannedOn;
 R.checkAutoSelectDead = checkAutoSelectDead;
 R.showHint = showHint;
 R.hideHint = hideHint;

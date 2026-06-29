@@ -454,15 +454,19 @@ function render() {
     ctx.drawImage(pawnCanvas, us.x - drawSize / 2, us.y + yShift - drawSize / 2 + pawnYOffset, drawSize, drawSize);
     ctx.restore();
 
-    // Shield visual
-    if (u.shielded || R.shieldAnims[u.id]) drawShieldEffect(ctx, us.x, us.y + yShift + pawnYOffset, u, isMine);
+    // Determine if skill is visually active (use planned state for own units during planning)
+    var skillOn = (isMine && G.phase === 'planning') ? R.isSkillPlannedOn(u) : (u.shielded || u.cloaked);
 
-    // Skill icon on pawn belly — opaque when active state, faded when inactive
+    // Shield visual effect (only when shielded — not during planning preview)
+    if ((u.shielded || R.shieldAnims[u.id]) && G.phase !== 'planning') {
+      drawShieldEffect(ctx, us.x, us.y + yShift + pawnYOffset, u, isMine);
+    }
+
+    // Skill icon on pawn belly — ONE icon, opaque when active, faded when not
     if (u.skill && R.SKILL_DEF[u.skill]) {
       var sd = R.SKILL_DEF[u.skill];
-      var skillIsOn = u.shielded || u.cloaked;
       ctx.save();
-      ctx.globalAlpha = (skillIsOn ? 0.85 : 0.25) * pawnAnimT;
+      ctx.globalAlpha = (skillOn ? 0.85 : 0.25) * pawnAnimT;
       drawIcon(ctx, R.icons[sd.svgKey + (isMine ? '_black' : '_white')], us.x, us.y + yShift + pawnYOffset + drawSize * 0.18, R.HEX * 0.5);
       ctx.restore();
     }

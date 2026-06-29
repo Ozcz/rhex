@@ -11,7 +11,6 @@ function init() {
   } else {
     document.getElementById('btnCreate').onclick = function() {
       R.createGame();
-      R.stopSound('ambience');
       R.playSound('waiting');
     };
   }
@@ -32,7 +31,6 @@ function init() {
   document.getElementById('btnBackToMenuShare').onclick = function() {
     R.stopSound('waiting');
     R.backToMenu();
-    R.playSound('ambience');
   };
 
   document.getElementById('hamburgerBtn').onclick = function() { document.getElementById('settingsModal').classList.add('visible'); };
@@ -41,13 +39,11 @@ function init() {
     document.getElementById('settingsModal').classList.remove('visible');
     R.send({type: 'rematch'});
     R.backToMenu();
-    R.playSound('ambience');
   };
   document.getElementById('btnCloseSettings').onclick = function() { document.getElementById('settingsModal').classList.remove('visible'); };
 
   document.getElementById('btnBackToMenuEnd').onclick = function() {
     R.backToMenu();
-    R.playSound('ambience');
   };
 
   document.addEventListener('pointerdown', function(e) {
@@ -55,10 +51,9 @@ function init() {
     if (btn && !btn.disabled) R.playSound('button');
   });
 
-  // Ambience starts on first interaction
-  document.addEventListener('pointerdown', function startAmbience() {
+  // Ambience starts on first interaction and never stops
+  document.addEventListener('pointerdown', function() {
     R.playSound('ambience');
-    document.removeEventListener('pointerdown', startAmbience);
   }, {once: true});
 
   R.updateTitleVisibility();

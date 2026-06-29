@@ -8,6 +8,7 @@ R.G = {
   myActions: {},
   unitOrder: [],
   opActions: null,
+  opToggles: {},
   myReady: false,
   opReady: false,
   timerVal: 0,

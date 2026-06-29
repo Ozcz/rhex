@@ -67,7 +67,6 @@ function startSetup() {
   document.body.classList.remove('inverted');
   R.playSound('gameFound');
   R.stopSound('waiting');
-  R.stopSound('ambience');
   R.boardAnimStart = performance.now();
   R.enemyPawnAnimStart = 0;
   R.prevScores = [0, 0, 0];
@@ -210,8 +209,11 @@ function submitPlan() {
   R.bowAim.targetHex = null; R.bowAim.currentPos = null;
 
   var orderedActions = R.buildOrderedActions();
-  var unitStates = R.myUnits().map(function(u) { return {id: u.id, shielded: u.shielded, cloaked: u.cloaked}; });
-  R.send({type: 'plan-done', actions: orderedActions, states: unitStates});
+  var toggles = {};
+  for (var tid in R.plannedToggles) {
+    if (R.plannedToggles.hasOwnProperty(tid)) toggles[tid] = R.plannedToggles[tid];
+  }
+  R.send({type: 'plan-done', actions: orderedActions, toggles: toggles});
   if (G.opActions) runResolution();
 }
 
@@ -219,6 +221,27 @@ async function runResolution() {
   var G = R.G;
   G.phase = 'resolution';
   updateTitleVisibility();
+
+  // Apply skill toggles from both players (shield/cloak state changes)
+  var myToggles = R.plannedToggles || {};
+  var opToggles = G.opToggles || {};
+  for (var tid in myToggles) {
+    var tu = R.unitById(tid);
+    if (tu) {
+      if (tu.skill === 'shield') { tu.shielded = myToggles[tid]; if (tu.shielded) R.triggerShieldAnim(tu.id, false); }
+      if (tu.skill === 'cloak') tu.cloaked = myToggles[tid];
+    }
+  }
+  for (var oid in opToggles) {
+    var ou = R.unitById(oid);
+    if (ou) {
+      if (ou.skill === 'shield') { ou.shielded = opToggles[oid]; if (ou.shielded) R.triggerShieldAnim(ou.id, false); }
+      if (ou.skill === 'cloak') ou.cloaked = opToggles[oid];
+    }
+  }
+  R.plannedToggles = {};
+  G.opToggles = {};
+
   var orderedActions = R.buildOrderedActions();
   var p1Acts = G.myPlayer === 1 ? orderedActions : G.opActions;
   var p2Acts = G.myPlayer === 2 ? orderedActions : G.opActions;
