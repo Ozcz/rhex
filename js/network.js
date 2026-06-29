@@ -50,7 +50,7 @@ function onMessage(data) {
       break;
     case 'start':
       G.myPlayer = 2;
-      G.timerConfig = data.timer || 60;
+      G.timerConfig = data.timer !== undefined ? data.timer : 60;
       R.startSetup();
       break;
     case 'setup-done':
